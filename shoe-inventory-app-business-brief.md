@@ -347,7 +347,7 @@ Recommended questions:
 - Options: iPhone, Android, both, not sure
 
 - Which plan would you most likely consider?
-- Options: Free, Starter at PHP 99/month, Growth at PHP 179/month, founding seller offer at PHP 65/month, not sure yet
+- Options: Free, Starter at PHP 99/month, Growth at PHP 349/month, founding seller offer at PHP 65/month, not sure yet
 
 - How many active shoe pairs do you usually manage?
 - Options: 1-20, 21-50, 51-150, 151-750, 750+
@@ -443,6 +443,7 @@ Recommended limits:
 - Basic profit per item
 - Basic dashboard
 - Installment tracking
+- Search and filtering
 - Sold history retained without automatic expiry
 - No web quick-add
 - Local export through the device share sheet, such as CSV or JSON
@@ -482,15 +483,14 @@ Recommended support:
 
 - Up to 150 active pairs
 - Full sold history
-- Cloud backup
+- Automatic cloud backup and recovery when changing or losing a phone
 - Installment tracking
+- Installment due-date reminders
 - Add/edit inventory
 - Mark as available, reserved, or sold
 - Cost price, target selling price, actual selling price
 - Profit calculation
-- Basic monthly dashboard
-- Search and filtering
-- Export to CSV
+- Monthly sales, profit, and unpaid-balance summaries
 
 Notes:
 
@@ -501,8 +501,8 @@ Notes:
 
 Price:
 
-- PHP 179 per month
-- PHP 1,799 per year
+- PHP 349 per month
+- PHP 3,490 per year
 
 Best for:
 
@@ -537,8 +537,7 @@ Notes:
 
 Price:
 
-- PHP 349 per month
-- PHP 3,499 per year
+- To be determined after team-specific value is validated
 
 Best for:
 
@@ -639,7 +638,7 @@ Purpose:
 - Collect waitlist signups
 - Ask optional post-signup survey questions
 - Interview sellers who currently use spreadsheets
-- Test whether users will pay PHP 99 or PHP 179 per month
+- Test whether users will pay PHP 99 or PHP 349 per month
 - Offer a founding-user price to reduce early friction
 - Focus messaging on speed, simplicity, installment tracking, and profit clarity
 
@@ -671,9 +670,9 @@ The eventual app should focus on:
 - Clean active and sold inventory separation
 - Automatic profit tracking
 - Installment tracking
-- A free tier with 20 active pairs, local-only data, and local export
+- A free tier with 20 active pairs, local-only data, search and filtering, and local export
 - A PHP 99/month Starter plan
-- A PHP 179/month Growth plan
+- A PHP 349/month Growth plan
 - No photo feature in the initial product
 - Android-first or cross-platform-first based on qualified reseller validation, not a default iOS assumption
 

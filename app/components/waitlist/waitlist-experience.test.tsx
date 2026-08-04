@@ -1,6 +1,25 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { WaitlistExperience } from "@/app/components/waitlist/waitlist-experience";
+import {
+  WaitlistCta,
+  WaitlistExperience,
+} from "@/app/components/waitlist/waitlist-experience";
+import { WaitlistJourneyProvider } from "@/app/components/waitlist/waitlist-journey";
+
+function renderExperience({ withPageCtas = false } = {}) {
+  return render(
+    <WaitlistJourneyProvider>
+      {withPageCtas ? (
+        <>
+          <WaitlistCta />
+          <WaitlistCta variant="secondary" />
+          <WaitlistCta variant="quiet" />
+        </>
+      ) : null}
+      <WaitlistExperience />
+    </WaitlistJourneyProvider>,
+  );
+}
 
 describe("WaitlistExperience", () => {
   beforeEach(() => {
@@ -17,7 +36,7 @@ describe("WaitlistExperience", () => {
   });
 
   it("shows accessible contact and consent feedback", () => {
-    render(<WaitlistExperience />);
+    renderExperience();
 
     fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
 
@@ -30,7 +49,7 @@ describe("WaitlistExperience", () => {
   });
 
   it("moves through signup and survey without network or storage writes", async () => {
-    render(<WaitlistExperience />);
+    renderExperience({ withPageCtas: true });
 
     fireEvent.change(
       screen.getByRole("textbox", { name: /email or philippine mobile/i }),
@@ -39,31 +58,54 @@ describe("WaitlistExperience", () => {
     fireEvent.click(
       screen.getByRole("checkbox", { name: /i agree to the collection/i }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /join the waitlist/i }).at(-1)!,
+    );
 
     await waitFor(
       () => expect(screen.getByText(/part of the first look/i)).toBeInTheDocument(),
       { timeout: 1500 },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /answer the quick survey/i }));
+    expect(
+      screen.getAllByRole("button", { name: /answer the quick survey/i }),
+    ).toHaveLength(4);
+    expect(
+      screen.getByText(/you’re on the waitlist\. help shape what we build first/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /answer the quick survey/i })[0],
+    );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("radio", { name: "Android" }));
     expect(screen.getByRole("radio", { name: "Android" })).toBeChecked();
 
     fireEvent.click(screen.getByRole("button", { name: /close survey/i }));
-    fireEvent.click(screen.getByRole("button", { name: /answer the quick survey/i }));
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /answer the quick survey/i })[1],
+    );
     expect(screen.getByRole("radio", { name: "Android" })).toBeChecked();
 
     fireEvent.click(screen.getByRole("button", { name: /finish quick survey/i }));
     expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /close survey/i })[0]);
+    expect(
+      screen.getByText(/thanks for helping shape shoetrack/i),
+    ).toBeInTheDocument();
+    for (const cta of screen.getAllByRole("button", {
+      name: /you’re all set — thank you/i,
+    })) {
+      expect(cta).toBeDisabled();
+      expect(cta).toHaveTextContent("✓");
+    }
     expect(globalThis.fetch).not.toHaveBeenCalled();
     expect(Storage.prototype.setItem).not.toHaveBeenCalled();
   });
 
   it("starts clean when remounted", async () => {
-    const view = render(<WaitlistExperience />);
+    const view = renderExperience({ withPageCtas: true });
     fireEvent.change(
       screen.getByRole("textbox", { name: /email or philippine mobile/i }),
       { target: { value: "09171234567" } },
@@ -71,11 +113,14 @@ describe("WaitlistExperience", () => {
     view.unmount();
 
     await act(async () => {
-      render(<WaitlistExperience />);
+      renderExperience({ withPageCtas: true });
     });
 
     expect(
       screen.getByRole("textbox", { name: /email or philippine mobile/i }),
     ).toHaveValue("");
+    expect(
+      screen.getAllByRole("button", { name: /join the waitlist/i }),
+    ).toHaveLength(4);
   });
 });

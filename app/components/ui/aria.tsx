@@ -192,13 +192,15 @@ export function SelectField<T extends object>({
   options: readonly string[];
 }) {
   return (
-    <Select {...props} className="group grid gap-2">
+    <Select {...props} className="group grid min-w-0 gap-2">
       <SelectLabel className="text-sm font-semibold text-[#171717]">
         {label}
       </SelectLabel>
-      <SelectButton className="flex h-13 w-full cursor-pointer items-center justify-between rounded-2xl border border-black/15 bg-white px-4 text-left text-sm text-[#171717] outline-none transition data-[focus-visible]:border-[#2457ff] data-[focus-visible]:ring-3 data-[focus-visible]:ring-[#2457ff]/12 data-[pressed]:border-[#2457ff]">
-        <SelectValue className="truncate data-[placeholder]:text-black/60" />
-        <span aria-hidden="true" className="text-black/60">⌄</span>
+      <SelectButton className="flex h-13 min-w-0 w-full cursor-pointer items-center justify-between overflow-hidden rounded-2xl border border-black/15 bg-white px-4 text-left text-sm text-[#171717] outline-none transition data-[focus-visible]:border-[#2457ff] data-[focus-visible]:ring-3 data-[focus-visible]:ring-[#2457ff]/12 data-[pressed]:border-[#2457ff]">
+        <SelectValue className="min-w-0 flex-1 truncate data-[placeholder]:text-black/60" />
+        <span aria-hidden="true" className="grid size-4 shrink-0 place-items-center text-black/60">
+          <span className="-mt-0.5 size-2 rotate-45 border-b-2 border-r-2 border-current" />
+        </span>
       </SelectButton>
       {description ? (
         <SelectText slot="description" className="text-xs text-black/65">

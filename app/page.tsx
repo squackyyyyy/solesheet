@@ -9,9 +9,11 @@ import {
   WaitlistCta,
   WaitlistExperience,
 } from "@/app/components/waitlist/waitlist-experience";
+import { WaitlistJourneyProvider } from "@/app/components/waitlist/waitlist-journey";
 import {
   faqs,
   featureProof,
+  foundingOffer,
   painPoints,
   plans,
   siteContent,
@@ -39,6 +41,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function Home() {
   return (
+    <WaitlistJourneyProvider>
     <main id="top" className="overflow-hidden bg-[#f8f5ed] text-[#171717]">
       <header className="relative z-30 border-b border-black/10 bg-[#f8f5ed]/92 backdrop-blur-lg">
         <div className="mx-auto flex h-18 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-10">
@@ -193,7 +196,7 @@ export default function Home() {
         <div className="grid gap-5 lg:grid-cols-[1fr_.6fr] lg:items-end">
           <div>
             <SectionLabel>Pricing preview</SectionLabel>
-            <h2 id="pricing-title" className="mt-5 max-w-3xl text-4xl font-semibold tracking-[-0.05em] sm:text-6xl">Start simple. Pay when scale and backup matter.</h2>
+            <h2 id="pricing-title" className="mt-5 max-w-3xl text-4xl font-semibold tracking-[-0.05em] sm:text-6xl">Free for the core work. Pay for protection, scale, and speed.</h2>
           </div>
           <p className="text-sm leading-7 text-black/65 lg:justify-self-end">{siteContent.pricingNote}</p>
         </div>
@@ -214,10 +217,10 @@ export default function Home() {
         <div className="mt-4 grid gap-5 rounded-[2rem] bg-[#e8ff9f] p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-black/65">Founding seller offer</p>
-            <h3 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">₱65/month while your early subscription stays active.</h3>
-            <p className="mt-2 text-sm text-black/65">Planned for the first 50–100 paying users after launch.</p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{foundingOffer.pricingHeadline}</h3>
+            <p className="mt-2 text-sm text-black/65">{foundingOffer.pricingSummary}</p>
           </div>
-          <WaitlistCta variant="secondary">Get the founding rate</WaitlistCta>
+          <WaitlistCta variant="secondary" />
         </div>
       </section>
 
@@ -259,5 +262,6 @@ export default function Home() {
         </div>
       </footer>
     </main>
+    </WaitlistJourneyProvider>
   );
 }

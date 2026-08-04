@@ -4,6 +4,7 @@ import {
   installmentSale,
   shoes,
 } from "@/app/lib/mock-data";
+import { foundingOffer } from "@/app/lib/site-content";
 
 export type MockupId =
   | "dashboard"
@@ -407,7 +408,7 @@ export function UpgradeScreen() {
       <ScreenHeader eyebrow="Protect your records" title="Backup & sync" />
       <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3.5">
         <p className="text-[9px] font-bold text-amber-900">Your free plan is local-only</p>
-        <p className="mt-1 text-[8px] leading-4 text-amber-800">Export anytime. Upgrade later if you want automatic cloud backup.</p>
+        <p className="mt-1 text-[8px] leading-4 text-amber-800">Search, filter, and export anytime. Upgrade later if you want automatic cloud backup.</p>
       </div>
       <div className="mt-3 rounded-2xl border-2 border-emerald-700 bg-white p-4 shadow-[0_10px_30px_rgba(4,120,87,.12)]">
         <div className="flex items-center justify-between">
@@ -417,15 +418,16 @@ export function UpgradeScreen() {
         <p className="mt-2 text-[24px] font-bold">₱99<span className="text-[9px] font-medium text-stone-600"> / month</span></p>
         <div className="mt-3 grid gap-2 text-[9px] text-stone-600">
           <p>✓ Up to 150 active pairs</p>
-          <p>✓ Automatic cloud backup</p>
-          <p>✓ Search, filters, and CSV export</p>
-          <p>✓ Full installment tracking</p>
+          <p>✓ Automatic cloud backup and restore</p>
+          <p>✓ Installment due reminders</p>
+          <p>✓ Monthly business summaries</p>
         </div>
       </div>
       <div className="mt-3 rounded-2xl bg-[#e8ff9f] p-3.5">
         <p className="text-[9px] font-bold">Founding seller rate</p>
-        <p className="mt-1 text-[15px] font-bold">₱65 / month</p>
-        <p className="mt-1 text-[8px] leading-4 text-stone-600">Planned for the first 50–100 paying users while active.</p>
+        <p className="mt-1 text-[15px] font-bold">{foundingOffer.price}</p>
+        <p className="mt-1 text-[8px] leading-4 text-stone-600">{foundingOffer.mockupEligibility}</p>
+        <p className="text-[8px] leading-4 text-stone-600">{foundingOffer.mockupScope}</p>
       </div>
       <div className="mt-auto grid h-10 place-items-center rounded-xl bg-emerald-700 text-[10px] font-bold text-white">Join early access</div>
       <p className="mt-2 text-center text-[8px] text-stone-600">No charge today · pricing is being validated</p>

@@ -4,7 +4,24 @@ export const siteContent = {
   heroTitle: "Your shoe business, out of the spreadsheet.",
   heroCopy:
     "A faster way to track pairs, profit, and installment payments—designed for resellers who run their business from a phone.",
-  pricingNote: "Planned pricing — help us shape what ships first.",
+  pricingNote: "Planned pricing — core work stays free; paid plans add protection, scale, and time savings.",
+} as const;
+
+export const foundingOffer = {
+  price: "₱65/month",
+  plan: "Starter",
+  audience: "the first 50 eligible survey respondents",
+  duration: "their first 12 paid months",
+  priceAfter: "After that, standard Starter pricing applies.",
+  pricingHeadline: "₱65/month on Starter for your first 12 paid months.",
+  pricingSummary:
+    "Planned for the first 50 eligible survey respondents. Eligibility and redemption details will be confirmed before launch; standard Starter pricing applies after the first year.",
+  finalSummary:
+    "Join early access and help shape the first release. The planned ₱65/month founding Starter offer is for the first 50 eligible survey respondents during their first 12 paid months. Eligibility and redemption details will be confirmed before launch.",
+  surveyOption:
+    "Founding Starter — ₱65/month (planned; first 12 paid months)",
+  mockupEligibility: "Planned for first 50 eligible survey respondents.",
+  mockupScope: "Starter only · first 12 paid months.",
 } as const;
 
 export const painPoints = [
@@ -35,29 +52,34 @@ export const plans = [
   {
     name: "Free",
     price: "₱0",
-    description: "Try the complete core workflow on one device.",
-    features: ["Up to 20 active pairs", "Profit and installment tracking", "Local export"],
+    description: "Run a small inventory properly on one device.",
+    features: ["Up to 20 active pairs", "Search, filters, profit, and installments", "Local export"],
     featured: false,
   },
   {
     name: "Starter",
     price: "₱99",
     suffix: "/month",
-    description: "For active solo sellers who want backup and room to grow.",
-    features: ["Up to 150 active pairs", "Cloud backup", "Search, filters, and CSV export"],
+    description: "Protect a growing inventory and stay ahead of payments.",
+    features: ["Up to 150 active pairs", "Automatic cloud backup and restore", "Installment reminders and monthly summaries"],
     featured: true,
   },
   {
     name: "Growth",
-    price: "₱179",
+    price: "₱349",
     suffix: "/month",
-    description: "For serious resellers encoding and reviewing more stock.",
-    features: ["Up to 750 active pairs", "Web quick-add", "Advanced reports and import"],
+    description: "Save time operating larger inventory across phone and browser.",
+    features: ["Up to 750 active pairs", "Web quick-add and spreadsheet import", "Cloud sync and advanced reports"],
     featured: false,
   },
 ] as const;
 
 export const faqs = [
+  {
+	question: "How does the founding Starter offer work?",
+	answer:
+		"The planned ₱65/month rate applies only to Starter for the first 50 eligible survey respondents during their first 12 paid months. Eligibility and redemption details will be confirmed before launch, and standard Starter pricing applies after that first year.",
+  },
   {
     question: "Is the app available now?",
     answer:
@@ -87,7 +109,7 @@ export const surveyQuestions = {
   },
   plan: {
     label: "Which planned option feels closest to what you would consider?",
-    options: ["Free", "Starter — ₱99/month", "Growth — ₱179/month", "Founding seller — ₱65/month", "Not sure yet"],
+    options: ["Free", "Starter — ₱99/month", "Growth — ₱349/month", foundingOffer.surveyOption, "Not sure yet"],
   },
   inventorySize: {
     label: "How many active pairs do you usually manage?",
