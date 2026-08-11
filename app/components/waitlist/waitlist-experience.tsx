@@ -41,7 +41,9 @@ export function WaitlistCta({
 			className={className}
 		>
 			{label}
-			<span aria-hidden="true">{isComplete ? "✓" : journeyState === "not-joined" ? "↗" : "→"}</span>
+			<span aria-hidden="true">
+				{isComplete ? "✓" : journeyState === "not-joined" ? "↗" : "→"}
+			</span>
 		</Button>
 	);
 }
@@ -123,7 +125,7 @@ function SurveyForm({
 				onChange={(value) => setAnswer("backup", value)}
 			/>
 			<div className="grid gap-3">
-				<p className="text-sm font-semibold text-[#171717]">
+				<p className="text-sm font-semibold text-[var(--brand-ink)]">
 					{surveyQuestions.channels.label}
 				</p>
 				<div className="grid gap-2 rounded-2xl border border-black/10 bg-white p-4 sm:grid-cols-2">
@@ -147,7 +149,7 @@ function SurveyForm({
 				value={String(answers.interview ?? "")}
 				onChange={(value) => setAnswer("interview", value)}
 			/>
-			<div className="sticky bottom-0 -mx-5 border-t border-black/10 bg-[#f8f5ed]/95 px-5 pb-1 pt-4 backdrop-blur sm:-mx-7 sm:px-7">
+			<div className="sticky bottom-0 -mx-5 border-t border-[#14213d]/10 bg-[#f7faf5]/95 px-5 pb-1 pt-4 backdrop-blur sm:-mx-7 sm:px-7">
 				<Button type="submit" className="w-full">
 					Finish quick survey
 					<span aria-hidden="true">→</span>
@@ -209,7 +211,7 @@ export function WaitlistExperience() {
 		<section
 			id="waitlist"
 			aria-labelledby="waitlist-title"
-			className="relative overflow-hidden rounded-[2.5rem] bg-[#171717] text-white"
+			className="relative overflow-hidden rounded-[2.5rem] bg-[var(--brand-ink)] text-white"
 		>
 			<div
 				aria-hidden="true"
@@ -217,11 +219,11 @@ export function WaitlistExperience() {
 			/>
 			<div
 				aria-hidden="true"
-				className="absolute -bottom-24 -left-20 size-72 rounded-full bg-[#2457ff]/35 blur-3xl"
+				className="absolute -bottom-24 -left-20 size-72 rounded-full bg-[#22c55e]/30 blur-3xl"
 			/>
 			<div className="relative grid gap-10 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[.82fr_1fr] lg:gap-16 lg:px-12 lg:py-14">
 				<div className="self-center">
-					<p className="text-xs font-bold uppercase tracking-[0.28em] text-[#b9c9ff]">
+					<p className="text-xs font-bold uppercase tracking-[0.28em] text-[#86efac]">
 						Founding seller list
 					</p>
 					<h2
@@ -253,7 +255,7 @@ export function WaitlistExperience() {
 					</div>
 				</div>
 
-				<div className="rounded-[2rem] bg-[#f8f5ed] p-5 text-[#171717] shadow-[0_30px_100px_rgba(0,0,0,.28)] sm:p-7">
+				<div className="rounded-[2rem] bg-[var(--brand-soft)] p-5 text-[var(--brand-ink)] shadow-[0_30px_100px_rgba(0,0,0,.28)] sm:p-7">
 					{journeyState !== "not-joined" ? (
 						<div
 							aria-live="polite"
@@ -265,7 +267,7 @@ export function WaitlistExperience() {
 							>
 								✓
 							</span>
-							<p className="mt-6 text-xs font-bold uppercase tracking-[0.24em] text-[#2457ff]">
+							<p className="mt-6 text-xs font-bold uppercase tracking-[0.24em] text-[var(--brand-action)]">
 								{journeyState === "survey-complete"
 									? "Your early-access flow is complete"
 									: "You’re part of the first look"}
@@ -290,7 +292,7 @@ export function WaitlistExperience() {
 							validationBehavior="aria"
 						>
 							<div>
-								<p className="text-xs font-bold uppercase tracking-[0.22em] text-[#2457ff]">
+								<p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-action)]">
 									Get early access
 								</p>
 								<h3 className="mt-2 text-2xl font-semibold tracking-tight">

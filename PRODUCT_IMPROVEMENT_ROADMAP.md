@@ -1,13 +1,13 @@
-# ShoeTrack Phased Product Improvement Roadmap
+# SoleSheet Phased Product Improvement Roadmap
 
 ## Purpose
 
-This document organizes the next waitlist-site and product-demo improvements into separate implementation phases. Each phase should become its own OpenSpec change so that scope, design decisions, acceptance criteria, and verification remain clear.
+This document organizes the next waitlist-site and product-preview improvements into separate implementation phases. Each phase should become its own OpenSpec change so that scope, design decisions, acceptance criteria, and verification remain clear.
 
 The priorities are:
 
-1. Make the product mockup genuinely useful to explore.
-2. Demonstrate an exceptionally fast inventory and sales workflow.
+1. Make the product mockup visibly prove a fast inventory workflow.
+2. Turn that proof into reusable, post-ready social visuals.
 3. Improve the waitlist and survey CTA lifecycle.
 4. Clarify the founding-seller offer.
 5. Demonstrate browser-based inventory entry as a Growth-plan advantage.
@@ -19,7 +19,7 @@ The current `add-modern-waitlist-page` change should be completed and archived b
 | Phase | Proposed OpenSpec change | Main outcome | Priority | Relative size |
 | --- | --- | --- | --- | --- |
 | 1 | `add-progress-aware-waitlist-cta` | CTA lifecycle and corrected founding-offer messaging | Quick win | Small |
-| 2 | `add-interactive-quick-log-demo` | Interactive, in-memory mobile demo with optimized core UX | Critical | Large |
+| 2 | `add-quick-log-proof-and-social-assets` | Responsive Flow photographs, anchored Quick Actions cue, and reusable social assets | Critical | Large |
 | 3 | `add-growth-web-quick-add-showcase` | Static browser Quick-Add mockup showing Growth batch entry | High | Medium |
 | 4 | `add-founding-offer-redemption` | Durable eligibility, unique codes, and first-year Starter discount enforcement | Before paid launch | Backend-dependent |
 
@@ -63,7 +63,7 @@ SURVEY COMPLETE
 | --- | --- | --- | --- |
 | Not joined | **Join the waitlist** | Focus or scroll to the waitlist form | None required |
 | Joined, survey incomplete | **Answer the quick survey** | Open the survey and restore in-session answers | “You’re on the waitlist. Help shape what we build first.” |
-| Survey complete | **You’re all set — thank you** | Disabled/non-actionable completion state with check icon | “Thanks for helping shape ShoeTrack.” |
+| Survey complete | **You’re all set — thank you** | Disabled/non-actionable completion state with check icon | “Thanks for helping shape SoleSheet.” |
 
 “You’re all set — thank you” is preferable to “Thank you for joining” because it confirms that both actions are complete and does not look like another invitation to click.
 
@@ -114,133 +114,73 @@ The survey remains optional, but the founding offer is an incentive for providin
 
 ---
 
-## Phase 2 — Interactive Mobile Demo and Best-in-Class Quick Logging
+## Phase 2 — Responsive Flow Photographs and Social Assets
 
-**Proposed OpenSpec change:** `add-interactive-quick-log-demo`
+**Active OpenSpec change:** `add-quick-log-proof-and-social-assets`
 
 ### Goal
 
-Turn the static phone mockups into a coherent in-memory product sandbox that lets visitors experience how quickly ShoeTrack handles a pair from inventory entry through sale and installment collection.
+Make SoleSheet feel immediately faster than a spreadsheet without turning the waitlist page into a disposable mini-application. Lead with one polished Quick Sale photograph inside the broader planned journey, and generate post-ready Facebook and Instagram visuals from the same code and fictional data.
 
-This phase combines interactivity and UX improvement. Building interactivity around the current static screens first and redesigning the UX afterward would create avoidable rework.
+### Approved experience model: responsive static product photographs
 
-### Recommended demo model: guided sandbox
+The product section leads with **“A quicker way to keep your stockroom current.”** Under **“The rest of the planned flow,”** Quick Sale is the default, visually emphasized **Fastest path** selection. Seven selectors reveal Quick Sale, Quick Actions, Search Stock, Add Stock, Installments, Payments, and Backup.
 
-| Option | Strength | Weakness |
-| --- | --- | --- |
-| Scripted tour | Easy to understand and implement | Feels like another slideshow; little user agency |
-| Free sandbox | High agency and product realism | Visitors may not know what to try; larger scope |
-| **Guided sandbox — recommended** | Clear suggested journey with freedom to explore and reset | Requires careful state and guidance design |
+Each selected destination is one photo-style static product preview. Desktop uses a separately composed 4:3 image and mobile uses a separately composed 2:3 image, so the phone UI stays legible, the Quick Log trigger remains visible, and the result does not become a scaled desktop crop. Only the planned-flow selectors operate; the fields, buttons, menus, and navigation pictured inside the images never become app controls on the waitlist page.
 
-The guided sandbox should provide a subtle “Try this next” cue while preserving normal navigation. It should never trap the user in a forced tutorial.
+### Home quick-action direction
 
-### Core interactive journey
+The Quick Actions photograph shows a circular emerald `+` floating above the bottom navigation with a visible **Quick Log** label. In the eventual product, holding it opens a short anchored menu:
 
-```text
-Dashboard
-   ├── Add pair ──▶ Quick Add ──▶ Saved confirmation ──▶ Inventory
-   │                                                  │
-   └──────────────────────────────────────────────────┘
-                                                      ▼
-                                              Select a pair
-                                                      │
-                                  ┌───────────────────┴──────────────┐
-                                  ▼                                  ▼
-                              Reserve                           Mark sold
-                                                                     │
-                                                    ┌────────────────┴──────────────┐
-                                                    ▼                               ▼
-                                               Fully paid                      Installment
-                                                                                    │
-                                                                                    ▼
-                                                                            Add payment
-                                                                                    │
-                                                                                    ▼
-                                                                    Totals and status update
-```
+- Sell a pair
+- Record a payment
+- Add a pair
 
-### In-memory product behavior
+Tapping starts Quick Sale immediately. Sale and payment actions select an existing inventory or installment record first. The shortcut appears on Home, stays out of form screens, and complements rather than replaces contextual actions. On the waitlist site it remains part of a non-focusable image with an equivalent description; it does not respond to a real hold.
 
-- Start from a believable sample reseller inventory.
-- Let users add, edit, reserve, sell, and inspect pairs.
-- Let users choose fully paid or installment when recording a sale.
-- Let users add a payment and see collected and remaining balances update.
-- Recalculate visible dashboard totals from the demo state rather than showing unrelated fixed numbers.
-- Keep all records in memory only and reset everything on reload.
-- Provide an explicit **Reset demo** action so visitors can safely experiment again.
-- Show concise success feedback after meaningful actions.
+### Quick Sale essentials
 
-### Fast inventory-entry UX recommendation
+1. Search existing stock by model, size, or colorway
+2. Select a sellable pair and prefill size, colorway, and cost
+3. Enter the selling price
+4. Confirm the today-defaulted sold date and paid/installment choice
 
-The quickest credible flow is “essentials first, details when needed.”
+The Quick Sale example is **Nike Dunk Low · Cacao Wow · US 8.5**, cost **₱4,800**, selling price **₱6,500**. Search Stock and Add Stock use **New Balance 530 · White / Silver · US 7**, cost **₱4,200**, and optional target **₱5,600** to show that both finding and encoding an exact pair remain lightweight.
 
-#### Default Quick Add
+### Installment preview
 
-1. Brand and model
-2. Size
-3. Cost price
-4. Target price, optional but visible
-5. Save
+The planned-flow Payments screen and social assets retain the fictional Nike Dunk Low example: **₱6,500 sale price**, **₱4,000 collected**, and **₱2,500 remaining**. Social before/after compositions may show a fictional **₱1,500** payment updating the figures to **₱5,500 collected** and **₱1,000 remaining**, but the public website does not ask visitors to record it.
 
-The remaining fields—colorway, date acquired, notes, and starting status—belong under **More details** or receive sensible defaults. New pairs default to Available and today's date.
+### Privacy and scope boundaries
 
-#### Speed features worth demonstrating
+- No public product form, record mutation, payment action, reset control, or demo state is introduced.
+- Selector changes create no product API call, account, analytics event, cookie, local storage, cloud sync, or buyer data.
+- The seven-item planned flow uses real React Aria selector buttons with keyboard, touch, visible-focus, and selected-state support.
+- Every selected product surface is one image-equivalent, non-focusable responsive photograph.
+- Product-photo upload, barcode scanning, AI recognition, import, unrestricted editing, and production payment handling remain out of scope.
 
-- **Save and add another** for encoding several pairs.
-- **Duplicate pair** for the same model/colorway in another size.
-- Remember the last-used brand and model within the demo session.
-- Numeric keyboards for peso fields on mobile.
-- Inline peso formatting without forcing users to type currency symbols.
-- Immediate validation beside the field instead of an error summary after submission.
-- A compact saved confirmation with a direct path to inventory.
-- A sticky primary action that remains reachable above the mobile browser controls.
+### Code-first social workflow
 
-#### What not to add in this phase
+Reuse the same product primitives, tokens, copy, and snapshot values to render:
 
-- Product-photo upload
-- Barcode scanning
-- AI shoe recognition
-- CSV import
-- Accounts, authentication, or cloud sync
-- Real buyer data or production payment processing
+- Four 1080×1350 Quick Log carousel frames
+- Four 1080×1350 installment carousel frames
+- One 1080×1920 Quick Log Story
+- One 1080×1920 installment Story
+- One 1200×630 link preview
 
-These would distract from validating the core promise: logging and updating stock faster than a spreadsheet.
-
-### UX and accessibility requirements
-
-- The device should become a real interactive application region, not a `role="img"` with hidden descendants.
-- Use React Aria Components for buttons, text fields, number fields, selects, radio groups, dialogs/sheets, and feedback states where applicable.
-- Support touch, mouse, and keyboard navigation.
-- Keep touch targets at least 44×44 CSS pixels even when the phone is visually scaled.
-- Ensure focus remains visible inside the device frame.
-- Announce saved records, status changes, and payment updates.
-- Avoid nested controls and horizontal scrolling inside forms.
-- Offer a short equivalent text summary outside the demo for visitors who do not want to operate it.
-- Respect reduced-motion preferences.
-
-### Open UX questions for the Phase 2 proposal
-
-1. Should Brand + Model be one searchable combobox or two fields?  
-   **Recommendation:** one searchable model picker that shows the brand, with a manual-entry option.
-2. Should Target price be required?  
-   **Recommendation:** optional; Cost is essential for capital tracking, while target price may not yet be known.
-3. Should saving return to inventory or keep the form open?  
-   **Recommendation:** primary action returns to the saved item; secondary “Save and add another” starts a fresh form.
-4. Should the demo allow editing every sample pair?  
-   **Recommendation:** yes for status and sale actions; full field editing can be limited to the pair created by the visitor.
-5. Should the guided cue automatically advance?  
-   **Recommendation:** update the cue after success, but never navigate automatically.
+An explicitly enabled, non-indexable local authoring route and Playwright capture command produce stable PNG filenames plus a manifest in `artifacts/social/`. Figma is not the source of truth, and no Figma session is required to revise or regenerate the initial set.
 
 ### Acceptance criteria
 
-- Every displayed app action that looks interactive is operable.
-- A visitor can complete the add → sell → installment → payment journey without leaving the page.
-- Demo inventory, dashboard totals, statuses, profit, and balances remain internally consistent.
-- Quick Add supports Save, Save and add another, and Duplicate pair.
-- The entire demo is keyboard- and touch-operable at a 360px viewport.
-- Reset restores the exact initial sample dataset.
-- Reload discards all visitor-entered demo data.
-- No request containing demo data leaves the browser.
+- All fourteen Flow masters have exact 3200×2400 desktop or 1600×2400 mobile dimensions, with optimized WebP delivery copies.
+- The Quick Actions photograph makes the held `+` menu obviously anchored without exposing a fake button to assistive technology.
+- Quick Sale is the default emphasized selector; Quick Actions, Search Stock, Add Stock, Installments, Payments, and Backup remain accessible.
+- Selector changes create no data-bearing request or durable storage write.
+- Real selectors have visible focus, keyboard support, 44×44 CSS targets, pressed-state semantics, and concise live status announcements.
+- All eleven social PNGs match their required dimensions, stable names, approved preview disclosure, and shared product values.
+- The social studio is unavailable without its task-specific environment flag and is never linked from the public waitlist page.
+- Lint, type checks, unit/component tests, browser journeys, capture verification, and the production build pass.
 
 ---
 
@@ -297,7 +237,7 @@ This feature should remain a Growth-plan differentiator. The mobile app must sti
 
 ### Goal
 
-Make the first-50 founding Starter offer enforceable once ShoeTrack has a real waitlist backend, accounts, and billing.
+Make the first-50 founding Starter offer enforceable once SoleSheet has a real waitlist backend, accounts, and billing.
 
 ### Is the discount possible?
 
@@ -353,17 +293,17 @@ For a small pilot, the first 50 codes can be issued manually after reviewing res
 ## Shared Principles Across All Phases
 
 - Keep the validation website honest about what is planned versus functional.
-- Preserve the separation between the editorial waitlist visual system and the stone/emerald product UI.
+- Preserve compositional separation between the editorial waitlist shell and the product UI while letting both share the SoleSheet Green, Deep Ink, Soft White, and accessible dark-green family.
 - Use one shared content registry for pricing, offer terms, CTA labels, and feature claims.
-- Use one shared in-memory domain model for the interactive mobile demo; reuse its field definitions and believable sample records in the static web mockup.
+- Use shared deterministic product fixtures and believable sample records across responsive Flow photographs and social compositions.
 - Design for a 360px Android viewport first, then verify larger mobile and desktop layouts.
 - Use React Aria Components for real interactions and accessible state management. Presentation-only browser mockup controls must not pretend to be operable.
 - Keep sample data realistic for Filipino shoe resellers and format money in Philippine pesos.
-- Never collect or transmit buyer data from the public demo.
+- Never collect or transmit buyer data from the public product preview.
 - Add component, browser, touch, keyboard, accessibility, and non-persistence tests within each phase rather than deferring verification.
 
 ## Next OpenSpec Action
 
-Start with Phase 1 as a small change, then begin Phase 2 immediately after it. Phase 2 should receive the deepest product-design discussion because it defines the experience visitors will use to judge whether ShoeTrack is genuinely faster than their spreadsheet.
+Complete and visually verify the active Phase 2 responsive-photo change before starting Phase 3. The Flow photographs and generated social images are now the primary surfaces people will use to judge whether SoleSheet looks genuinely faster than their spreadsheet.
 
 Do not create all four OpenSpec changes at once. Create each proposal when the previous phase is sufficiently clear or complete so new learning can influence the next phase.

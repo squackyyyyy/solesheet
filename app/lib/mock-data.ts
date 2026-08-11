@@ -8,12 +8,12 @@ export type ShoeRecord = {
   colorway: string;
   size: string;
   cost: number;
-  target: number;
+  target: number | null;
   status: InventoryStatus;
   buyer?: string;
 };
 
-export const shoes: ShoeRecord[] = [
+export const stockroomShoes: ShoeRecord[] = [
   {
     id: "dunk-cacao-85",
     brand: "Nike",
@@ -26,16 +26,6 @@ export const shoes: ShoeRecord[] = [
     buyer: "Mika R.",
   },
   {
-    id: "nb-530-7",
-    brand: "New Balance",
-    model: "530",
-    colorway: "White / Silver",
-    size: "US 7",
-    cost: 4200,
-    target: 5600,
-    status: "Available",
-  },
-  {
     id: "samba-og-9",
     brand: "adidas",
     model: "Samba OG",
@@ -43,17 +33,121 @@ export const shoes: ShoeRecord[] = [
     size: "US 9",
     cost: 5700,
     target: 7200,
-    status: "Sold",
-    buyer: "Carlo D.",
+    status: "Available",
+  },
+  {
+    id: "vomero-photon-8",
+    brand: "Nike",
+    model: "Zoom Vomero 5",
+    colorway: "Photon Dust",
+    size: "US 8",
+    cost: 4200,
+    target: 5900,
+    status: "Available",
+  },
+  {
+    id: "gel-1130-white-75",
+    brand: "ASICS",
+    model: "GEL-1130",
+    colorway: "White / Clay Canyon",
+    size: "US 7.5",
+    cost: 3900,
+    target: 5400,
+    status: "Reserved",
+  },
+  {
+    id: "forum-low-85",
+    brand: "adidas",
+    model: "Forum Low",
+    colorway: "Cloud White",
+    size: "US 8.5",
+    cost: 4600,
+    target: 6100,
+    status: "Available",
+  },
+  {
+    id: "air-force-white-9",
+    brand: "Nike",
+    model: "Air Force 1 '07",
+    colorway: "Triple White",
+    size: "US 9",
+    cost: 5200,
+    target: 6800,
+    status: "Available",
+  },
+  {
+    id: "550-sea-salt-7",
+    brand: "New Balance",
+    model: "550",
+    colorway: "Sea Salt",
+    size: "US 7",
+    cost: 4300,
+    target: 5900,
+    status: "Reserved",
+  },
+  {
+    id: "club-c-chalk-65",
+    brand: "Reebok",
+    model: "Club C 85",
+    colorway: "Chalk / Green",
+    size: "US 6.5",
+    cost: 3800,
+    target: 5100,
+    status: "Available",
+  },
+  {
+    id: "gel-kayano-silver-8",
+    brand: "ASICS",
+    model: "GEL-KAYANO 14",
+    colorway: "White / Pure Silver",
+    size: "US 8",
+    cost: 5600,
+    target: 7400,
+    status: "Available",
+  },
+  {
+    id: "mexico-66-75",
+    brand: "Onitsuka Tiger",
+    model: "Mexico 66",
+    colorway: "White / Blue",
+    size: "US 7.5",
+    cost: 4100,
+    target: 5600,
+    status: "Available",
+  },
+  {
+    id: "palermo-green-7",
+    brand: "PUMA",
+    model: "Palermo",
+    colorway: "Vine / Gum",
+    size: "US 7",
+    cost: 3600,
+    target: 4900,
+    status: "Available",
+  },
+  {
+    id: "japan-s-white-8",
+    brand: "ASICS",
+    model: "JAPAN S",
+    colorway: "White / Black",
+    size: "US 8",
+    cost: 3400,
+    target: 4700,
+    status: "Available",
   },
 ];
 
+export const shoes = stockroomShoes.slice(0, 3);
+
 export const dashboard = {
-  activePairs: 84,
-  inventoryCost: 318400,
-  expectedRevenue: 426800,
-  monthlyProfit: 31240,
-  unpaidBalance: 42600,
+  activePairs: stockroomShoes.length,
+  inventoryCost: stockroomShoes.reduce((total, shoe) => total + shoe.cost, 0),
+  expectedRevenue: stockroomShoes.reduce(
+    (total, shoe) => total + (shoe.target ?? 0),
+    0,
+  ),
+  monthlyProfit: 8950,
+  unpaidBalance: 2500,
 };
 
 export const installmentSale = {
@@ -66,6 +160,30 @@ export const installmentSale = {
   remaining: 2500,
   dueDate: "Aug 18",
   paymentStatus: "Partially paid" as PaymentStatus,
+};
+
+export const recordedInstallmentPayment = {
+  amount: installmentSale.secondPayment,
+  collectedBefore: installmentSale.collected,
+  collectedAfter: installmentSale.collected + installmentSale.secondPayment,
+  remainingBefore: installmentSale.remaining,
+  remainingAfter: installmentSale.remaining - installmentSale.secondPayment,
+  progress: Math.round(
+    ((installmentSale.collected + installmentSale.secondPayment) /
+      installmentSale.salePrice) *
+      100,
+  ),
+} as const;
+
+export const quickLogExample: ShoeRecord = {
+  id: "nb-530-white-silver-7-demo",
+  brand: "New Balance",
+  model: "530",
+  colorway: "White / Silver",
+  size: "US 7",
+  cost: 4200,
+  target: 5600,
+  status: "Available",
 };
 
 export const formatPeso = (amount: number) =>

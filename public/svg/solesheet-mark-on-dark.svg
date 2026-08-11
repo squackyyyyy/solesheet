@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">SoleSheet standalone mark for dark backgrounds</title><desc id="desc">Green low-top sneaker with spreadsheet grid and white outline.</desc>
+  <defs><clipPath id="shoe"><path d="M48 288c0-28 20-52 54-65 57 0 98-8 136-34l37-26c16-11 39-8 50 9l29 40c9 13 22 22 37 25l61 18c25 8 39 24 39 47 0 24-19 42-46 42H114c-42 0-66-22-66-53Z"/></clipPath></defs>
+  <path d="M48 288c0-28 20-52 54-65 57 0 98-8 136-34l37-26c16-11 39-8 50 9l29 40c9 13 22 22 37 25l61 18c25 8 39 24 39 47 0 24-19 42-46 42H114c-42 0-66-22-66-53Z" fill="#22C55E" stroke="#F7FAF5" stroke-width="9" stroke-linejoin="round"/>
+  <g clip-path="url(#shoe)" stroke="#F7FAF5" stroke-width="6"><path d="M98 140v230M160 140v230M222 140v230M284 140v230M346 140v230M408 140v230"/><path d="M28 217h490M28 261h490M28 305h490"/></g>
+  <path d="M52 299h435" stroke="#14213D" stroke-width="9" stroke-linecap="round"/>
+  <g fill="#14213D"><circle cx="271" cy="184" r="6"/><circle cx="296" cy="193" r="6"/><circle cx="321" cy="202" r="6"/><circle cx="271" cy="212" r="6"/><circle cx="296" cy="221" r="6"/><circle cx="321" cy="230" r="6"/></g>
+  <path d="M271 184l25 37M271 212l25-19M296 193l25 37M296 221l25-19" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round"/>
+</svg>

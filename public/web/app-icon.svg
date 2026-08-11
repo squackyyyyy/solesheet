@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title"><title id="title">SoleSheet detailed app icon</title>
+  <defs><clipPath id="shoe"><path d="M56 286c0-27 19-49 51-61 54 0 92-7 128-32l35-25c15-10 37-7 47 9l28 38c8 12 21 20 35 24l58 17c24 7 37 23 37 44 0 23-18 40-43 40H119c-40 0-63-21-63-51Z"/></clipPath></defs>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#14213D"/>
+  <path d="M56 286c0-27 19-49 51-61 54 0 92-7 128-32l35-25c15-10 37-7 47 9l28 38c8 12 21 20 35 24l58 17c24 7 37 23 37 44 0 23-18 40-43 40H119c-40 0-63-21-63-51Z" fill="#22C55E" stroke="#F7FAF5" stroke-width="10" stroke-linejoin="round"/>
+  <g clip-path="url(#shoe)" stroke="#F7FAF5" stroke-width="7"><path d="M106 145v220M173 145v220M240 145v220M307 145v220M374 145v220M441 145v220"/><path d="M40 222h450M40 270h450M40 318h450"/></g>
+  <path d="M60 295h411" stroke="#14213D" stroke-width="11" stroke-linecap="round"/>
+</svg>

@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const siteUrl = new URL(
-	process.env.NEXT_PUBLIC_SITE_URL ?? "https://shoetrack.ph",
+	process.env.NEXT_PUBLIC_SITE_URL ?? "https://solesheet.ph",
 );
 
 const geistSans = Geist({
@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	metadataBase: siteUrl,
 	title: {
-		default: "ShoeTrack — Inventory for Philippine shoe resellers",
-		template: "%s · ShoeTrack",
+		default: "SoleSheet — Inventory for Philippine shoe resellers",
+		template: "%s · SoleSheet",
 	},
 	description:
 		"A faster mobile inventory, profit, and installment tracker being shaped with Filipino shoe resellers.",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 		description:
 			"Explore the planned mobile inventory, profit, and installment workflow for Filipino shoe resellers.",
 		url: "/",
-		siteName: "ShoeTrack",
+		siteName: "SoleSheet",
 		locale: "en_PH",
 		type: "website",
 		images: [
@@ -40,13 +40,13 @@ export const metadata: Metadata = {
 				url: "/opengraph-image",
 				width: 1200,
 				height: 630,
-				alt: "ShoeTrack mobile inventory dashboard concept",
+				alt: "SoleSheet mobile inventory dashboard concept",
 			},
 		],
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "ShoeTrack — built for Filipino shoe resellers",
+		title: "SoleSheet — built for Filipino shoe resellers",
 		description:
 			"A faster way to track pairs, profit, and installment payments from your phone.",
 		images: ["/opengraph-image"],
@@ -55,6 +55,15 @@ export const metadata: Metadata = {
 		index: true,
 		follow: true,
 	},
+	icons: {
+		icon: [
+			{ url: "/web/favicon.svg", type: "image/svg+xml" },
+			{ url: "/web/favicon-32.png", sizes: "32x32", type: "image/png" },
+			{ url: "/web/favicon.ico" },
+		],
+		apple: [{ url: "/web/apple-touch-icon.png" }],
+	},
+	manifest: "/web/site.webmanifest",
 };
 
 export default function RootLayout({

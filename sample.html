@@ -1,0 +1,303 @@
+<div id="shoetrack-quick-log-wireframe">
+  <style>
+    #shoetrack-quick-log-wireframe {
+      color-scheme: light dark;
+      color: light-dark(#1c1917, #f5f5f4);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      width: 100%;
+    }
+    #shoetrack-quick-log-wireframe * { box-sizing: border-box; }
+    #shoetrack-quick-log-wireframe .st-view-switcher {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    #shoetrack-quick-log-wireframe .st-switch {
+      border: 1px solid light-dark(#d6d3d1, #57534e);
+      border-radius: 999px;
+      background: light-dark(#ffffff, #292524);
+      color: inherit;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    #shoetrack-quick-log-wireframe .st-switch[aria-pressed="true"] {
+      border-color: light-dark(#065f46, #6ee7b7);
+      background: light-dark(#065f46, #047857);
+      color: #ffffff;
+    }
+    #shoetrack-quick-log-wireframe .st-phone {
+      position: relative;
+      width: min(100%, 430px);
+      min-height: 690px;
+      margin: 0 auto;
+      overflow: hidden;
+      border: 7px solid light-dark(#171717, #0c0a09);
+      border-radius: 38px;
+      background: light-dark(#f7f6f2, #1c1917);
+      box-shadow: 0 26px 70px light-dark(rgba(28,25,23,.18), rgba(0,0,0,.5));
+    }
+    #shoetrack-quick-log-wireframe .st-status {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 24px 8px;
+      font-weight: 500;
+    }
+    #shoetrack-quick-log-wireframe .st-screen { padding: 10px 20px 104px; }
+    #shoetrack-quick-log-wireframe .st-titlebar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0 20px;
+    }
+    #shoetrack-quick-log-wireframe .st-titlebar strong { text-align: center; }
+    #shoetrack-quick-log-wireframe .st-titlebar span:last-child { text-align: right; color: light-dark(#047857, #6ee7b7); }
+    #shoetrack-quick-log-wireframe .st-search-label,
+    #shoetrack-quick-log-wireframe .st-field-label {
+      display: block;
+      margin-bottom: 6px;
+      color: light-dark(#57534e, #d6d3d1);
+      font-weight: 500;
+    }
+    #shoetrack-quick-log-wireframe .st-input {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 48px;
+      width: 100%;
+      border: 1px solid light-dark(#d6d3d1, #57534e);
+      border-radius: 14px;
+      background: light-dark(#ffffff, #292524);
+      color: inherit;
+      padding: 11px 13px;
+    }
+    #shoetrack-quick-log-wireframe .st-selected-shoe {
+      margin: 14px 0;
+      padding: 14px;
+      border: 1px solid light-dark(#a7f3d0, #047857);
+      border-radius: 16px;
+      background: light-dark(#ecfdf5, #064e3b);
+    }
+    #shoetrack-quick-log-wireframe .st-shoe-top,
+    #shoetrack-quick-log-wireframe .st-date-row,
+    #shoetrack-quick-log-wireframe .st-summary-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    #shoetrack-quick-log-wireframe .st-meta { margin-top: 4px; color: light-dark(#57534e, #d6d3d1); }
+    #shoetrack-quick-log-wireframe .st-cost {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid light-dark(#a7f3d0, #047857);
+      color: light-dark(#57534e, #d6d3d1);
+    }
+    #shoetrack-quick-log-wireframe .st-form-grid { display: grid; gap: 14px; }
+    #shoetrack-quick-log-wireframe .st-price {
+      font-size: 2rem;
+      font-weight: 500;
+      text-align: center;
+    }
+    #shoetrack-quick-log-wireframe .st-date {
+      padding: 11px 13px;
+      border: 1px solid light-dark(#d6d3d1, #57534e);
+      border-radius: 14px;
+      background: light-dark(#ffffff, #292524);
+    }
+    #shoetrack-quick-log-wireframe .st-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    #shoetrack-quick-log-wireframe .st-option {
+      min-height: 48px;
+      border: 1px solid light-dark(#d6d3d1, #57534e);
+      border-radius: 14px;
+      background: light-dark(#ffffff, #292524);
+      color: inherit;
+      padding: 10px;
+      font: inherit;
+      cursor: pointer;
+    }
+    #shoetrack-quick-log-wireframe .st-option.is-selected {
+      border: 2px solid light-dark(#047857, #6ee7b7);
+      background: light-dark(#ecfdf5, #064e3b);
+    }
+    #shoetrack-quick-log-wireframe .st-primary {
+      width: 100%;
+      min-height: 50px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 15px;
+      background: light-dark(#047857, #059669);
+      color: #ffffff;
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    #shoetrack-quick-log-wireframe .st-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-top: 1px solid light-dark(#e7e5e4, #44403c);
+      background: light-dark(rgba(255,255,255,.96), rgba(28,25,23,.97));
+    }
+    #shoetrack-quick-log-wireframe .st-nav { display: flex; gap: 22px; color: light-dark(#78716c, #a8a29e); }
+    #shoetrack-quick-log-wireframe .st-fab-wrap { display: flex; align-items: center; gap: 8px; }
+    #shoetrack-quick-log-wireframe .st-fab-label { font-weight: 500; }
+    #shoetrack-quick-log-wireframe .st-fab {
+      width: 54px;
+      height: 54px;
+      border: 0;
+      border-radius: 50%;
+      background: light-dark(#047857, #059669);
+      color: #ffffff;
+      font-size: 1.7rem;
+      cursor: pointer;
+    }
+    #shoetrack-quick-log-wireframe .st-menu {
+      position: absolute;
+      right: 18px;
+      bottom: 86px;
+      width: min(300px, calc(100% - 36px));
+      overflow: hidden;
+      border: 1px solid light-dark(#d6d3d1, #57534e);
+      border-radius: 18px;
+      background: light-dark(#ffffff, #292524);
+      box-shadow: 0 18px 55px light-dark(rgba(28,25,23,.2), rgba(0,0,0,.55));
+      z-index: 3;
+    }
+    #shoetrack-quick-log-wireframe .st-menu-title { padding: 13px 15px 7px; color: light-dark(#57534e, #d6d3d1); font-weight: 500; }
+    #shoetrack-quick-log-wireframe .st-menu button {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      gap: 11px;
+      min-height: 54px;
+      border: 0;
+      border-top: 1px solid light-dark(#e7e5e4, #44403c);
+      background: transparent;
+      color: inherit;
+      padding: 11px 15px;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+    }
+    #shoetrack-quick-log-wireframe .st-menu-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: light-dark(#d1fae5, #064e3b);
+      color: light-dark(#065f46, #a7f3d0);
+      font-weight: 500;
+    }
+    #shoetrack-quick-log-wireframe .st-helper { margin-top: 12px; text-align: center; color: light-dark(#57534e, #d6d3d1); }
+    #shoetrack-quick-log-wireframe .st-installment-summary {
+      padding: 14px;
+      border-radius: 16px;
+      background: light-dark(#1c1917, #0c0a09);
+      color: #ffffff;
+    }
+    @media (max-width: 420px) {
+      #shoetrack-quick-log-wireframe .st-phone { min-height: 720px; border-width: 4px; border-radius: 30px; }
+      #shoetrack-quick-log-wireframe .st-screen { padding-left: 15px; padding-right: 15px; }
+      #shoetrack-quick-log-wireframe .st-nav { gap: 12px; }
+      #shoetrack-quick-log-wireframe .st-fab-label { display: none; }
+    }
+  </style>
+
+  <div class="st-view-switcher" aria-label="Wireframe states">
+    <button class="st-switch" type="button" data-view="sale" aria-pressed="true">Tap +: record sale</button>
+    <button class="st-switch" type="button" data-view="menu" aria-pressed="false">Hold +: quick actions</button>
+    <button class="st-switch" type="button" data-view="installment" aria-pressed="false">Installment continuation</button>
+  </div>
+
+  <div class="st-phone" aria-live="polite">
+    <div class="st-status"><span>9:41</span><span>● ● ●</span></div>
+    <div class="st-screen" data-screen></div>
+    <div class="st-bottom">
+      <div class="st-nav"><span>Home</span><span>Stock</span><span>Sales</span></div>
+      <div class="st-fab-wrap">
+        <span class="st-fab-label">Quick Log</span>
+        <button class="st-fab" type="button" aria-label="Quick Log">+</button>
+      </div>
+    </div>
+    <div data-menu-slot></div>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById('shoetrack-quick-log-wireframe');
+      const screen = root.querySelector('[data-screen]');
+      const menuSlot = root.querySelector('[data-menu-slot]');
+      const switches = [...root.querySelectorAll('[data-view]')];
+
+      const sale = `
+        <div class="st-titlebar"><span>Cancel</span><strong>Record a sale</strong><span></span></div>
+        <div class="st-form-grid">
+          <div>
+            <label class="st-search-label">Find a pair in inventory</label>
+            <div class="st-input"><i data-lucide="search" aria-hidden="true"></i><span>Search model, size, or colorway</span></div>
+          </div>
+          <div class="st-selected-shoe">
+            <div class="st-shoe-top"><strong>New Balance 530</strong><span>Available</span></div>
+            <div class="st-meta">US 7 · White / Silver</div>
+            <div class="st-cost">Cost price <strong>₱4,200</strong></div>
+          </div>
+          <div>
+            <label class="st-field-label">Sold for</label>
+            <div class="st-input st-price">₱5,600</div>
+          </div>
+          <div class="st-date-row"><span><strong>Sold on</strong><br><span class="st-meta">Defaults to today</span></span><span class="st-date">Aug 11, 2026</span></div>
+          <div>
+            <span class="st-field-label">Payment</span>
+            <div class="st-options"><button class="st-option is-selected" type="button">Paid in full</button><button class="st-option" type="button">Installment</button></div>
+          </div>
+        </div>
+        <button class="st-primary" type="button">Complete sale</button>
+        <div class="st-helper">Size, colorway, and cost come from the selected pair.</div>`;
+
+      const installment = `
+        <div class="st-titlebar"><span>Back</span><strong>Installment setup</strong><span></span></div>
+        <div class="st-selected-shoe">
+          <div class="st-shoe-top"><strong>New Balance 530</strong><strong>₱5,600 sale</strong></div>
+          <div class="st-meta">US 7 · White / Silver</div>
+        </div>
+        <div class="st-form-grid">
+          <div><label class="st-field-label">Amount received today</label><div class="st-input st-price">₱2,000</div></div>
+          <div class="st-installment-summary">
+            <div class="st-summary-row"><span>Sale price</span><strong>₱5,600</strong></div>
+            <div class="st-summary-row"><span>Received</span><strong>₱2,000</strong></div>
+            <div class="st-summary-row"><span>Remaining</span><strong>₱3,600</strong></div>
+          </div>
+          <div><label class="st-field-label">First due date</label><div class="st-input">Aug 25, 2026</div></div>
+        </div>
+        <button class="st-primary" type="button">Save installment sale</button>`;
+
+      const menu = `
+        <div class="st-menu" role="menu" aria-label="Quick Log actions">
+          <div class="st-menu-title">Quick actions</div>
+          <button type="button" role="menuitem"><span class="st-menu-icon">↗</span><span><strong>Record a sale</strong><br><span class="st-meta">Select a pair and mark it sold</span></span></button>
+          <button type="button" role="menuitem"><span class="st-menu-icon">₱</span><span><strong>Record a payment</strong><br><span class="st-meta">Apply it to an installment</span></span></button>
+          <button type="button" role="menuitem"><span class="st-menu-icon">+</span><span><strong>Add inventory</strong><br><span class="st-meta">Create a new pair record</span></span></button>
+        </div>`;
+
+      function render(view) {
+        switches.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.view === view)));
+        screen.innerHTML = view === 'installment' ? installment : sale;
+        menuSlot.innerHTML = view === 'menu' ? menu : '';
+        if (window.lucide) window.lucide.createIcons({ attrs: { width: 16, height: 16 } });
+      }
+
+      switches.forEach((button) => button.addEventListener('click', () => render(button.dataset.view)));
+      render('sale');
+    })();
+  </script>
+</div>

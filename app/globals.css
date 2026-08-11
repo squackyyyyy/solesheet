@@ -1,11 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f5ed;
-  --foreground: #171717;
-  --marketing-blue: #2457ff;
+  --background: #f7faf5;
+  --foreground: #14213d;
+  --brand-green: #22c55e;
+  --brand-ink: #14213d;
+  --brand-soft: #f7faf5;
+  --brand-mist: #ecfdf3;
+  --brand-action: #047857;
+  --brand-action-hover: #065f46;
   --marketing-citrus: #e8ff9f;
-  --marketing-paper: #f8f5ed;
+  --marketing-paper: #f7faf5;
   --app-emerald: #047857;
   --app-stone: #f7f6f2;
 }
@@ -19,8 +24,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #f8f5ed;
-    --foreground: #171717;
+    --background: #f7faf5;
+    --foreground: #14213d;
   }
 }
 
@@ -54,8 +59,8 @@ textarea {
 }
 
 ::selection {
-  background: var(--marketing-blue);
-  color: white;
+  background: var(--brand-green);
+  color: var(--brand-ink);
 }
 
 .no-scrollbar {
@@ -90,6 +95,23 @@ textarea {
   to { opacity: 0; transform: translateY(22px) scale(0.99); }
 }
 
+@keyframes proof-change {
+  from {
+    opacity: 0.72;
+    transform: translateY(8px);
+    box-shadow: 0 0 0 5px rgba(232, 255, 159, 0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(232, 255, 159, 0);
+  }
+}
+
+.proof-changed {
+  animation: proof-change 320ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -112,5 +134,10 @@ textarea {
   [role="radio"],
   [role="checkbox"] {
     forced-color-adjust: auto;
+  }
+
+  .proof-changed {
+    outline: 2px solid CanvasText;
+    outline-offset: -2px;
   }
 }

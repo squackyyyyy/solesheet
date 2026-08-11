@@ -1,0 +1,146 @@
+{
+  "generatedBy": "node scripts/capture-flow-mockups.mjs",
+  "destinations": 7,
+  "assets": [
+    {
+      "id": "quick-sale",
+      "label": "Quick Sale",
+      "layout": "desktop",
+      "captureId": "quick-sale-desktop",
+      "masterFilename": "quick-sale-desktop.png",
+      "publicFilename": "quick-sale-desktop.webp",
+      "width": 3200,
+      "height": 2400
+    },
+    {
+      "id": "quick-sale",
+      "label": "Quick Sale",
+      "layout": "mobile",
+      "captureId": "quick-sale-mobile",
+      "masterFilename": "quick-sale-mobile.png",
+      "publicFilename": "quick-sale-mobile.webp",
+      "width": 1600,
+      "height": 2400
+    },
+    {
+      "id": "quick-actions",
+      "label": "Quick Actions",
+      "layout": "desktop",
+      "captureId": "quick-actions-desktop",
+      "masterFilename": "quick-actions-desktop.png",
+      "publicFilename": "quick-actions-desktop.webp",
+      "width": 3200,
+      "height": 2400
+    },
+    {
+      "id": "quick-actions",
+      "label": "Quick Actions",
+      "layout": "mobile",
+      "captureId": "quick-actions-mobile",
+      "masterFilename": "quick-actions-mobile.png",
+      "publicFilename": "quick-actions-mobile.webp",
+      "width": 1600,
+      "height": 2400
+    },
+    {
+      "id": "search-stock",
+      "label": "Search Stock",
+      "layout": "desktop",
+      "captureId": "search-stock-desktop",
+      "masterFilename": "search-stock-desktop.png",
+      "publicFilename": "search-stock-desktop.webp",
+      "width": 3200,
+      "height": 2400
+    },
+    {
+      "id": "search-stock",
+      "label": "Search Stock",
+      "layout": "mobile",
+      "captureId": "search-stock-mobile",
+      "masterFilename": "search-stock-mobile.png",
+      "publicFilename": "search-stock-mobile.webp",
+      "width": 1600,
+      "height": 2400
+    },
+    {
+      "id": "add-stock",
+      "label": "Add Stock",
+      "layout": "desktop",
+      "captureId": "add-stock-desktop",
+      "masterFilename": "add-stock-desktop.png",
+      "publicFilename": "add-stock-desktop.webp",
+      "width": 3200,
+      "height": 2400
+    },
+    {
+      "id": "add-stock",
+      "label": "Add Stock",
+      "layout": "mobile",
+      "captureId": "add-stock-mobile",
+      "masterFilename": "add-stock-mobile.png",
+      "publicFilename": "add-stock-mobile.webp",
+      "width": 1600,
+      "height": 2400
+    },
+    {
+      "id": "installments",
+      "label": "Installments",
+      "layout": "desktop",
+      "captureId": "installments-desktop",
+      "masterFilename": "installments-desktop.png",
+      "publicFilename": "installments-desktop.webp",
+      "width": 3200,
+      "height": 2400
+    },
+    {
+      "id": "installments",
+      "label": "Installments",
+      "layout": "mobile",
+      "captureId": "installments-mobile",
+      "masterFilename": "installments-mobile.png",
+      "publicFilename": "installments-mobile.webp",
+      "width": 1600,
+      "height": 2400
+    },
+    {
+      "id": "payments",
+      "label": "Payments",
+      "layout": "desktop",
+      "captureId": "payments-desktop",
+      "masterFilename": "payments-desktop.png",
+      "publicFilename": "payments-desktop.webp",
+      "width": 3200,
+      "height": 2400
+    },
+    {
+      "id": "payments",
+      "label": "Payments",
+      "layout": "mobile",
+      "captureId": "payments-mobile",
+      "masterFilename": "payments-mobile.png",
+      "publicFilename": "payments-mobile.webp",
+      "width": 1600,
+      "height": 2400
+    },
+    {
+      "id": "backup",
+      "label": "Backup",
+      "layout": "desktop",
+      "captureId": "backup-desktop",
+      "masterFilename": "backup-desktop.png",
+      "publicFilename": "backup-desktop.webp",
+      "width": 3200,
+      "height": 2400
+    },
+    {
+      "id": "backup",
+      "label": "Backup",
+      "layout": "mobile",
+      "captureId": "backup-mobile",
+      "masterFilename": "backup-mobile.png",
+      "publicFilename": "backup-mobile.webp",
+      "width": 1600,
+      "height": 2400
+    }
+  ]
+}

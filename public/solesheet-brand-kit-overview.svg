@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120" role="img" aria-labelledby="title desc">
+  <title id="title">SoleSheet professional logo kit overview</title>
+  <desc id="desc">Light and dark website lockups, standalone mark, favicon, and brand colors.</desc>
+  <defs><filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="13" stdDeviation="18" flood-color="#14213D" flood-opacity=".11"/></filter></defs>
+  <rect width="1600" height="1120" fill="#EAF0EA"/>
+  <text x="80" y="72" fill="#14213D" font-family="Arial,Helvetica,sans-serif" font-size="44" font-weight="700" letter-spacing="-2">SoleSheet · professional logo kit</text>
+  <text x="80" y="108" fill="#64748B" font-family="Arial,Helvetica,sans-serif" font-size="21">Grid Shoe identity · website, product, social, and single-color applications</text>
+
+  <g transform="translate(70 150)" filter="url(#shadow)">
+    <rect width="1460" height="300" rx="30" fill="#FFFFFF"/>
+    <text x="42" y="52" fill="#22C55E" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" letter-spacing="3">LIGHT MODE · PRIMARY HORIZONTAL</text>
+    <image href="svg/solesheet-horizontal-on-light.svg" x="150" y="47" width="1160" height="310" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+
+  <g transform="translate(70 480)" filter="url(#shadow)">
+    <rect width="1460" height="300" rx="30" fill="#14213D"/>
+    <text x="42" y="52" fill="#86EFAC" font-family="Arial,Helvetica,sans-serif" font-size="18" font-weight="700" letter-spacing="3">DARK MODE · PRIMARY HORIZONTAL</text>
+    <image href="svg/solesheet-horizontal-on-dark.svg" x="150" y="47" width="1160" height="310" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+
+  <g transform="translate(70 810)" filter="url(#shadow)">
+    <rect width="430" height="240" rx="28" fill="#FFFFFF"/>
+    <text x="30" y="45" fill="#64748B" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" letter-spacing="2">STANDALONE MARK</text>
+    <image href="svg/solesheet-mark-on-light.svg" x="105" y="40" width="220" height="190" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g transform="translate(530 810)" filter="url(#shadow)">
+    <rect width="430" height="240" rx="28" fill="#14213D"/>
+    <text x="30" y="45" fill="#86EFAC" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" letter-spacing="2">DARK-MODE MARK</text>
+    <image href="svg/solesheet-mark-on-dark.svg" x="105" y="40" width="220" height="190" preserveAspectRatio="xMidYMid meet"/>
+  </g>
+  <g transform="translate(990 810)" filter="url(#shadow)">
+    <rect width="540" height="240" rx="28" fill="#FFFFFF"/>
+    <text x="30" y="45" fill="#64748B" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" letter-spacing="2">APP ICON + PALETTE</text>
+    <image href="web/app-icon.svg" x="30" y="67" width="140" height="140"/>
+    <g transform="translate(205 80)"><circle cx="34" cy="34" r="34" fill="#22C55E"/><text x="0" y="95" fill="#64748B" font-family="Arial,Helvetica,sans-serif" font-size="15">#22C55E</text></g>
+    <g transform="translate(325 80)"><circle cx="34" cy="34" r="34" fill="#14213D"/><text x="0" y="95" fill="#64748B" font-family="Arial,Helvetica,sans-serif" font-size="15">#14213D</text></g>
+    <g transform="translate(445 80)"><circle cx="34" cy="34" r="33" fill="#F7FAF5" stroke="#D8E0D8"/><text x="0" y="95" fill="#64748B" font-family="Arial,Helvetica,sans-serif" font-size="15">#F7FAF5</text></g>
+  </g>
+</svg>

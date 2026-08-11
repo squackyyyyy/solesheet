@@ -1,0 +1,121 @@
+{
+  "generatedBy": "bun run assets:social",
+  "disclosure": "Product preview",
+  "postingOrder": [
+    "quick-log",
+    "installment",
+    "link-preview"
+  ],
+  "assets": [
+    {
+      "id": "quick-log-feed-01",
+      "filename": "quick-log-feed-01.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "quick-log",
+      "sequence": 1,
+      "headline": "A sale should be one tap away.",
+      "caption": "Hold the same + for payments or new stock."
+    },
+    {
+      "id": "quick-log-feed-02",
+      "filename": "quick-log-feed-02.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "quick-log",
+      "sequence": 2,
+      "headline": "Find the pair. Enter one number.",
+      "caption": "Nike Dunk Low · US 8.5 · Cacao Wow"
+    },
+    {
+      "id": "quick-log-feed-03",
+      "filename": "quick-log-feed-03.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "quick-log",
+      "sequence": 3,
+      "headline": "Sale logged. Stock stays clear.",
+      "caption": "₱6,500 sale · Paid in full"
+    },
+    {
+      "id": "quick-log-feed-04",
+      "filename": "quick-log-feed-04.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "quick-log",
+      "sequence": 4,
+      "headline": "Less spreadsheet catching up.",
+      "caption": "SoleSheet is upcoming for Philippine shoe resellers."
+    },
+    {
+      "id": "installment-feed-01",
+      "filename": "installment-feed-01.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "installment",
+      "sequence": 1,
+      "headline": "Sold is not the same as paid.",
+      "caption": "One fictional installment, one connected balance."
+    },
+    {
+      "id": "installment-feed-02",
+      "filename": "installment-feed-02.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "installment",
+      "sequence": 2,
+      "headline": "See what came in—and what is still due.",
+      "caption": "₱4,000 collected · ₱2,500 remaining"
+    },
+    {
+      "id": "installment-feed-03",
+      "filename": "installment-feed-03.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "installment",
+      "sequence": 3,
+      "headline": "Record the payment once.",
+      "caption": "Example payment: ₱1,500"
+    },
+    {
+      "id": "installment-feed-04",
+      "filename": "installment-feed-04.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "installment",
+      "sequence": 4,
+      "headline": "₱1,000 remaining. Still partially paid.",
+      "caption": "₱5,500 collected of ₱6,500"
+    },
+    {
+      "id": "quick-log-story",
+      "filename": "quick-log-story.png",
+      "width": 1080,
+      "height": 1920,
+      "group": "quick-log",
+      "sequence": 5,
+      "headline": "Quick sale. Stockroom updated.",
+      "caption": "Product preview · Nothing is saved or sent."
+    },
+    {
+      "id": "installment-story",
+      "filename": "installment-story.png",
+      "width": 1080,
+      "height": 1920,
+      "group": "installment",
+      "sequence": 5,
+      "headline": "Record a payment. Know the balance.",
+      "caption": "Product preview · Fictional sample data."
+    },
+    {
+      "id": "solesheet-link-preview",
+      "filename": "solesheet-link-preview.png",
+      "width": 1200,
+      "height": 630,
+      "group": "link-preview",
+      "sequence": 1,
+      "headline": "Save once. See your stockroom update.",
+      "caption": "SoleSheet · Upcoming product"
+    }
+  ]
+}

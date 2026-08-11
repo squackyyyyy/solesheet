@@ -1,5 +1,5 @@
 export const siteContent = {
-  brand: "ShoeTrack",
+  brand: "SoleSheet",
   eyebrow: "Built with Filipino resellers",
   heroTitle: "Your shoe business, out of the spreadsheet.",
   heroCopy:
@@ -43,7 +43,7 @@ export const painPoints = [
 ] as const;
 
 export const featureProof = [
-  { label: "Active stock", value: "84 pairs", tone: "blue" },
+  { label: "Active stock", value: "84 pairs", tone: "brand" },
   { label: "Monthly profit", value: "₱31,240", tone: "citrus" },
   { label: "Unpaid balance", value: "₱42,600", tone: "ink" },
 ] as const;
@@ -73,6 +73,8 @@ export const plans = [
     featured: false,
   },
 ] as const;
+
+export const starterPlan = plans[1];
 
 export const faqs = [
   {

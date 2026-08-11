@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="title desc">
+  <title id="title">SoleSheet horizontal logo for light backgrounds</title>
+  <desc id="desc">Green outlined grid shoe with navy and green SoleSheet wordmark.</desc>
+  <defs><clipPath id="shoe"><path d="M48 188c0-28 20-52 54-65 57 0 98-8 136-34l37-26c16-11 39-8 50 9l29 40c9 13 22 22 37 25l61 18c25 8 39 24 39 47 0 24-19 42-46 42H114c-42 0-66-22-66-53Z"/></clipPath></defs>
+  <g transform="translate(18 18) scale(.9)">
+    <path d="M48 188c0-28 20-52 54-65 57 0 98-8 136-34l37-26c16-11 39-8 50 9l29 40c9 13 22 22 37 25l61 18c25 8 39 24 39 47 0 24-19 42-46 42H114c-42 0-66-22-66-53Z" fill="#22C55E" stroke="#14213D" stroke-width="9" stroke-linejoin="round"/>
+    <g clip-path="url(#shoe)" stroke="#F7FAF5" stroke-width="6"><path d="M98 38v230M160 38v230M222 38v230M284 38v230M346 38v230M408 38v230"/><path d="M28 117h490M28 161h490M28 205h490"/></g>
+    <path d="M52 199h435" stroke="#14213D" stroke-width="9" stroke-linecap="round"/>
+    <g fill="#14213D"><circle cx="271" cy="84" r="6"/><circle cx="296" cy="93" r="6"/><circle cx="321" cy="102" r="6"/><circle cx="271" cy="112" r="6"/><circle cx="296" cy="121" r="6"/><circle cx="321" cy="130" r="6"/></g>
+    <path d="M271 84l25 37M271 112l25-19M296 93l25 37M296 121l25-19" fill="none" stroke="#14213D" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <text x="515" y="198" font-family="Arial,Helvetica,sans-serif" font-size="116" font-weight="700" letter-spacing="-6" fill="#14213D">Sole<tspan fill="#22C55E">Sheet</tspan></text>
+</svg>

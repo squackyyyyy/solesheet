@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title"><title id="title">SoleSheet one-color navy mark</title>
+  <defs><mask id="cut"><rect width="512" height="512" fill="black"/><path d="M48 288c0-28 20-52 54-65 57 0 98-8 136-34l37-26c16-11 39-8 50 9l29 40c9 13 22 22 37 25l61 18c25 8 39 24 39 47 0 24-19 42-46 42H114c-42 0-66-22-66-53Z" fill="white"/><g stroke="black" stroke-width="6"><path d="M98 140v230M160 140v230M222 140v230M284 140v230M346 140v230M408 140v230"/><path d="M28 217h490M28 261h490M28 305h490"/></g></mask></defs>
+  <path d="M48 288c0-28 20-52 54-65 57 0 98-8 136-34l37-26c16-11 39-8 50 9l29 40c9 13 22 22 37 25l61 18c25 8 39 24 39 47 0 24-19 42-46 42H114c-42 0-66-22-66-53Z" fill="#14213D" mask="url(#cut)"/>
+  <path d="M48 288c0-28 20-52 54-65 57 0 98-8 136-34l37-26c16-11 39-8 50 9l29 40c9 13 22 22 37 25l61 18c25 8 39 24 39 47 0 24-19 42-46 42H114c-42 0-66-22-66-53Z" fill="none" stroke="#14213D" stroke-width="9" stroke-linejoin="round"/><path d="M52 299h435" stroke="#14213D" stroke-width="9"/>
+</svg>

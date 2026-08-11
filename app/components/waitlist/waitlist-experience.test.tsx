@@ -92,7 +92,7 @@ describe("WaitlistExperience", () => {
     expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole("button", { name: /close survey/i })[0]);
     expect(
-      screen.getByText(/thanks for helping shape shoetrack/i),
+      screen.getByText(/thanks for helping shape solesheet/i),
     ).toBeInTheDocument();
     for (const cta of screen.getAllByRole("button", {
       name: /you’re all set — thank you/i,

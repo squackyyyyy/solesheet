@@ -1,0 +1,65 @@
+[
+  {
+    "id": "quick-sale",
+    "label": "Quick Sale",
+    "title": "Sell a pair in seconds",
+    "fastestPath": true,
+    "description": "Product preview showing a Nike Dunk Low sale found by model, size, or colorway, with US 8.5, Cacao Wow, and ₱4,800 cost prefilled before entering a ₱6,500 sale price, today's date, and payment type.",
+    "desktop": { "captureId": "quick-sale-desktop", "masterFilename": "quick-sale-desktop.png", "publicFilename": "quick-sale-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
+    "mobile": { "captureId": "quick-sale-mobile", "masterFilename": "quick-sale-mobile.png", "publicFilename": "quick-sale-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
+  },
+  {
+    "id": "quick-actions",
+    "label": "Quick Actions",
+    "title": "One button, three shortcuts",
+    "fastestPath": false,
+    "description": "Product preview of the Home dashboard with a menu anchored above the plus button listing Sell a pair, Record a payment, and Add a pair, with an instruction to hold plus for more.",
+    "desktop": { "captureId": "quick-actions-desktop", "masterFilename": "quick-actions-desktop.png", "publicFilename": "quick-actions-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
+    "mobile": { "captureId": "quick-actions-mobile", "masterFilename": "quick-actions-mobile.png", "publicFilename": "quick-actions-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
+  },
+  {
+    "id": "search-stock",
+    "label": "Search Stock",
+    "title": "Find the exact pair quickly",
+    "fastestPath": false,
+    "description": "Product preview showing the search query 530 7 silver resolving across model, size, and colorway to an available New Balance 530 in US 7 and White / Silver, with ₱4,200 cost and ₱5,600 target.",
+    "desktop": { "captureId": "search-stock-desktop", "masterFilename": "search-stock-desktop.png", "publicFilename": "search-stock-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
+    "mobile": { "captureId": "search-stock-mobile", "masterFilename": "search-stock-mobile.png", "publicFilename": "search-stock-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
+  },
+  {
+    "id": "add-stock",
+    "label": "Add Stock",
+    "title": "Add only the essentials",
+    "fastestPath": false,
+    "description": "Product preview of a short Add pair form for a New Balance 530 in US 7 and White / Silver, with ₱4,200 cost, optional ₱5,600 target, and one Add pair action.",
+    "desktop": { "captureId": "add-stock-desktop", "masterFilename": "add-stock-desktop.png", "publicFilename": "add-stock-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
+    "mobile": { "captureId": "add-stock-mobile", "masterFilename": "add-stock-mobile.png", "publicFilename": "add-stock-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
+  },
+  {
+    "id": "installments",
+    "label": "Installments",
+    "title": "Continue only when needed",
+    "fastestPath": false,
+    "description": "Product preview continuing a ₱6,500 Nike Dunk Low sale into installment terms with a ₱2,500 down payment, ₱4,000 starting balance, and Aug 18 first due date.",
+    "desktop": { "captureId": "installments-desktop", "masterFilename": "installments-desktop.png", "publicFilename": "installments-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
+    "mobile": { "captureId": "installments-mobile", "masterFilename": "installments-mobile.png", "publicFilename": "installments-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
+  },
+  {
+    "id": "payments",
+    "label": "Payments",
+    "title": "See every payment land",
+    "fastestPath": false,
+    "description": "Product preview recording a ₱1,500 installment payment, moving collected from ₱4,000 to ₱5,500 and remaining from ₱2,500 to ₱1,000 while the sale stays Partially paid.",
+    "desktop": { "captureId": "payments-desktop", "masterFilename": "payments-desktop.png", "publicFilename": "payments-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
+    "mobile": { "captureId": "payments-mobile", "masterFilename": "payments-mobile.png", "publicFilename": "payments-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
+  },
+  {
+    "id": "backup",
+    "label": "Backup",
+    "title": "Keep a safer copy",
+    "fastestPath": false,
+    "description": "Product preview comparing local-only use with the planned Starter plan at ₱99 per month, with automatic cloud backup and restore clearly presented as a Starter feature rather than a separate plan.",
+    "desktop": { "captureId": "backup-desktop", "masterFilename": "backup-desktop.png", "publicFilename": "backup-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
+    "mobile": { "captureId": "backup-mobile", "masterFilename": "backup-mobile.png", "publicFilename": "backup-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
+  }
+]

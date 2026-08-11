@@ -36,7 +36,7 @@ export function WaitlistJourneyProvider({ children }: { children: ReactNode }) {
 		journeyState === "survey-incomplete"
 			? "You’re on the waitlist. Help shape what we build first."
 			: journeyState === "survey-complete"
-				? "Thanks for helping shape ShoeTrack."
+				? "Thanks for helping shape SoleSheet."
 				: "";
 
 	function activateCta() {
@@ -59,7 +59,7 @@ export function WaitlistJourneyProvider({ children }: { children: ReactNode }) {
 
 	function completeSurvey() {
 		setJourneyState("survey-complete");
-		setAnnouncement("You’re all set — thank you for helping shape ShoeTrack.");
+		setAnnouncement("You’re all set — thank you for helping shape SoleSheet.");
 	}
 
 	return (

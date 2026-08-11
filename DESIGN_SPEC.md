@@ -65,8 +65,8 @@ Configured in:
 
 ### Core Background
 
-- Page background: `#f6f4ef`
-- Foreground/text: `#141414`
+- Page background / SoleSheet Soft White: `#F7FAF5`
+- Foreground / SoleSheet Deep Ink: `#14213D`
 
 These are defined as CSS variables in:
 
@@ -75,38 +75,35 @@ These are defined as CSS variables in:
 ### Surface Colors
 
 - Main card background: `white`
-- Secondary warm surface: `#fbfaf7`
+- Secondary brand mist: `#ECFDF3`
 - Soft neutral surface: `stone-50`
 - Input background: `white`
 
 ### Brand and Accent Colors
 
-The design uses a restrained operational palette with green accents:
+The supplied SoleSheet palette leads the marketing website:
 
-- Primary accent: `emerald-700`
-- Accent surface: `emerald-50`
+- Brand accent / logo green: `#22C55E`
+- Primary text and dark sections: `#14213D`
+- Primary page surface: `#F7FAF5`
+- Accessible action green: `#047857`, with `#065F46` on hover
+- Secondary emphasis only: citrus `#E8FF9F`
 - Success or ready state: `emerald-50` to `emerald-100`
-- Secondary neutral accent: `stone-*`
 - Warning/accent chip: `amber-100`
+
+Bright SoleSheet Green is used for marks, decoration, selection, and focus where contrast permits. White-text buttons use the darker action green; the former bright-blue marketing accent is not part of the public palette.
 
 ### Text Colors
 
-- Primary text: `stone-950`
+- Primary marketing text: SoleSheet Deep Ink `#14213D`
+- Primary product-UI text: `stone-950`
 - Secondary body text: `stone-600`
 - Tertiary labels: `stone-500`
 - Accent text on green surfaces: `emerald-900` / `emerald-800`
 
 ### Background Treatment
 
-The page background uses a soft radial gradient:
-
-- Top: warm off-white
-- Middle: light cream
-- Bottom: pale cool gray-green
-
-Implementation:
-
-- `bg-[radial-gradient(circle_at_top,_#fff7ed_0%,_#f6f4ef_40%,_#edf0ea_100%)]`
+The marketing page uses Soft White as its continuous base. Brand-mist section bands, Deep Ink feature sections, and subtle SoleSheet Green radial glows provide separation without introducing a competing hue. Product-preview artwork may retain its warmer stone surfaces as a distinct in-app environment.
 
 ## Layout
 
@@ -205,10 +202,35 @@ Purpose:
 
 Preview elements:
 
-- Ready status chip
-- Example shoe record
-- Example cost and target pricing
-- Example reserved status with buyer name
+- 12 active pairs and ₱53,200 inventory capital
+- Monthly profit and unpaid-installment summaries
+- Recently updated inventory record
+- Home-only circular emerald `+` above bottom navigation with a visible **Quick log** label
+
+The floating cue represents a future anchored menu for Sell a pair, Record a payment, and Add a pair. It remains presentation-only and non-focusable on the waitlist site; the mockup's equivalent description communicates its intent.
+
+### Responsive Flow Photographs
+
+Purpose:
+
+- Show how little work the planned Quick Sale path requires
+- Make “log faster” and “see inventory faster” visible without asking visitors to operate a demo
+
+Quick Sale is the default, emphasized item under **“The rest of the planned flow.”** It depicts one combined stock search, selected-pair prefills, a dominant selling price, today-defaulted sold date, and paid/installment choice. Quick Actions, Search Stock, Add Stock, Installments, Payments, and Backup complete the seven-item selector.
+
+Only the gallery selectors operate. Each selected panel is one semantic `<picture>` with a concise equivalent description. Phone fields, save treatments, menus, navigation, and buttons exist only as pixels inside the image. Desktop uses independent 4:3 editorial compositions; mobile uses independent 2:3 compositions with shorter framing copy, a larger upright phone crop, and enough vertical room to preserve bottom-edge controls such as the Quick Log `+`. The app surface uses stone, emerald, amber, and citrus with a visible **Product preview** disclosure in every destination.
+
+PNG masters remain deterministic authoring artifacts at 3200×2400 desktop and 1600×2400 mobile. Optimized WebP derivatives are served publicly so visitors do not download the multi-megabyte masters. Public navigation, product previews, social compositions, and metadata use the supplied SoleSheet Grid Shoe identity from `public/`.
+
+### Code-Rendered Social Assets
+
+The social design source of truth is the application code and centralized content—not Figma. Feed, Story, and link-preview compositions reuse the approved app primitives, fictional records, numeric values, typography, and colors.
+
+- Feed: 1080×1350
+- Story: 1080×1920, with overlay-safe top and bottom space
+- Link preview: 1200×630
+
+Every product depiction includes a visible **Product preview** or equivalent upcoming-state disclosure. A gated, non-indexable local studio supports deterministic Playwright capture; it is not linked from the public site.
 
 ### Waitlist CTA Panel
 
@@ -302,14 +324,17 @@ Rules:
 
 ## Interaction Style
 
-Current page interactions are minimal and presentation-first.
+Current page interactions are focused and proof-first: waitlist/survey actions plus the seven planned-flow selector buttons. All phone mockups remain presentation-only responsive images.
 
-Preferred interaction behavior for future buildout:
+Interaction behavior:
 
 - Subtle hover color shifts
 - Clear focus borders on inputs
 - No flashy motion
 - No distracting animation
+- 44×44 CSS minimum targets for real controls
+- Short changed-value highlights with an equivalent reduced-motion state
+- No nested horizontal scrollers in the product section
 
 ## Form Styling
 
@@ -360,4 +385,3 @@ The design should communicate:
 - Mobile-first speed
 - Profit and installment clarity
 - An early-access product worth joining
-
