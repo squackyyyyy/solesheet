@@ -10,8 +10,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:browser": "playwright test",
+    "test:browser:authoring": "SHOETRACK_ENABLE_WEB_QUICK_ADD_STUDIO=1 playwright test --config=playwright.authoring.config.ts",
     "assets:social": "node scripts/capture-social.mjs",
-    "assets:flow": "node scripts/capture-flow-mockups.mjs"
+    "assets:flow": "node scripts/capture-flow-mockups.mjs",
+    "assets:web-quick-add": "node scripts/capture-web-quick-add.mjs"
   },
   "dependencies": {
     "next": "16.2.12",

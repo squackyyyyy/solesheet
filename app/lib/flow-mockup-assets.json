@@ -13,7 +13,7 @@
     "label": "Quick Actions",
     "title": "One button, three shortcuts",
     "fastestPath": false,
-    "description": "Product preview of the Home dashboard with a menu anchored above the plus button listing Sell a pair, Record a payment, and Add a pair, with an instruction to hold plus for more.",
+    "description": "Product preview of the basic Home dashboard with 12 active pairs, ₱53,200 inventory cost, ₱8,950 monthly profit, a Stock mix of 9 available and 3 reserved pairs, and a menu anchored above Quick Log listing Sell a pair, Record a payment, and Add a pair.",
     "desktop": { "captureId": "quick-actions-desktop", "masterFilename": "quick-actions-desktop.png", "publicFilename": "quick-actions-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
     "mobile": { "captureId": "quick-actions-mobile", "masterFilename": "quick-actions-mobile.png", "publicFilename": "quick-actions-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
   },

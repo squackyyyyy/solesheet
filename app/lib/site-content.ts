@@ -48,6 +48,16 @@ export const featureProof = [
   { label: "Unpaid balance", value: "₱42,600", tone: "ink" },
 ] as const;
 
+export const webQuickAddContent = {
+  label: "Growth · Web Quick-Add",
+  heading: "A full delivery. One clean batch.",
+  positioning:
+    "Add one pair quickly from your phone—or encode multiple entries from your browser. Web Quick-Add is planned for Growth sellers who handle inventory in multiple quantities.",
+  disclosure: "Planned Growth feature · Static product preview",
+  imageDescription:
+    "Product preview of the planned Growth Web Quick-Add workspace showing a structured inventory batch table with representative shoe records, Add row, Duplicate, Delete, and Save 12 pairs treatments, a computed ₱53,200 inventory cost, and a cue that the batch would become available in mobile inventory.",
+} as const;
+
 export const plans = [
   {
     name: "Free",
@@ -69,7 +79,7 @@ export const plans = [
     price: "₱349",
     suffix: "/month",
     description: "Save time operating larger inventory across phone and browser.",
-    features: ["Up to 750 active pairs", "Web quick-add and spreadsheet import", "Cloud sync and advanced reports"],
+    features: ["Up to 750 active pairs", "Planned Web Quick-Add and spreadsheet import", "Planned cloud sync and advanced reports"],
     featured: false,
   },
 ] as const;
@@ -86,6 +96,11 @@ export const faqs = [
     question: "Is the app available now?",
     answer:
       "Not yet. We are validating the core workflow with real resellers before deciding the first release platform and final feature mix.",
+  },
+  {
+    question: "What is Web Quick-Add, and is it available now?",
+    answer:
+      "Web Quick-Add is a planned Growth feature for encoding multiple pairs in one browser batch. The planned workflow would let you add or duplicate rows, review the pair count and inventory cost, and save the batch so those pairs are available in mobile inventory. It is not live yet—the page shows a static preview—and adding one pair from your phone remains part of the core product. Spreadsheet import is a separate planned Growth feature.",
   },
   {
     question: "Will installment tracking be paid-only?",
@@ -124,10 +139,12 @@ export const surveyQuestions = {
   currentTool: {
     label: "What do you use to track inventory today?",
     options: ["Google Sheets", "Excel", "Notes app", "Messenger", "Notebook", "Memory only", "Other"],
+    otherDetailLabel: "Other inventory method",
   },
   priority: {
     label: "Which feature matters most?",
-    options: ["Fast inventory updates", "Profit tracking", "Installment tracking", "Web quick-add", "Cloud backup", "Reports"],
+    options: ["Fast inventory updates", "Profit tracking", "Installment tracking", "Web quick-add", "Cloud backup", "Reports", "Other"],
+    otherDetailLabel: "Other feature",
   },
   backup: {
     label: "Would you want cloud backup and sync?",
@@ -135,7 +152,8 @@ export const surveyQuestions = {
   },
   channels: {
     label: "Where do you usually sell?",
-    options: ["Facebook Marketplace", "Facebook groups", "Instagram", "TikTok", "Shopee / Lazada", "Direct messages", "Physical store"],
+    options: ["Facebook Marketplace", "Facebook groups", "Instagram", "TikTok", "Shopee / Lazada", "Direct messages", "Physical store", "Other"],
+    otherDetailLabel: "Other sales channel",
   },
   interview: {
     label: "Can we message you for a short follow-up interview?",

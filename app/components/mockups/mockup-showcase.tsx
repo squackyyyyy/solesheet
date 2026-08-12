@@ -17,14 +17,14 @@ export function MockupShowcase() {
       <div className="grid gap-3 sm:grid-cols-[1fr_.8fr] sm:items-end">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-black/65">
-            The rest of the planned flow
+            Product preview gallery
           </p>
           <h3 id="planned-flow-title" className="mt-2 max-w-xl text-2xl font-semibold tracking-tight text-[#171717] sm:text-3xl">
-            See how quick the everyday work can feel.
+            Seven everyday workflows, shown clearly.
           </h3>
         </div>
         <p className="max-w-md text-xs leading-6 text-black/55 sm:justify-self-end">
-          Choose a moment to view a static product preview. The images show the planned experience; the app controls pictured inside them do not operate here.
+          Select a moment to switch the preview image. Controls pictured inside the phone are illustrative and do not operate here.
         </p>
       </div>
 

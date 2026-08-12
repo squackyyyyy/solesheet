@@ -31,6 +31,21 @@ Mockups SHALL use plausible Philippine sneaker-reseller examples, Philippine pes
 - **WHEN** a visitor views the installment setup and tracking mockups
 - **THEN** the screens distinguish inventory status, payment status, cash collected, and remaining balance without suggesting that the app lends money or processes payments
 
+### Requirement: Home dashboard previews share one canonical basic summary
+Every Home dashboard representation in the product showcase SHALL use the same canonical mock state and information hierarchy. The shared state SHALL show 12 active pairs, ₱53,200 inventory cost, ₱8,950 monthly profit, ₱2,500 unpaid installment balance, and a **Stock mix** of 9 available and 3 reserved pairs. The Stock mix SHALL use a compact segmented visualization derived from those status counts and SHALL remain a basic status summary rather than imply time-series, ranking, drill-down, or advanced reporting capability.
+
+#### Scenario: Visitor compares dashboard representations
+- **WHEN** a visitor views the general dashboard preview and the Home dashboard beneath Quick Actions
+- **THEN** both representations use the same dashboard labels, values, Stock mix counts, status proportions, and module order without contradictory information
+
+#### Scenario: Visitor sees the free basic-dashboard value
+- **WHEN** a Home dashboard preview is visible
+- **THEN** the Stock mix communicates 9 available and 3 reserved pairs through text and a restrained segmented bar without presenting paid advanced analytics as available
+
+#### Scenario: Dashboard equivalent descriptions are read nonvisually
+- **WHEN** assistive technology encounters a dashboard preview or the Quick Actions photograph
+- **THEN** its concise equivalent description communicates the canonical active inventory and Stock mix state without exposing the segmented bar as a separate control
+
 ### Requirement: Showcase is usable without a pointer
 All mockup navigation SHALL support touch, keyboard, and assistive technology. Screen labels and equivalent textual descriptions SHALL communicate the important information when visual detail cannot be perceived.
 
@@ -50,11 +65,11 @@ The showcase SHALL avoid loading unnecessary high-resolution assets and SHALL re
 - **THEN** the initially visible mockup is prioritized, offscreen visual assets are deferred, and the visitor can use the page before all showcase content has loaded
 
 ### Requirement: Planned-flow gallery uses seven static product-photograph destinations
-The product showcase SHALL present **Quick Sale**, **Quick Actions**, **Search Stock**, **Add Stock**, **Installments**, **Payments**, and **Backup** under **“The rest of the planned flow.”** Quick Sale SHALL be selected by default and identified as the fastest path. Only the seven selector buttons SHALL operate; every selected panel SHALL be one static product-preview image with no focusable or operable controls inside the depicted phone.
+The product showcase SHALL present **Quick Sale**, **Quick Actions**, **Search Stock**, **Add Stock**, **Installments**, **Payments**, and **Backup** under the eyebrow **Product preview gallery** and heading **Seven everyday workflows, shown clearly.** The supporting instruction SHALL explain that selecting a moment switches the preview image and that controls pictured inside the phone are illustrative and do not operate. Quick Sale SHALL be selected by default and identified as the fastest path. Only the seven selector buttons SHALL operate; every selected panel SHALL be one static product-preview image with no focusable or operable controls inside the depicted phone.
 
-#### Scenario: Visitor reaches the planned flow
-- **WHEN** a visitor reaches **“The rest of the planned flow”**
-- **THEN** Quick Sale is selected, visibly identified as the fastest path, and its static responsive product photograph is shown
+#### Scenario: Visitor reaches the product preview gallery
+- **WHEN** a visitor reaches **Product preview gallery**
+- **THEN** the gallery uses the updated static-preview heading and instruction, Quick Sale is selected and visibly identified as the fastest path, and its static responsive product photograph is shown
 
 #### Scenario: Visitor selects another destination
 - **WHEN** a visitor activates Quick Actions, Search Stock, Add Stock, Installments, Payments, or Backup
@@ -83,15 +98,19 @@ The Quick Sale image SHALL depict one combined search covering model, size, and 
 - **THEN** the image shows that selecting Nike Dunk Low · US 8.5 · Cacao Wow prefills size, colorway, and ₱4,800 cost while the seller supplies the ₱6,500 sale price
 
 ### Requirement: Quick Actions depicts the anchored hold menu
-The Quick Actions image SHALL depict the Home dashboard and a menu visually anchored to the bottom-right `+`. The menu SHALL list **Sell a pair**, **Record a payment**, and **Add a pair** in that order, and the composition SHALL visibly explain **Hold + for more** without implying that the image itself responds to a hold.
+The Quick Actions image SHALL depict the canonical Home dashboard, including its compact **Stock mix** visualization, beneath a menu visually anchored to the bottom-right `+`. The menu SHALL list **Sell a pair**, **Record a payment**, and **Add a pair** in that order, and the composition SHALL visibly explain **Hold + for more** without implying that the image itself responds to a hold. The menu, Quick Log label, and trigger SHALL remain the dominant visual message; the open menu MAY naturally cover lower dashboard modules but the visible underlying dashboard content SHALL remain consistent with the general dashboard preview.
 
 #### Scenario: Visitor views Quick Actions
 - **WHEN** Quick Actions is selected
-- **THEN** the image clearly associates the three-action menu with the `+` button rather than presenting it as a centered modal
+- **THEN** the image shows the canonical dashboard and Stock mix while clearly associating the three-action menu with the `+` button rather than presenting it as a centered modal
 
 #### Scenario: Mobile visitor views Quick Actions
 - **WHEN** Quick Actions is selected at 360px wide
-- **THEN** the complete three-action menu, Quick Log label, and anchored `+` trigger are visible together inside the mobile photograph
+- **THEN** the complete three-action menu, Quick Log label, anchored `+` trigger, and enough of the Stock mix to recognize the basic visualization are visible together inside the mobile photograph
+
+#### Scenario: Quick Actions is described nonvisually
+- **WHEN** assistive technology encounters the selected Quick Actions photograph
+- **THEN** one equivalent description identifies the canonical Home summary, the 9-available and 3-reserved Stock mix, and the three actions anchored to Quick Log
 
 ### Requirement: Public product identity uses the supplied SoleSheet brand kit
 The landing page, browser metadata and icons, product photographs, social compositions, and link-preview image SHALL identify the product as **SoleSheet** and SHALL reuse the supplied Grid Shoe logo variants appropriate to light and dark backgrounds. The public marketing shell SHALL use SoleSheet Green `#22C55E`, Deep Ink `#14213D`, and Soft White `#F7FAF5` as its defining palette. White-text actions MAY use a darker accessible green, and citrus MAY remain a restrained secondary highlight; unrelated bright blue SHALL NOT remain the dominant interactive or section color.

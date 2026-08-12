@@ -139,8 +139,28 @@ export const stockroomShoes: ShoeRecord[] = [
 
 export const shoes = stockroomShoes.slice(0, 3);
 
+export const webQuickAddBatch: ShoeRecord[] = stockroomShoes.map((shoe) => ({
+  ...shoe,
+  status: "Available",
+  buyer: undefined,
+}));
+
+export const webQuickAddSummary = {
+  readyCount: webQuickAddBatch.length,
+  inventoryCost: webQuickAddBatch.reduce((total, shoe) => total + shoe.cost, 0),
+} as const;
+
+const stockMix = stockroomShoes.reduce(
+  (counts, shoe) => {
+    if (shoe.status === "Available") counts.available += 1;
+    if (shoe.status === "Reserved") counts.reserved += 1;
+    return counts;
+  },
+  { available: 0, reserved: 0 },
+);
+
 export const dashboard = {
-  activePairs: stockroomShoes.length,
+  activePairs: stockMix.available + stockMix.reserved,
   inventoryCost: stockroomShoes.reduce((total, shoe) => total + shoe.cost, 0),
   expectedRevenue: stockroomShoes.reduce(
     (total, shoe) => total + (shoe.target ?? 0),
@@ -148,6 +168,7 @@ export const dashboard = {
   ),
   monthlyProfit: 8950,
   unpaidBalance: 2500,
+  stockMix,
 };
 
 export const installmentSale = {

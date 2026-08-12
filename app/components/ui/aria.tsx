@@ -59,13 +59,6 @@ import {
   Text as SelectText,
   type SelectProps,
 } from "react-aria-components/Select";
-import {
-  Tab,
-  TabList,
-  TabPanel,
-  Tabs,
-  type TabsProps,
-} from "react-aria-components/Tabs";
 
 function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
@@ -294,44 +287,6 @@ export function DialogSheet({
         </Dialog>
       </Modal>
     </ModalOverlay>
-  );
-}
-
-export function AppProofTabs({
-  tabs,
-  ...props
-}: Omit<TabsProps, "children"> & {
-  tabs: ReadonlyArray<{ id: string; label: string; content: ReactNode }>;
-}) {
-  return (
-    <Tabs {...props} className="min-w-0">
-      <TabList
-        aria-label="Choose a workflow to try"
-        className="grid grid-cols-2 gap-1 rounded-[1.1rem] bg-stone-200/75 p-1"
-      >
-        {tabs.map((tab, index) => (
-          <Tab
-            key={tab.id}
-            id={tab.id}
-            className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[.85rem] px-3 text-center text-xs font-bold text-stone-600 outline-none transition data-[hovered]:text-stone-950 data-[selected]:bg-stone-950 data-[selected]:text-white data-[focus-visible]:ring-2 data-[focus-visible]:ring-emerald-700 data-[focus-visible]:ring-offset-2 sm:text-sm"
-          >
-            <span aria-hidden="true" className="text-[10px]">
-              0{index + 1}
-            </span>
-            {tab.label}
-          </Tab>
-        ))}
-      </TabList>
-      {tabs.map((tab) => (
-        <TabPanel
-          key={tab.id}
-          id={tab.id}
-          className="mt-4 outline-none data-[focus-visible]:ring-2 data-[focus-visible]:ring-emerald-700 data-[focus-visible]:ring-offset-4"
-        >
-          {tab.content}
-        </TabPanel>
-      ))}
-    </Tabs>
   );
 }
 

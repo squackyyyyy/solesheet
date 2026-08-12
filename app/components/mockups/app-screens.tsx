@@ -28,7 +28,7 @@ export const mockupMeta: Array<{
     shortLabel: "Overview",
     label: "Inventory dashboard",
     description:
-      "Dashboard showing 12 active pairs, ₱53,200 inventory cost, ₱8,950 monthly profit, a ₱2,500 unpaid balance, and a floating Quick log shortcut for adding a pair, marking a pair sold, or recording a payment.",
+      "Product preview of the basic Home dashboard showing 12 active pairs, ₱53,200 inventory cost, ₱8,950 monthly profit, a Stock mix of 9 available and 3 reserved pairs, a ₱2,500 unpaid balance, and the floating Quick Log shortcut.",
   },
   {
     id: "quick-log",
@@ -160,6 +160,41 @@ function FieldPreview({ label, value }: { label: string; value: string }) {
   );
 }
 
+function DashboardStockMix() {
+  const availablePercent =
+    (dashboard.stockMix.available / dashboard.activePairs) * 100;
+  const reservedPercent =
+    (dashboard.stockMix.reserved / dashboard.activePairs) * 100;
+
+  return (
+    <div className="mt-2 rounded-2xl border border-stone-200 bg-white p-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[8px] font-bold text-stone-800">Stock mix</p>
+        <div className="flex gap-2 text-[7px] font-semibold">
+          <span className="text-emerald-700">{dashboard.stockMix.available} available</span>
+          <span className="text-amber-700">{dashboard.stockMix.reserved} reserved</span>
+        </div>
+      </div>
+      <div
+        aria-hidden="true"
+        data-stock-mix-bar="true"
+        className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-stone-100"
+      >
+        <span
+          data-stock-mix-segment="available"
+          className="h-full bg-emerald-600"
+          style={{ width: `${availablePercent}%` }}
+        />
+        <span
+          data-stock-mix-segment="reserved"
+          className="h-full bg-amber-300"
+          style={{ width: `${reservedPercent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function DeviceFrame({
   label,
   description,
@@ -212,6 +247,7 @@ export function DashboardScreen() {
           <p className="mt-1 text-[12px] font-bold">{formatPeso(dashboard.monthlyProfit)}</p>
         </div>
       </div>
+      <DashboardStockMix />
       <div className="mt-2 rounded-2xl border border-amber-200 bg-amber-50 p-3">
         <div className="flex items-center justify-between">
           <div>

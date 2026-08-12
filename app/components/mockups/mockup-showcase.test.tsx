@@ -6,6 +6,18 @@ describe("MockupShowcase", () => {
   it("defaults to the emphasized Quick Sale responsive photograph", () => {
     render(<MockupShowcase />);
 
+    expect(screen.getByText("Product preview gallery")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Seven everyday workflows, shown clearly.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /select a moment to switch the preview image.*controls pictured inside the phone are illustrative and do not operate here/i,
+      ),
+    ).toBeInTheDocument();
+
     const quickSale = screen.getByRole("button", { name: /quick sale, fastest path/i });
     expect(quickSale).toHaveAttribute("aria-pressed", "true");
     expect(quickSale).toHaveClass("bg-emerald-900");
@@ -54,7 +66,7 @@ describe("MockupShowcase", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Quick Actions" }));
     const image = screen.getByRole("img", {
-      name: /menu anchored above the plus button listing Sell a pair, Record a payment, and Add a pair/i,
+      name: /basic Home dashboard.*12 active pairs.*Stock mix of 9 available and 3 reserved pairs.*menu anchored above Quick Log listing Sell a pair, Record a payment, and Add a pair/i,
     });
     expect(image.parentElement?.querySelector("source")).toHaveAttribute(
       "srcset",

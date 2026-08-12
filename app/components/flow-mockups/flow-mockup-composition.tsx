@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import type { FlowMockupCapture, FlowMockupId } from "@/app/lib/flow-mockup-assets";
-import { formatPeso, installmentSale, quickLogExample, recordedInstallmentPayment, stockroomShoes } from "@/app/lib/mock-data";
+import { dashboard, formatPeso, installmentSale, quickLogExample, recordedInstallmentPayment, stockroomShoes } from "@/app/lib/mock-data";
 import { starterPlan } from "@/app/lib/site-content";
 
 const saleShoe = stockroomShoes[0];
@@ -90,9 +90,93 @@ function BottomNavigation() {
   return <div className="absolute inset-x-6 bottom-8 grid grid-cols-4 border-t border-stone-200 pt-5 text-center text-[11px] font-bold text-stone-500"><div className="text-emerald-700"><span className="mb-1 block text-[21px]">⌂</span>Home</div><div><span className="mb-1 block text-[19px]">▦</span>Stock</div><div><span className="mb-1 block text-[20px]">↗</span>Sales</div><div><span className="mb-1 block text-[18px]">•••</span>More</div></div>;
 }
 
+function DashboardStockMix() {
+  const availablePercent =
+    (dashboard.stockMix.available / dashboard.activePairs) * 100;
+  const reservedPercent =
+    (dashboard.stockMix.reserved / dashboard.activePairs) * 100;
+
+  return (
+    <div className="mt-3 rounded-[20px] bg-white px-4 py-3 ring-1 ring-stone-200">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-black text-stone-800">Stock mix</p>
+        <div className="flex gap-3 text-[10px] font-bold">
+          <span className="text-emerald-700">{dashboard.stockMix.available} available</span>
+          <span className="text-amber-700">{dashboard.stockMix.reserved} reserved</span>
+        </div>
+      </div>
+      <div
+        aria-hidden="true"
+        data-stock-mix-bar="true"
+        className="mt-2 flex h-2 overflow-hidden rounded-full bg-stone-100"
+      >
+        <span
+          data-stock-mix-segment="available"
+          className="h-full bg-emerald-600"
+          style={{ width: `${availablePercent}%` }}
+        />
+        <span
+          data-stock-mix-segment="reserved"
+          className="h-full bg-amber-300"
+          style={{ width: `${reservedPercent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function DashboardScreen() {
   return (
-    <div className="relative h-[918px] px-7 pt-8"><ScreenHeading eyebrow="Good morning, Jules" title="Your stockroom" /><div className="mt-6 rounded-[28px] bg-emerald-800 p-6 text-white"><p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-200">Active inventory</p><p className="mt-2 text-[46px] font-black">12</p><p className="text-[13px] text-emerald-100">pairs ready to manage</p></div><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-[22px] bg-white p-5 ring-1 ring-stone-200"><p className="text-[11px] text-stone-500">Inventory cost</p><p className="mt-2 text-[20px] font-black">₱53,200</p></div><div className="rounded-[22px] bg-[#e8ff9f] p-5"><p className="text-[11px] text-stone-600">Monthly profit</p><p className="mt-2 text-[20px] font-black">₱8,950</p></div></div><div className="absolute bottom-[108px] right-7 z-20 flex items-end gap-3"><div className="mb-2 rounded-full bg-white/95 px-4 py-2 text-[12px] font-black shadow-lg">Quick Log</div><div className="relative grid size-[74px] place-items-center rounded-full bg-emerald-700 text-[39px] text-white shadow-[0_20px_45px_rgba(4,120,87,.38)]"><span className="absolute -inset-3 rounded-full border-2 border-[#e8ff9f]" />+</div></div><div className="absolute bottom-[190px] right-8 z-10 w-[310px] overflow-hidden rounded-[26px] border border-stone-200 bg-white/96 p-2 shadow-[0_26px_70px_rgba(17,17,17,.24)]">{[["↗","Sell a pair","Record a completed sale"],["₱","Record a payment","Update an installment"],["＋","Add a pair","Add new inventory"]].map(([icon,label,detail], index)=><div key={label} className={`flex min-h-[76px] items-center gap-4 px-3 ${index ? "border-t border-stone-100" : ""}`}><span className="grid size-11 place-items-center rounded-2xl bg-emerald-100 text-[18px] font-black text-emerald-800">{icon}</span><div><p className="text-[14px] font-black">{label}</p><p className="mt-1 text-[11px] text-stone-500">{detail}</p></div></div>)}</div><BottomNavigation /></div>
+    <div className="relative h-[918px] px-7 pt-8">
+      <ScreenHeading eyebrow="Good morning, Jules" title="Your stockroom" />
+      <div className="mt-5 rounded-[25px] bg-emerald-800 px-5 py-4 text-white">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-200">Active inventory</p>
+          <span className="rounded-full bg-white/12 px-3 py-1 text-[10px]">Live</span>
+        </div>
+        <p className="mt-1 text-[40px] font-black">{dashboard.activePairs}</p>
+        <p className="text-[12px] text-emerald-100">pairs ready to manage</p>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="rounded-[20px] bg-white px-4 py-3 ring-1 ring-stone-200">
+          <p className="text-[10px] text-stone-500">Inventory cost</p>
+          <p className="mt-1 text-[18px] font-black">{formatPeso(dashboard.inventoryCost)}</p>
+        </div>
+        <div className="rounded-[20px] bg-[#e8ff9f] px-4 py-3">
+          <p className="text-[10px] text-stone-600">Monthly profit</p>
+          <p className="mt-1 text-[18px] font-black">{formatPeso(dashboard.monthlyProfit)}</p>
+        </div>
+      </div>
+      <DashboardStockMix />
+      <div className="mt-3 flex items-center justify-between rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3">
+        <div>
+          <p className="text-[10px] text-amber-700">Unpaid installments</p>
+          <p className="mt-1 text-[17px] font-black">{formatPeso(dashboard.unpaidBalance)}</p>
+        </div>
+        <span className="text-[20px] text-amber-600">→</span>
+      </div>
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-[11px] font-black">Recently updated</p>
+        <p className="text-[10px] font-bold text-emerald-700">View all</p>
+      </div>
+      <div className="mt-2 flex items-start justify-between gap-3 rounded-[20px] bg-white px-4 py-3 ring-1 ring-stone-200">
+        <div>
+          <p className="text-[12px] font-black">{saleShoe.brand} {saleShoe.model}</p>
+          <p className="mt-1 text-[10px] text-stone-500">{saleShoe.size} · {saleShoe.colorway}</p>
+        </div>
+        <span className="rounded-full bg-amber-100 px-3 py-1 text-[9px] font-black text-amber-800">{saleShoe.status}</span>
+      </div>
+      <div className="absolute bottom-[108px] right-7 z-20 flex items-end gap-3">
+        <div className="mb-2 rounded-full bg-white/95 px-4 py-2 text-[12px] font-black shadow-lg">Quick Log</div>
+        <div className="relative grid size-[74px] place-items-center rounded-full bg-emerald-700 text-[39px] text-white shadow-[0_20px_45px_rgba(4,120,87,.38)]">
+          <span className="absolute -inset-3 rounded-full border-2 border-[#e8ff9f]" />+
+        </div>
+      </div>
+      <div className="absolute bottom-[190px] right-8 z-10 w-[310px] overflow-hidden rounded-[26px] border border-stone-200 bg-white/96 p-2 shadow-[0_26px_70px_rgba(17,17,17,.24)]">
+        {[["↗","Sell a pair","Record a completed sale"],["₱","Record a payment","Update an installment"],["＋","Add a pair","Add new inventory"]].map(([icon,label,detail], index)=><div key={label} className={`flex min-h-[76px] items-center gap-4 px-3 ${index ? "border-t border-stone-100" : ""}`}><span className="grid size-11 place-items-center rounded-2xl bg-emerald-100 text-[18px] font-black text-emerald-800">{icon}</span><div><p className="text-[14px] font-black">{label}</p><p className="mt-1 text-[11px] text-stone-500">{detail}</p></div></div>)}
+      </div>
+      <BottomNavigation />
+    </div>
   );
 }
 

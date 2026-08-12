@@ -21,6 +21,30 @@ function renderExperience({ withPageCtas = false } = {}) {
   );
 }
 
+async function joinAndOpenSurvey() {
+  fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), {
+    target: { value: "seller@example.com" },
+  });
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: /i agree to the collection/i }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
+
+  await waitFor(
+    () => expect(screen.getByText(/part of the first look/i)).toBeInTheDocument(),
+    { timeout: 1500 },
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: /answer the quick survey/i }),
+  );
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+}
+
+function chooseSelectOption(question: RegExp, option: string) {
+  fireEvent.click(screen.getByRole("button", { name: question }));
+  fireEvent.click(screen.getByRole("option", { name: option }));
+}
+
 describe("WaitlistExperience", () => {
   beforeEach(() => {
     vi.spyOn(Storage.prototype, "setItem");
@@ -38,21 +62,43 @@ describe("WaitlistExperience", () => {
   it("shows accessible contact and consent feedback", () => {
     renderExperience();
 
+    const email = screen.getByRole("textbox", { name: "Email address" });
+    expect(email).toHaveAttribute("type", "email");
+    expect(email).toHaveAttribute("autocomplete", "email");
+    expect(email).toHaveAttribute("placeholder", "you@email.com");
+
     fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
 
     expect(
-      screen.getByText(/enter a valid email address or philippine mobile number/i),
+      screen.getByText("Enter a valid email address."),
     ).toBeInTheDocument();
+    expect(email).toHaveAttribute("aria-invalid", "true");
     expect(
       screen.getByText(/agree to the privacy notice/i),
     ).toBeInTheDocument();
+  });
+
+  it("rejects a Philippine mobile number as a waitlist contact", () => {
+    renderExperience();
+
+    const email = screen.getByRole("textbox", { name: "Email address" });
+    fireEvent.change(email, { target: { value: "09171234567" } });
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /i agree to the collection/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
+
+    expect(email).toHaveValue("09171234567");
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
+    expect(screen.queryByText(/part of the first look/i)).not.toBeInTheDocument();
   });
 
   it("moves through signup and survey without network or storage writes", async () => {
     renderExperience({ withPageCtas: true });
 
     fireEvent.change(
-      screen.getByRole("textbox", { name: /email or philippine mobile/i }),
+      screen.getByRole("textbox", { name: "Email address" }),
       { target: { value: "seller@example.com" } },
     );
     fireEvent.click(
@@ -104,11 +150,140 @@ describe("WaitlistExperience", () => {
     expect(Storage.prototype.setItem).not.toHaveBeenCalled();
   });
 
+  it("captures independent Other details and retains them while the page stays open", async () => {
+    renderExperience();
+    await joinAndOpenSurvey();
+
+    chooseSelectOption(/what do you use to track inventory today/i, "Other");
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Other inventory method" }),
+      { target: { value: "Airtable" } },
+    );
+
+    chooseSelectOption(/which feature matters most/i, "Other");
+    fireEvent.change(screen.getByRole("textbox", { name: "Other feature" }), {
+      target: { value: "Supplier purchase tracking" },
+    });
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Instagram" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Other sales channel" }),
+      { target: { value: "Weekend pop-ups" } },
+    );
+
+    expect(
+      screen.getByRole("textbox", { name: "Other inventory method" }),
+    ).toHaveValue("Airtable");
+    expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
+      "Supplier purchase tracking",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Other sales channel" }),
+    ).toHaveValue("Weekend pop-ups");
+    expect(screen.getByRole("checkbox", { name: "Instagram" })).toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: /close survey/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /answer the quick survey/i }),
+    );
+
+    expect(
+      screen.getByRole("textbox", { name: "Other inventory method" }),
+    ).toHaveValue("Airtable");
+    expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
+      "Supplier purchase tracking",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Other sales channel" }),
+    ).toHaveValue("Weekend pop-ups");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(Storage.prototype.setItem).not.toHaveBeenCalled();
+  });
+
+  it("clears only a deselected Other detail and permits blank Other completion", async () => {
+    renderExperience();
+    await joinAndOpenSurvey();
+
+    chooseSelectOption(/what do you use to track inventory today/i, "Other");
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Other inventory method" }),
+      { target: { value: "Airtable" } },
+    );
+    chooseSelectOption(/which feature matters most/i, "Other");
+    fireEvent.change(screen.getByRole("textbox", { name: "Other feature" }), {
+      target: { value: "Purchase orders" },
+    });
+    fireEvent.click(screen.getByRole("checkbox", { name: "Instagram" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Other sales channel" }),
+      { target: { value: "Weekend pop-ups" } },
+    );
+
+    chooseSelectOption(/what do you use to track inventory today/i, "Excel");
+    expect(
+      screen.queryByRole("textbox", { name: "Other inventory method" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
+      "Purchase orders",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Other sales channel" }),
+    ).toHaveValue("Weekend pop-ups");
+
+    chooseSelectOption(/what do you use to track inventory today/i, "Other");
+    expect(
+      screen.getByRole("textbox", { name: "Other inventory method" }),
+    ).toHaveValue("");
+
+    chooseSelectOption(/which feature matters most/i, "Reports");
+    expect(
+      screen.queryByRole("textbox", { name: "Other feature" }),
+    ).not.toBeInTheDocument();
+    chooseSelectOption(/which feature matters most/i, "Other");
+    expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
+      "",
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
+    expect(
+      screen.queryByRole("textbox", { name: "Other sales channel" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Instagram" })).toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
+    expect(
+      screen.getByRole("textbox", { name: "Other sales channel" }),
+    ).toHaveValue("");
+
+    fireEvent.click(screen.getByRole("button", { name: /finish quick survey/i }));
+    expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
+  });
+
+  it("resets Other details when the experience is remounted", async () => {
+    const view = renderExperience();
+    await joinAndOpenSurvey();
+
+    chooseSelectOption(/what do you use to track inventory today/i, "Other");
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Other inventory method" }),
+      { target: { value: "Airtable" } },
+    );
+    view.unmount();
+
+    renderExperience();
+    await joinAndOpenSurvey();
+    chooseSelectOption(/what do you use to track inventory today/i, "Other");
+    expect(
+      screen.getByRole("textbox", { name: "Other inventory method" }),
+    ).toHaveValue("");
+  });
+
   it("starts clean when remounted", async () => {
     const view = renderExperience({ withPageCtas: true });
     fireEvent.change(
-      screen.getByRole("textbox", { name: /email or philippine mobile/i }),
-      { target: { value: "09171234567" } },
+      screen.getByRole("textbox", { name: "Email address" }),
+      { target: { value: "seller@example.com" } },
     );
     view.unmount();
 
@@ -117,7 +292,7 @@ describe("WaitlistExperience", () => {
     });
 
     expect(
-      screen.getByRole("textbox", { name: /email or philippine mobile/i }),
+      screen.getByRole("textbox", { name: "Email address" }),
     ).toHaveValue("");
     expect(
       screen.getAllByRole("button", { name: /join the waitlist/i }),

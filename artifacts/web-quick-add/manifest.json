@@ -1,0 +1,26 @@
+{
+  "generatedBy": "bun run assets:web-quick-add",
+  "destinations": 1,
+  "assets": [
+    {
+      "id": "growth-web-quick-add",
+      "label": "Growth Web Quick-Add",
+      "layout": "desktop",
+      "captureId": "growth-web-quick-add-desktop",
+      "masterFilename": "growth-web-quick-add-desktop.png",
+      "publicFilename": "growth-web-quick-add-desktop.webp",
+      "width": 3200,
+      "height": 2400
+    },
+    {
+      "id": "growth-web-quick-add",
+      "label": "Growth Web Quick-Add",
+      "layout": "mobile",
+      "captureId": "growth-web-quick-add-mobile",
+      "masterFilename": "growth-web-quick-add-mobile.png",
+      "publicFilename": "growth-web-quick-add-mobile.webp",
+      "width": 1600,
+      "height": 2400
+    }
+  ]
+}

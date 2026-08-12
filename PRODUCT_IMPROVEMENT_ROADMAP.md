@@ -16,12 +16,12 @@ The current `add-modern-waitlist-page` change should be completed and archived b
 
 ## Recommended Phase Order
 
-| Phase | Proposed OpenSpec change | Main outcome | Priority | Relative size |
-| --- | --- | --- | --- | --- |
-| 1 | `add-progress-aware-waitlist-cta` | CTA lifecycle and corrected founding-offer messaging | Quick win | Small |
-| 2 | `add-quick-log-proof-and-social-assets` | Responsive Flow photographs, anchored Quick Actions cue, and reusable social assets | Critical | Large |
-| 3 | `add-growth-web-quick-add-showcase` | Static browser Quick-Add mockup showing Growth batch entry | High | Medium |
-| 4 | `add-founding-offer-redemption` | Durable eligibility, unique codes, and first-year Starter discount enforcement | Before paid launch | Backend-dependent |
+| Phase | Proposed OpenSpec change                | Main outcome                                                                        | Priority           | Relative size     |
+| ----- | --------------------------------------- | ----------------------------------------------------------------------------------- | ------------------ | ----------------- |
+| 1     | `add-progress-aware-waitlist-cta`       | CTA lifecycle and corrected founding-offer messaging                                | Quick win          | Small             |
+| 2     | `add-quick-log-proof-and-social-assets` | Responsive Flow photographs, anchored Quick Actions cue, and reusable social assets | Critical           | Large             |
+| 3     | `add-growth-web-quick-add-showcase`     | Static browser Quick-Add mockup showing Growth batch entry                          | High               | Medium            |
+| 4     | `add-founding-offer-redemption`         | Durable eligibility, unique codes, and first-year Starter discount enforcement      | Before paid launch | Backend-dependent |
 
 Phases 1–3 remain validation-stage frontend work. Phase 4 requires real persistence, identity, and billing integration and should not be presented as functional until those systems exist.
 
@@ -59,11 +59,11 @@ SURVEY COMPLETE
 
 ### Recommended CTA presentation
 
-| State | Primary CTA label | Behavior | Supporting message |
-| --- | --- | --- | --- |
-| Not joined | **Join the waitlist** | Focus or scroll to the waitlist form | None required |
-| Joined, survey incomplete | **Answer the quick survey** | Open the survey and restore in-session answers | “You’re on the waitlist. Help shape what we build first.” |
-| Survey complete | **You’re all set — thank you** | Disabled/non-actionable completion state with check icon | “Thanks for helping shape SoleSheet.” |
+| State                     | Primary CTA label              | Behavior                                                 | Supporting message                                        |
+| ------------------------- | ------------------------------ | -------------------------------------------------------- | --------------------------------------------------------- |
+| Not joined                | **Join the waitlist**          | Focus or scroll to the waitlist form                     | None required                                             |
+| Joined, survey incomplete | **Answer the quick survey**    | Open the survey and restore in-session answers           | “You’re on the waitlist. Help shape what we build first.” |
+| Survey complete           | **You’re all set — thank you** | Disabled/non-actionable completion state with check icon | “Thanks for helping shape SoleSheet.”                     |
 
 “You’re all set — thank you” is preferable to “Thank you for joining” because it confirms that both actions are complete and does not look like another invitation to click.
 
@@ -207,7 +207,7 @@ The strongest presentation is not a larger copy of the mobile form. It should de
 
 ### Recommended positioning
 
-> Add one pair quickly from your phone—or encode a full delivery from your browser. Web Quick-Add is planned for Growth sellers who handle inventory in batches.
+> Add one pair quickly from your phone—or encode multiple entries from your browser. Web Quick-Add is planned for Growth sellers who handle inventory in multiple quantities.
 
 This feature should remain a Growth-plan differentiator. The mobile app must still support adding individual pairs; otherwise the paid feature would weaken the core mobile promise.
 

@@ -19,6 +19,9 @@ describe("flowMockupAssets", () => {
     expect(flowMockupAssets.find((asset) => asset.id === "backup")?.description).toMatch(
       /Starter plan.*cloud backup and restore.*Starter feature/i,
     );
+    expect(flowMockupAssets.find((asset) => asset.id === "quick-actions")?.description).toMatch(
+      /basic Home dashboard.*12 active pairs.*₱53,200.*₱8,950.*Stock mix of 9 available and 3 reserved.*Sell a pair, Record a payment, and Add a pair/i,
+    );
 
     const ids = new Set<string>();
     const filenames = new Set<string>();

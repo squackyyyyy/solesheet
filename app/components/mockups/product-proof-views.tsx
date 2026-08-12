@@ -1,5 +1,4 @@
 import { formatPeso, type PaymentStatus, type ShoeRecord } from "@/app/lib/mock-data";
-import type { DemoPayment } from "@/app/lib/product-proof";
 
 export function PreviewDisclosure({ compact = false }: { compact?: boolean }) {
   return (
@@ -7,37 +6,6 @@ export function PreviewDisclosure({ compact = false }: { compact?: boolean }) {
       <span aria-hidden="true" className="size-1.5 rounded-full bg-emerald-600" />
       Illustrative product preview
     </span>
-  );
-}
-
-export function InteractiveProofShell({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      aria-labelledby="interactive-proof-title"
-      aria-describedby="interactive-proof-description"
-      className="relative overflow-hidden rounded-[2rem] border border-stone-950/10 bg-[#f7f6f2] shadow-[0_30px_90px_rgba(17,17,17,.12)]"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-stone-200 bg-white/80 px-4 py-4 sm:px-6">
-        <div>
-          <p id="interactive-proof-title" className="text-sm font-bold text-stone-950">
-            {title}
-          </p>
-          <p id="interactive-proof-description" className="mt-1 max-w-xl text-xs leading-5 text-stone-600">
-            {description}
-          </p>
-        </div>
-        <PreviewDisclosure compact />
-      </div>
-      {children}
-    </section>
   );
 }
 
@@ -160,32 +128,6 @@ export function PaymentProgress({
       <div className="mt-3 flex justify-between gap-3 text-xs tabular-nums text-stone-300">
         <span>{formatPeso(collected)} collected</span>
         <span>{formatPeso(total)} total</span>
-      </div>
-    </div>
-  );
-}
-
-export function PaymentHistory({ payments }: { payments: DemoPayment[] }) {
-  return (
-    <div>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-stone-500">
-        Payment history
-      </p>
-      <div className="mt-2 grid gap-2">
-        {payments.map((payment, index) => (
-          <div
-            key={payment.id}
-            className={`flex items-center justify-between rounded-xl border px-3.5 py-3 text-xs ${index === payments.length - 1 && payments.length > 2 ? "proof-changed border-[#bfd85b] bg-[#efffb8]" : "border-stone-200 bg-white"}`}
-          >
-            <div>
-              <p className="font-bold text-stone-900">{payment.label}</p>
-              <p className="mt-0.5 text-stone-500">{payment.date}</p>
-            </div>
-            <p className="font-bold tabular-nums text-emerald-700">
-              +{formatPeso(payment.amount)}
-            </p>
-          </div>
-        ))}
       </div>
     </div>
   );

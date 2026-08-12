@@ -41,7 +41,7 @@ export function WaitlistJourneyProvider({ children }: { children: ReactNode }) {
 
 	function activateCta() {
 		if (journeyState === "not-joined") {
-			document.getElementById("waitlist-contact")?.focus();
+			document.getElementById("waitlist-email")?.focus();
 			return;
 		}
 

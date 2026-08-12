@@ -12,10 +12,17 @@ import {
 } from "@/app/components/ui/aria";
 import { useWaitlistJourney } from "@/app/components/waitlist/waitlist-journey";
 import { foundingOffer, surveyQuestions } from "@/app/lib/site-content";
-import { isValidWaitlistContact } from "@/app/lib/validation";
+import { isValidWaitlistEmail } from "@/app/lib/validation";
 
 type SignupState = "form" | "pending";
 type SurveyAnswers = Record<string, string | string[]>;
+type SingleOtherAnswerKey = "currentTool" | "priority";
+type OtherDetailKey =
+	| "currentToolOther"
+	| "priorityOther"
+	| "channelsOther";
+
+const OTHER_OPTION = "Other";
 
 export function WaitlistCta({
 	variant = "primary",
@@ -61,14 +68,30 @@ function SurveyForm({
 		setAnswers((current) => ({ ...current, [key]: value }));
 	};
 
+	const setSingleOtherAnswer = (
+		key: SingleOtherAnswerKey,
+		detailKey: Exclude<OtherDetailKey, "channelsOther">,
+		value: string,
+	) => {
+		setAnswers((current) => {
+			const next = { ...current, [key]: value };
+			if (value !== OTHER_OPTION) delete next[detailKey];
+			return next;
+		});
+	};
+
 	const toggleChannel = (channel: string, isSelected: boolean) => {
-		const current = Array.isArray(answers.channels) ? answers.channels : [];
-		setAnswer(
-			"channels",
-			isSelected
-				? [...current, channel]
-				: current.filter((item) => item !== channel),
-		);
+		setAnswers((current) => {
+			const channels = Array.isArray(current.channels) ? current.channels : [];
+			const next: SurveyAnswers = {
+				...current,
+				channels: isSelected
+					? [...channels, channel]
+					: channels.filter((item) => item !== channel),
+			};
+			if (channel === OTHER_OPTION && !isSelected) delete next.channelsOther;
+			return next;
+		});
 	};
 
 	return (
@@ -104,20 +127,56 @@ function SurveyForm({
 				value={String(answers.installments ?? "")}
 				onChange={(value) => setAnswer("installments", value)}
 			/>
-			<SelectField
-				label={surveyQuestions.currentTool.label}
-				options={surveyQuestions.currentTool.options}
-				placeholder="Choose your current tool"
-				selectedKey={String(answers.currentTool ?? "") || null}
-				onSelectionChange={(key) => setAnswer("currentTool", String(key))}
-			/>
-			<SelectField
-				label={surveyQuestions.priority.label}
-				options={surveyQuestions.priority.options}
-				placeholder="Choose one feature"
-				selectedKey={String(answers.priority ?? "") || null}
-				onSelectionChange={(key) => setAnswer("priority", String(key))}
-			/>
+			<div className="grid gap-3">
+				<SelectField
+					label={surveyQuestions.currentTool.label}
+					options={surveyQuestions.currentTool.options}
+					placeholder="Choose your current tool"
+					selectedKey={String(answers.currentTool ?? "") || null}
+					onSelectionChange={(key) =>
+						setSingleOtherAnswer(
+							"currentTool",
+							"currentToolOther",
+							key == null ? "" : String(key),
+						)
+					}
+				/>
+				{answers.currentTool === OTHER_OPTION ? (
+					<TextInput
+						label={surveyQuestions.currentTool.otherDetailLabel}
+						description="Optional — tell us what you use."
+						value={String(answers.currentToolOther ?? "")}
+						onChange={(value) => setAnswer("currentToolOther", value)}
+						inputId="survey-current-tool-other"
+						autoComplete="off"
+					/>
+				) : null}
+			</div>
+			<div className="grid gap-3">
+				<SelectField
+					label={surveyQuestions.priority.label}
+					options={surveyQuestions.priority.options}
+					placeholder="Choose one feature"
+					selectedKey={String(answers.priority ?? "") || null}
+					onSelectionChange={(key) =>
+						setSingleOtherAnswer(
+							"priority",
+							"priorityOther",
+							key == null ? "" : String(key),
+						)
+					}
+				/>
+				{answers.priority === OTHER_OPTION ? (
+					<TextInput
+						label={surveyQuestions.priority.otherDetailLabel}
+						description="Optional — tell us what would help most."
+						value={String(answers.priorityOther ?? "")}
+						onChange={(value) => setAnswer("priorityOther", value)}
+						inputId="survey-priority-other"
+						autoComplete="off"
+					/>
+				) : null}
+			</div>
 			<RadioCards
 				label={surveyQuestions.backup.label}
 				options={surveyQuestions.backup.options}
@@ -142,6 +201,17 @@ function SurveyForm({
 						</CheckField>
 					))}
 				</div>
+				{Array.isArray(answers.channels) &&
+				answers.channels.includes(OTHER_OPTION) ? (
+					<TextInput
+						label={surveyQuestions.channels.otherDetailLabel}
+						description="Optional — tell us where else you sell."
+						value={String(answers.channelsOther ?? "")}
+						onChange={(value) => setAnswer("channelsOther", value)}
+						inputId="survey-channels-other"
+						autoComplete="off"
+					/>
+				) : null}
 			</div>
 			<RadioCards
 				label={surveyQuestions.interview.label}
@@ -188,9 +258,9 @@ export function WaitlistExperience() {
 
 	function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		const nextContactError = isValidWaitlistContact(contact)
+		const nextContactError = isValidWaitlistEmail(contact)
 			? ""
-			: "Enter a valid email address or Philippine mobile number.";
+			: "Enter a valid email address.";
 		const nextConsentError = consent
 			? ""
 			: "Please agree to the privacy notice to continue.";
@@ -311,15 +381,17 @@ export function WaitlistExperience() {
 								autoComplete="name"
 							/>
 							<TextInput
-								label="Email or Philippine mobile number"
+								label="Email address"
 								value={contact}
 								onChange={(value) => {
 									setContact(value);
 									if (contactError) setContactError("");
 								}}
 								errorMessage={contactError}
-								placeholder="you@email.com or 09•• ••• ••••"
-								inputId="waitlist-contact"
+								placeholder="you@email.com"
+								type="email"
+								name="email"
+								inputId="waitlist-email"
 								autoComplete="email"
 							/>
 							<CheckField
