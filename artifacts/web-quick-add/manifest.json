@@ -4,7 +4,7 @@
   "assets": [
     {
       "id": "growth-web-quick-add",
-      "label": "Growth Web Quick-Add",
+      "label": "Growth Web Inventory",
       "layout": "desktop",
       "captureId": "growth-web-quick-add-desktop",
       "masterFilename": "growth-web-quick-add-desktop.png",
@@ -14,7 +14,7 @@
     },
     {
       "id": "growth-web-quick-add",
-      "label": "Growth Web Quick-Add",
+      "label": "Growth Web Inventory",
       "layout": "mobile",
       "captureId": "growth-web-quick-add-mobile",
       "masterFilename": "growth-web-quick-add-mobile.png",

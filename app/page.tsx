@@ -1,12 +1,12 @@
 import {
 	DashboardScreen,
 	DeviceFrame,
-	PaymentsScreen,
 	mockupMeta,
 } from "@/app/components/mockups/app-screens";
 import { BrandLogo } from "@/app/components/brand/brand-logo";
 import { formatPeso, recordedInstallmentPayment } from "@/app/lib/mock-data";
 import { MockupShowcase } from "@/app/components/mockups/mockup-showcase";
+import { PricingFeatureComparison } from "@/app/components/pricing/pricing-feature-comparison";
 import { WebQuickAddSection } from "@/app/components/web-quick-add/web-quick-add-section";
 import {
 	WaitlistCta,
@@ -243,34 +243,31 @@ export default function Home() {
 					</div>
 				</section>
 
-				<WebQuickAddSection />
-
 				<section
 					id="installments"
 					aria-labelledby="installment-title"
-					className="relative bg-[var(--brand-ink)] text-white"
+					className="border-b border-[#14213d]/10 bg-[var(--brand-soft)]"
 				>
-					<div
-						aria-hidden="true"
-						className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(circle_at_center,#22c55e44,transparent_65%)]"
-					/>
-					<div className="relative mx-auto grid max-w-[1440px] gap-12 px-4 py-20 sm:px-6 sm:py-28 lg:grid-cols-[.82fr_1fr] lg:items-center lg:px-10">
-						<div>
-							<p className="text-[11px] font-bold uppercase tracking-[0.26em] text-[#86efac]">
-								The local differentiator
-							</p>
-							<h2
-								id="installment-title"
-								className="mt-5 max-w-xl text-4xl font-semibold tracking-[-0.05em] sm:text-6xl"
-							>
-								Inventory sold. Payment still moving.
-							</h2>
-							<p className="mt-6 max-w-lg text-base leading-8 text-white/75">
-								SoleSheet keeps the stock state and payment state separate, so a
-								released pair can still show exactly what was collected and what
-								remains.
-							</p>
-							<div className="mt-8 grid gap-3 sm:grid-cols-2">
+					<div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 sm:py-16 lg:px-10">
+						<div
+							data-installment-state-callout="true"
+							className="rounded-[2rem] bg-[var(--brand-ink)] px-6 py-8 text-white shadow-[0_24px_70px_rgba(20,33,61,.16)] sm:px-9 sm:py-10"
+						>
+							<div>
+								<p className="text-[11px] font-bold uppercase tracking-[0.26em] text-[#86efac]">
+									The local differentiator
+								</p>
+								<h2
+									id="installment-title"
+									className="mt-5 max-w-xl text-4xl font-semibold tracking-[-0.05em] sm:text-6xl"
+								>
+									Sold doesn’t always mean settled.
+								</h2>
+								<p className="mt-5 max-w-2xl text-base leading-7 text-white/75">
+									SoleSheet keeps inventory state and payment state separate, so a
+									sold pair can still show exactly what was collected and what remains.
+								</p>
+								<div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 								{[
 									[
 										"Cash collected",
@@ -291,22 +288,17 @@ export default function Home() {
 										<p className="mt-2 text-lg font-semibold">{value}</p>
 									</div>
 								))}
+								</div>
+								<p className="mt-5 text-xs leading-6 text-white/70">
+									Seller-managed tracking only. No lending, interest, late fees,
+									collections, or payment processing.
+								</p>
 							</div>
-							<p className="mt-5 text-xs leading-6 text-white/70">
-								Seller-managed tracking only. No lending, interest, late fees,
-								collections, or payment processing.
-							</p>
-						</div>
-						<div className="mx-auto w-full max-w-[380px] lg:justify-self-end">
-							<DeviceFrame
-								label={mockupMeta[5].label}
-								description={mockupMeta[5].description}
-							>
-								<PaymentsScreen />
-							</DeviceFrame>
 						</div>
 					</div>
 				</section>
+
+				<WebQuickAddSection />
 
 				<section
 					id="pricing"
@@ -360,6 +352,7 @@ export default function Home() {
 							</article>
 						))}
 					</div>
+					<PricingFeatureComparison />
 					<div className="mt-4 grid gap-5 rounded-[2rem] bg-[#e8ff9f] p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8">
 						<div>
 							<p className="text-xs font-bold uppercase tracking-[0.2em] text-black/65">

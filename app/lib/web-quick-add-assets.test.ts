@@ -12,8 +12,8 @@ describe("webQuickAddAssets", () => {
   it("defines one stable desktop/mobile asset pair with an equivalent description", () => {
     expect(webQuickAddAssets).toHaveLength(1);
     const [asset] = webQuickAddAssets;
-    expect(asset).toMatchObject({ id: "growth-web-quick-add", label: "Growth Web Quick-Add" });
-    expect(asset.description).toMatch(/structured inventory batch table.*Save 12 pairs.*₱53,200.*mobile inventory/i);
+    expect(asset).toMatchObject({ id: "growth-web-quick-add", label: "Growth Web Inventory" });
+    expect(asset.description).toMatch(/fixed-column SoleSheet inventory table.*two emerald-highlighted New rows.*Add row as pair creation.*12 pairs in inventory.*2 newly added on web.*₱53,200.*planned web changes appearing in mobile inventory/i);
     expect(asset.desktop).toMatchObject({
       captureId: "growth-web-quick-add-desktop",
       width: 3200,

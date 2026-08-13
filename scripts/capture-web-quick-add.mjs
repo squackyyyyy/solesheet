@@ -23,7 +23,7 @@ function pngDimensions(buffer) {
 }
 
 if (registry.length !== 1 || captures.length !== 2) {
-  throw new Error(`Expected one Web Quick-Add destination and two captures, got ${registry.length} and ${captures.length}`);
+  throw new Error(`Expected one Web Inventory destination and two captures, got ${registry.length} and ${captures.length}`);
 }
 
 await mkdir(masterDir, { recursive: true });

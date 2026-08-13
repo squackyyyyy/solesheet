@@ -31,7 +31,7 @@
     "label": "Add Stock",
     "title": "Add only the essentials",
     "fastestPath": false,
-    "description": "Product preview of a short Add pair form for a New Balance 530 in US 7 and White / Silver, with ₱4,200 cost, optional ₱5,600 target, and one Add pair action.",
+    "description": "Product preview of a short Add pair form for a New Balance 530 in US 7 and White / Silver, with ₱4,200 cost, optional ₱5,600 target, a collapsed Optional details row for Date acquired, Status, and Notes that can be added or edited later, and one Add pair action.",
     "desktop": { "captureId": "add-stock-desktop", "masterFilename": "add-stock-desktop.png", "publicFilename": "add-stock-desktop.webp", "width": 3200, "height": 2400, "sourceWidth": 1600, "sourceHeight": 1200 },
     "mobile": { "captureId": "add-stock-mobile", "masterFilename": "add-stock-mobile.png", "publicFilename": "add-stock-mobile.webp", "width": 1600, "height": 2400, "sourceWidth": 800, "sourceHeight": 1200 }
   },

@@ -56,7 +56,7 @@ The app helps a reseller:
 - Compute profit automatically
 - Track installment payments for sold shoes
 - See inventory value and sales performance
-- Add inventory from mobile or through a web quick-add page
+- Manage inventory from mobile or through a fixed-column web inventory table
 - Preserve sold history without automatically deleting records
 
 The app should feel simpler and faster than a spreadsheet.
@@ -165,11 +165,13 @@ Future paid enhancements can include:
 - Exportable collection reports
 - Multi-device installment sync
 
-### Web Quick-Add Flow
+### Web Inventory Flow
 
-The app should eventually generate or provide a web link where users can add inventory from a browser. This is valuable because bulk encoding is often easier on a laptop or desktop.
+The app should eventually provide a browser workspace that shows the same SoleSheet inventory as the mobile app. It should use fixed SoleSheet columns—brand/model, size, colorway, cost price, target price, and status—so sellers can edit or add rows without creating arbitrary spreadsheet columns.
 
-This feature should likely be paid, because it creates a strong upgrade reason and may require cloud infrastructure.
+Adding a row means adding a new pair. Completed row edits are intended to appear in mobile inventory once paid cross-device sync is implemented. Required-field validation, deletion/archive behavior, and conflict handling need separate product design before the feature launches.
+
+This feature should likely be paid, because browser inventory management and cross-device sync create a strong upgrade reason and require cloud infrastructure.
 
 ## 6. Validation Phase Before App Development
 
@@ -359,7 +361,7 @@ Recommended questions:
 - Options: Google Sheets, Excel, Notes app, Messenger, notebook, memory only, other
 
 - Which feature matters most to you?
-- Options: Fast inventory updates, profit tracking, installment tracking, web quick-add, cloud backup, reports
+- Options: Fast inventory updates, profit tracking, installment tracking, web inventory, cloud backup, reports
 
 - Would you want cloud backup/sync?
 - Options: Yes, no, maybe, only if affordable
@@ -445,7 +447,7 @@ Recommended limits:
 - Installment tracking
 - Search and filtering
 - Sold history retained without automatic expiry
-- No web quick-add
+- No web inventory
 - Local export through the device share sheet, such as CSV or JSON
 - No spreadsheet import
 - No advanced analytics
@@ -516,8 +518,8 @@ Recommended support:
 - Full sold history
 - Cloud sync and backup
 - Installment tracking with stronger reporting
-- Web quick-add link
-- Bulk web entry
+- Web inventory workspace
+- Browser row management
 - Spreadsheet import
 - Advanced analytics
 - Best-selling sizes
@@ -531,7 +533,7 @@ Recommended support:
 Notes:
 
 - This is likely the best plan to highlight once the product is mature enough.
-- The web quick-add feature should probably start here because it is a clear upgrade driver.
+- The web inventory feature should probably start here because it is a clear upgrade driver.
 
 ### Pro / Team
 
@@ -622,7 +624,7 @@ Purpose:
 - Make the final platform call after 30 to 50 qualified target-reseller responses and interviews
 - Use React Aria Components for accessible, touch-friendly interactive web controls such as forms, dialogs, radio groups, and validation states.
 - React Aria is not required for purely static website sections.
-- A web quick-add interface is a valuable future feature
+- A web inventory interface is a valuable future feature
 - Backend can start simple and cost-conscious
 - Cloud sync/backup should be designed carefully because it affects pricing and operating costs
 - Avoid cloud-heavy features such as photos in the initial product
@@ -648,7 +650,7 @@ Purpose:
 - Should the first version launch Android-first using a cross-platform codebase, or should results justify a different choice?
 - What is the minimum inventory size where a reseller feels pain strongly enough to pay?
 - How often do target users add inventory in bulk from a computer?
-- Do users care more about installment tracking, profit analytics, web quick-add, or backup/sync?
+- Do users care more about installment tracking, profit analytics, web inventory, or backup/sync?
 - What payment flow is best for the Philippine market: app store subscription, web payment, GCash/Maya, or a mix?
 - Should the waitlist collect email, phone number, or both?
 - Should the waitlist website show pricing immediately, or ask pricing interest after signup?

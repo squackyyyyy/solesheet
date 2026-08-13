@@ -42,3 +42,20 @@ describe("Quick Actions flow composition", () => {
     expect(screen.getByText("Hold + for more")).toBeInTheDocument();
   });
 });
+
+describe("Add Stock flow composition", () => {
+  it("depicts supported optional details without adding an operable control", () => {
+    const capture = getFlowMockupCapture("add-stock-desktop");
+    expect(capture).toBeDefined();
+
+    const { container } = render(<FlowMockupComposition capture={capture!} />);
+    const disclosure = container.querySelector('[data-optional-details-disclosure="collapsed"]');
+    expect(disclosure).toHaveTextContent("Optional details");
+    expect(disclosure).toHaveTextContent("Date acquired · Status · Notes");
+    expect(disclosure).toHaveTextContent("Add or edit these later");
+    expect(screen.getByText("Target price").compareDocumentPosition(disclosure as Node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(disclosure?.compareDocumentPosition(screen.getByText("Add pair →")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(container).not.toHaveTextContent(/photos|supplier/i);
+    expect(container.querySelectorAll("button, a, input, select, textarea, [tabindex]")).toHaveLength(0);
+  });
+});

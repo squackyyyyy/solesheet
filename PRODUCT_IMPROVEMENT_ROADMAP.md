@@ -20,7 +20,7 @@ The current `add-modern-waitlist-page` change should be completed and archived b
 | ----- | --------------------------------------- | ----------------------------------------------------------------------------------- | ------------------ | ----------------- |
 | 1     | `add-progress-aware-waitlist-cta`       | CTA lifecycle and corrected founding-offer messaging                                | Quick win          | Small             |
 | 2     | `add-quick-log-proof-and-social-assets` | Responsive Flow photographs, anchored Quick Actions cue, and reusable social assets | Critical           | Large             |
-| 3     | `add-growth-web-quick-add-showcase`     | Static browser Quick-Add mockup showing Growth batch entry                          | High               | Medium            |
+| 3     | `reframe-web-quick-add-inventory-table` | Static browser Web Inventory mockup showing Growth fixed-column row management      | High               | Medium            |
 | 4     | `add-founding-offer-redemption`         | Durable eligibility, unique codes, and first-year Starter discount enforcement      | Before paid launch | Backend-dependent |
 
 Phases 1–3 remain validation-stage frontend work. Phase 4 requires real persistence, identity, and billing integration and should not be presented as functional until those systems exist.
@@ -31,7 +31,7 @@ The validation-stage pricing story should keep the free tier genuinely useful an
 
 - **Free:** up to 20 active pairs, local-only records, search and filtering, profit and installment tracking, sold history, and local export.
 - **Starter — ₱99/month:** up to 150 active pairs, automatic cloud backup and recovery, installment reminders, and monthly business summaries.
-- **Growth — ₱349/month or ₱3,490/year:** up to 750 active pairs, cloud synchronization, browser Quick-Add, spreadsheet import, and advanced reports.
+- **Growth — ₱349/month or ₱3,490/year:** up to 750 active pairs, cross-device synchronization, browser Web Inventory, spreadsheet import, and advanced reports.
 
 All amounts remain planned validation-stage pricing until the product, payment flow, and customer research are ready for launch. A future Pro/Team price is intentionally deferred until team-specific value is validated.
 
@@ -184,30 +184,30 @@ An explicitly enabled, non-indexable local authoring route and Playwright captur
 
 ---
 
-## Phase 3 — Growth Web Quick-Add Showcase
+## Phase 3 — Growth Web Inventory Showcase
 
-**Proposed OpenSpec change:** `add-growth-web-quick-add-showcase`
+**Active OpenSpec change:** `reframe-web-quick-add-inventory-table`
 
 ### Goal
 
-Show why the Growth plan is valuable for resellers who prefer encoding several pairs from a laptop or desktop browser. This is a static product mockup for communicating the feature, not an interactive demo.
+Show why the Growth plan is valuable for resellers who want to manage the same inventory from a laptop or desktop browser. This is a static product mockup for communicating the feature, not an interactive demo.
 
-The strongest presentation is not a larger copy of the mobile form. It should depict a polished batch-entry workspace so visitors immediately understand how they could encode many pairs efficiently.
+The strongest presentation is not a larger copy of the mobile form or a temporary batch screen. It should depict a polished fixed-column inventory workspace so visitors immediately understand how they could add and edit multiple pairs efficiently.
 
 ### Recommended browser-side experience
 
 - A realistic desktop browser frame visually distinct from the mobile app shell.
-- A Growth-plan label and short explanation of browser quick-add.
-- A compact, populated batch-entry table with columns for brand/model, size, colorway, cost, target price, and starting status.
-- Visible examples of Add row, Duplicate row, Delete row, and Save batch controls to communicate the intended workflow, without making them operable.
-- A static summary such as “12 pairs ready” and an estimated inventory cost.
-- A small visual cue showing that the entered pairs would become available in mobile inventory.
+- A Growth-plan label and short explanation of browser inventory management.
+- A compact, populated fixed-column inventory table with columns for brand/model, size, colorway, cost, target price, and status.
+- An Add row treatment that means adding a new pair, with at least two fully populated New rows highlighted by restrained emerald borders or glow.
+- Static summaries for 12 pairs in inventory, 2 newly added on web, and the fixture-derived inventory cost.
+- A concise integrated planned-state note that web changes are intended to appear in mobile inventory.
 - Visual styling based on the same React Aria component patterns intended for the future browser app, while keeping the landing-page mockup non-interactive.
 - An equivalent accessible text description of the feature and screen contents.
 
 ### Recommended positioning
 
-> Add one pair quickly from your phone—or encode multiple entries from your browser. Web Quick-Add is planned for Growth sellers who handle inventory in multiple quantities.
+> Manage the same SoleSheet inventory from your browser. Fixed columns keep it simple, while adding rows makes encoding multiple pairs faster. Planned for Growth.
 
 This feature should remain a Growth-plan differentiator. The mobile app must still support adding individual pairs; otherwise the paid feature would weaken the core mobile promise.
 
@@ -215,19 +215,20 @@ This feature should remain a Growth-plan differentiator. The mobile app must sti
 
 - The browser mockup is entirely static: no editable fields, row actions, simulated saving, local state, or interactive walkthrough.
 - Do not expose presentation-only controls as focusable buttons, fields, or table widgets.
-- Depict manual batch entry first.
+- Depict fixed-column row management first; users cannot create columns.
 - Show CSV import only as “planned,” if it is shown at all.
 - Do not imply live cloud sync is functional in the frontend prototype.
 - Reuse the same inventory field definitions and sample data as the mobile demo.
+- Keep required-field validation, deletion/archive behavior, and conflict handling outside the static mockup until their product behavior is designed.
 
 ### Acceptance criteria
 
-- The page includes a polished desktop quick-add mockup that is visually understandable on both mobile and desktop landing-page layouts.
-- The static screen clearly communicates batch entry, duplicate-row convenience, inventory cost, and the connection to mobile inventory.
+- The page includes a polished desktop Web Inventory mockup that is visually understandable on both mobile and desktop landing-page layouts.
+- The static screen clearly communicates fixed columns, Add row as new-pair creation, two highlighted New rows, inventory cost, and the planned connection to mobile inventory.
 - No part of the browser mockup appears in the accessibility tree as a usable control.
 - A concise accessible description conveys the information represented visually.
 - The mockup follows the intended React Aria visual language without adding browser-demo interaction or state.
-- Growth pricing and feature copy consistently identify Web Quick-Add as a Growth feature.
+- Growth pricing and feature copy consistently identify Web Inventory as a Growth feature.
 
 ---
 

@@ -22,6 +22,15 @@ describe("flowMockupAssets", () => {
     expect(flowMockupAssets.find((asset) => asset.id === "quick-actions")?.description).toMatch(
       /basic Home dashboard.*12 active pairs.*₱53,200.*₱8,950.*Stock mix of 9 available and 3 reserved.*Sell a pair, Record a payment, and Add a pair/i,
     );
+    const addStock = flowMockupAssets.find((asset) => asset.id === "add-stock");
+    expect(addStock?.description).toMatch(
+      /short Add pair form.*optional ₱5,600 target.*collapsed Optional details row.*Date acquired, Status, and Notes.*added or edited later.*Add pair action/i,
+    );
+    expect(addStock?.description).not.toMatch(/photos|supplier/i);
+    expect(addStock).toMatchObject({
+      desktop: { captureId: "add-stock-desktop", masterFilename: "add-stock-desktop.png", publicFilename: "add-stock-desktop.webp" },
+      mobile: { captureId: "add-stock-mobile", masterFilename: "add-stock-mobile.png", publicFilename: "add-stock-mobile.webp" },
+    });
 
     const ids = new Set<string>();
     const filenames = new Set<string>();

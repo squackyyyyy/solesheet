@@ -74,6 +74,19 @@ function Field({ label, value, emphasis = false, optional = false }: { label: st
   );
 }
 
+function OptionalDetailsDisclosure() {
+  return (
+    <div data-optional-details-disclosure="collapsed" className="rounded-[20px] border border-stone-200 bg-white px-4 py-3 shadow-[0_8px_24px_rgba(17,17,17,.04)]">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[13px] font-black text-stone-900">Optional details</p>
+        <span aria-hidden="true" className="text-[18px] leading-none text-stone-400">⌄</span>
+      </div>
+      <p className="mt-1 text-[11px] font-bold text-stone-600">Date acquired · Status · Notes</p>
+      <p className="mt-1 text-[10px] text-stone-400">Add or edit these later</p>
+    </div>
+  );
+}
+
 function PaymentChoice({ installment = false }: { installment?: boolean }) {
   return <div><p className="mb-2 text-[12px] font-bold text-stone-700">Payment</p><div className="grid grid-cols-2 gap-2 rounded-2xl bg-stone-100 p-1.5 text-[13px] font-black"><div className={`grid h-[46px] place-items-center rounded-xl ${installment ? "text-stone-500" : "bg-stone-950 text-white"}`}>Paid in full</div><div className={`grid h-[46px] place-items-center rounded-xl ${installment ? "bg-stone-950 text-white" : "text-stone-500"}`}>Installment</div></div></div>;
 }
@@ -185,7 +198,7 @@ function StockSearchScreen() {
 }
 
 function AddStockScreen() {
-  return <div className="px-7 pt-8"><ScreenHeading eyebrow="Stockroom" title="Add a pair" /><p className="mt-4 text-[13px] leading-5 text-stone-500">Start with the essentials. Add the rest later.</p><div className="mt-5 space-y-4"><Field label="Brand and model" value={`${quickLogExample.brand} ${quickLogExample.model}`} /><div className="grid grid-cols-2 gap-3"><Field label="Size" value={quickLogExample.size} /><Field label="Colorway" value={quickLogExample.colorway} /></div><Field label="Cost price" value={formatPeso(quickLogExample.cost)} emphasis /><Field label="Target price" value={formatPeso(quickLogExample.target ?? 0)} optional /></div><div className="mt-6"><Action>Add pair →</Action></div><p className="mt-4 text-center text-[11px] font-bold text-stone-400">Photos, notes, and supplier can wait.</p></div>;
+  return <div className="px-7 pt-8"><ScreenHeading eyebrow="Stockroom" title="Add a pair" /><p className="mt-4 text-[13px] leading-5 text-stone-500">Start with the essentials. Add the rest later.</p><div className="mt-5 space-y-4"><Field label="Brand and model" value={`${quickLogExample.brand} ${quickLogExample.model}`} /><div className="grid grid-cols-2 gap-3"><Field label="Size" value={quickLogExample.size} /><Field label="Colorway" value={quickLogExample.colorway} /></div><Field label="Cost price" value={formatPeso(quickLogExample.cost)} emphasis /><Field label="Target price" value={formatPeso(quickLogExample.target ?? 0)} optional /></div><div className="mt-4"><OptionalDetailsDisclosure /></div><div className="mt-5"><Action>Add pair →</Action></div></div>;
 }
 
 function InstallmentScreen() {
@@ -204,7 +217,7 @@ const content: Record<FlowMockupId, { eyebrow: string; headline: ReactNode; mobi
   "quick-sale": { eyebrow: "Quick Sale · One tap", headline: <>Sell a pair<br />in seconds.</>, mobileHeadline: <>Sell a pair<br />in seconds.</>, body: "Find the shoe by model, size, or colorway. Everything known is filled in—enter the sale price and save.", dark: true, screen: (mobile) => <SaleScreen mobile={mobile} /> },
   "quick-actions": { eyebrow: "Quick Log · Press and hold", headline: <>One button.<br />Three shortcuts.</>, mobileHeadline: <>Hold for<br />quick actions.</>, body: "Tap starts a sale. Hold the same button for payments or new stock—the menu stays anchored to your thumb.", dark: false, screen: DashboardScreen },
   "search-stock": { eyebrow: "Stock search · All details", headline: <>Find the exact<br />pair, quickly.</>, mobileHeadline: <>Search all stock<br />at once.</>, body: "One compact search checks the model, size, and colorway, then keeps the exact variant and status visible.", dark: true, screen: StockSearchScreen },
-  "add-stock": { eyebrow: "Inventory · Essentials first", headline: <>Add stock<br />without the admin.</>, mobileHeadline: <>Add only<br />what matters.</>, body: "Model, size, colorway, and cost are enough to start. Target price is useful, clearly optional, and easy to add.", dark: false, screen: AddStockScreen },
+  "add-stock": { eyebrow: "Inventory · Essentials first", headline: <>Add stock<br />without the admin.</>, mobileHeadline: <>Add only<br />what matters.</>, body: "Model, size, colorway, and cost are enough to start. Target price and other details can be added or edited later.", dark: false, screen: AddStockScreen },
   installments: { eyebrow: "Quick Sale · Only when needed", headline: <>Installment?<br />Continue once.</>, mobileHeadline: <>Set terms<br />only if needed.</>, body: "Paid-in-full sales finish immediately. Choose installment and SoleSheet asks only for the payment terms next.", dark: true, screen: InstallmentScreen },
   payments: { eyebrow: "Installments · Connected totals", headline: <>Record a payment.<br />See balances move.</>, mobileHeadline: <>Every payment<br />updates the total.</>, body: "Add one payment and collected, remaining, progress, history, and status stay aligned automatically.", dark: false, screen: PaymentsScreen },
   backup: { eyebrow: "Data · Honest by design", headline: <>Local today.<br />Starter when ready.</>, mobileHeadline: <>Your records,<br />safer over time.</>, body: "Use SoleSheet locally without an account. Starter adds automatic cloud backup and restore for ₱99 a month.", dark: true, screen: BackupScreen },

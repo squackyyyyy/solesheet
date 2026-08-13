@@ -4,7 +4,7 @@ import { WebQuickAddSection } from "@/app/components/web-quick-add/web-quick-add
 import { faqs, plans, webQuickAddContent } from "@/app/lib/site-content";
 
 describe("WebQuickAddSection", () => {
-  it("frames Web Quick-Add truthfully as a planned Growth proof", () => {
+  it("frames Web Inventory truthfully as a planned Growth proof", () => {
     render(<WebQuickAddSection />);
 
     const section = screen.getByRole("region", { name: webQuickAddContent.heading });
@@ -34,23 +34,23 @@ describe("WebQuickAddSection", () => {
     expect(within(figure).queryAllByRole("grid")).toHaveLength(0);
   });
 
-  it("keeps Web Quick-Add planned for Growth while mobile inventory entry remains core", () => {
+  it("keeps Web Inventory in the intended Growth plan while mobile inventory entry remains core", () => {
     const growth = plans.find((plan) => plan.name === "Growth");
     const free = plans.find((plan) => plan.name === "Free");
 
-    expect(growth?.features).toContain("Planned Web Quick-Add and spreadsheet import");
+    expect(growth?.features).toContain("Web Inventory and spreadsheet import");
     expect(growth?.description).toMatch(/phone and browser/i);
     expect(free?.features).toContain("Search, filters, profit, and installments");
-    expect(webQuickAddContent.positioning).toMatch(/add one pair quickly from your phone/i);
+    expect(webQuickAddContent.positioning).toMatch(/same SoleSheet inventory from your browser.*adding rows/i);
   });
 
-  it("keeps the FAQ aligned with the planned Growth workflow", () => {
-    const faq = faqs.find((entry) => entry.question.startsWith("What is Web Quick-Add"));
+  it("keeps the FAQ aligned with the intended Growth workflow", () => {
+    const faq = faqs.find((entry) => entry.question.startsWith("What is Web Inventory"));
 
-    expect(faq?.answer).toMatch(/planned Growth feature.*multiple pairs.*browser batch/i);
-    expect(faq?.answer).toMatch(/add or duplicate rows.*pair count and inventory cost/i);
-    expect(faq?.answer).toMatch(/available in mobile inventory.*not live yet/i);
+    expect(faq?.answer).toMatch(/intended Growth feature.*same SoleSheet inventory.*browser/i);
+    expect(faq?.answer).toMatch(/fixed columns.*adding a row means adding a pair/i);
+    expect(faq?.answer).toMatch(/row edits.*appear in mobile inventory.*not live yet/i);
     expect(faq?.answer).toMatch(/one pair from your phone.*core product/i);
-    expect(faq?.answer).toMatch(/spreadsheet import is a separate planned Growth feature/i);
+    expect(faq?.answer).toMatch(/spreadsheet import is another intended Growth feature/i);
   });
 });

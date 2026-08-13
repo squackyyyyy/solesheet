@@ -139,15 +139,17 @@ export const stockroomShoes: ShoeRecord[] = [
 
 export const shoes = stockroomShoes.slice(0, 3);
 
-export const webQuickAddBatch: ShoeRecord[] = stockroomShoes.map((shoe) => ({
-  ...shoe,
-  status: "Available",
-  buyer: undefined,
-}));
+export const webInventoryRows = stockroomShoes;
 
-export const webQuickAddSummary = {
-  readyCount: webQuickAddBatch.length,
-  inventoryCost: webQuickAddBatch.reduce((total, shoe) => total + shoe.cost, 0),
+export const webInventoryNewRowIds = [
+  "vomero-photon-8",
+  "gel-1130-white-75",
+] as const;
+
+export const webInventorySummary = {
+  pairCount: webInventoryRows.length,
+  newlyAddedCount: webInventoryNewRowIds.length,
+  inventoryCost: webInventoryRows.reduce((total, shoe) => total + shoe.cost, 0),
 } as const;
 
 const stockMix = stockroomShoes.reduce(

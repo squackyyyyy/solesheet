@@ -6,7 +6,7 @@ import { getWebQuickAddCapture } from "@/app/lib/web-quick-add-assets";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "SoleSheet Web Quick-Add studio",
+  title: "SoleSheet Web Inventory studio",
   robots: { index: false, follow: false },
 };
 

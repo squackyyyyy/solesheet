@@ -11,8 +11,8 @@ test("page remains responsive and exposes the complete product story", async ({ 
   await expect(page.getByRole("heading", { name: /see the workflows we’re building for everyday reselling/i })).toBeVisible();
   await expect(page.getByText(/browse seven static product previews.*they are not a live demo/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: /seven everyday workflows, shown clearly/i })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /a full delivery\. one clean batch/i })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /inventory sold/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /your stockroom\. one clear table/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /sold doesn’t always mean settled/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: /free for the core work/i })).toBeVisible();
 
   const overflow = await page.evaluate(() => {
@@ -95,47 +95,102 @@ test("mobile Flow art uses a tall cropped phone and a compact Planned pill", asy
   expect((plannedBox?.width ?? 0) / (plannedBox?.height ?? 1)).toBeGreaterThan(2);
 });
 
-test("installment section matches the Payments preview's recorded-payment state", async ({ page }) => {
+test("compact installment callout reinforces the gallery without duplicating the Payments preview", async ({ page }, testInfo) => {
   await page.goto("/");
 
   const section = page.locator("#installments");
-  await expect(section.getByText("Record payment")).toBeVisible();
-  await expect(section.getByText("Payment received")).toBeVisible();
-  await expect(section.getByText("₱1,500").first()).toBeVisible();
-  await expect(section.getByText("₱5,500").first()).toBeVisible();
-  await expect(section.getByText("₱1,000").first()).toBeVisible();
-  await expect(section.getByText("85%")).toBeVisible();
-  await expect(section.getByText("Payment history")).toBeVisible();
-  await expect(section.getByText("Payment recorded ✓")).toBeVisible();
-  await expect(section.getByText("Partially paid").first()).toBeVisible();
+  await expect(section).toHaveAttribute("aria-labelledby", "installment-title");
+  await expect(section.getByRole("heading", { name: "Sold doesn’t always mean settled." })).toBeVisible();
+  await expect(section.getByText(/keeps inventory state and payment state separate/i)).toBeVisible();
+  await expect(section.getByText("₱5,500")).toBeVisible();
+  await expect(section.getByText("₱1,000")).toBeVisible();
+  await expect(section.getByText("Sold", { exact: true })).toBeVisible();
+  await expect(section.getByText("Partially paid", { exact: true })).toBeVisible();
+  await expect(section.getByText(/seller-managed tracking only.*payment processing/i)).toBeVisible();
+  await expect(section.locator('[data-installment-state-callout="true"]')).toHaveCount(1);
+  await expect(section.getByText("Record payment")).toHaveCount(0);
+  await expect(section.getByText("Payment received")).toHaveCount(0);
+
+  if (!testInfo.project.name.startsWith("mobile")) {
+    await page.getByRole("link", { name: "Installments" }).click();
+    await expect(page).toHaveURL(/#installments$/);
+    await expect(section).toBeInViewport();
+  }
 });
 
 test("pricing makes core inventory work free and reserves protection and scale for paid plans", async ({ page }) => {
   await page.goto("/");
 
+  const pricing = page.locator("#pricing");
+  const free = pricing.locator("article").filter({ hasText: "Free" });
+  const starter = pricing.locator("article").filter({ hasText: "Starter" });
+  const growth = pricing.locator("article").filter({ hasText: "Growth" });
+
   await expect(page.getByText(/₱349\/month/i)).toBeVisible();
-  await expect(page.getByText(/search, filters, profit, and installments/i)).toBeVisible();
-  await expect(page.getByText(/automatic cloud backup and restore/i)).toBeVisible();
-  await expect(page.getByText(/installment reminders and monthly summaries/i)).toBeVisible();
-  await expect(page.getByText(/planned web quick-add and spreadsheet import/i)).toBeVisible();
-  await expect(page.getByText(/planned cloud sync and advanced reports/i)).toBeVisible();
-  await expect(page.getByText(/planned pricing — core work stays free/i)).toBeVisible();
+  await expect(free.getByText(/search, filters, profit, and installments/i)).toBeVisible();
+  await expect(starter.getByText(/automatic cloud backup and restore/i)).toBeVisible();
+  await expect(starter.getByText(/installment reminders and monthly summaries/i)).toBeVisible();
+  await expect(growth.getByText(/web inventory and spreadsheet import/i)).toBeVisible();
+  await expect(growth.getByText(/cross-device sync and advanced reports/i)).toBeVisible();
+  await expect(page.getByText(/SoleSheet is still in validation.*not available yet/i)).toBeVisible();
 });
 
-test("Growth Web Quick-Add is a responsive static proof with no product side effects", async ({ page, context }, testInfo) => {
+test("pricing comparison preserves the cumulative plan ladder on desktop and mobile", async ({ page, context }, testInfo) => {
   const writes: string[] = [];
   page.on("request", (request) => {
     if (!["GET", "HEAD"].includes(request.method())) writes.push(`${request.method()} ${request.url()}`);
   });
 
   await page.goto("/");
-  const section = page.getByRole("region", { name: /a full delivery\. one clean batch/i });
+  const comparison = page.getByRole("region", { name: "Plan feature comparison" });
+  const before = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }));
+  const cookiesBefore = await context.cookies();
+
+  if (testInfo.project.name.startsWith("mobile")) {
+    const disclosure = comparison.locator("details");
+    await expect(disclosure).not.toHaveAttribute("open", "");
+    await disclosure.locator("summary").click();
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(comparison.getByText("Swipe to compare plans →")).toBeVisible();
+
+    const scrollRegion = comparison.getByRole("region", { name: /feature comparison table.*swipe horizontally/i });
+    await expect(scrollRegion).toBeVisible();
+    expect(await scrollRegion.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+    await expect(scrollRegion.locator('th[scope="row"]').first()).toHaveClass(/\bsticky\b.*\bleft-0\b/);
+  } else {
+    const table = comparison.locator('[data-pricing-comparison-table="true"]:visible');
+    await expect(table).toHaveCount(1);
+    await expect(table.locator("thead th")).toHaveText(["Feature", "Free", "Starter", "Growth"]);
+  }
+
+  const visibleTable = comparison.locator('[data-pricing-comparison-table="true"]:visible');
+  await expect(visibleTable).toHaveCount(1);
+  await expect(visibleTable.getByRole("rowheader", { name: "Active pairs" })).toBeVisible();
+  await expect(visibleTable.getByText("Planned", { exact: true })).toHaveCount(0);
+  await expect(
+    comparison.locator("p:visible").filter({
+      hasText: /starter includes the Free core.*Growth includes Starter and Free benefits, then adds scale benefits/i,
+    }),
+  ).toBeVisible();
+  expect(writes).toEqual([]);
+  expect(await context.cookies()).toEqual(cookiesBefore);
+  expect(await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }))).toEqual(before);
+});
+
+test("Growth Web Inventory is a responsive static proof with no product side effects", async ({ page, context }, testInfo) => {
+  const writes: string[] = [];
+  page.on("request", (request) => {
+    if (!["GET", "HEAD"].includes(request.method())) writes.push(`${request.method()} ${request.url()}`);
+  });
+
+  await page.goto("/");
+  const section = page.getByRole("region", { name: /your stockroom\. one clear table/i });
   await section.scrollIntoViewIfNeeded();
-  await expect(section.getByText("Growth · Web Quick-Add", { exact: true })).toBeVisible();
-  await expect(section.getByText(/add one pair quickly from your phone.*planned for Growth sellers who handle inventory in multiple quantities/i)).toBeVisible();
+  await expect(section.getByText("Growth · Web Inventory", { exact: true })).toBeVisible();
+  await expect(section.getByText(/manage the same SoleSheet inventory from your browser.*adding rows makes encoding multiple pairs faster.*planned for Growth/i)).toBeVisible();
   await expect(section.getByText(/planned Growth feature.*static product preview/i)).toBeVisible();
 
-  const image = section.getByRole("img", { name: /structured inventory batch table.*Save 12 pairs.*₱53,200.*mobile inventory/i });
+  const image = section.getByRole("img", { name: /fixed-column SoleSheet inventory table.*two emerald-highlighted New rows.*Add row as pair creation.*12 pairs in inventory.*2 newly added on web.*₱53,200.*planned web changes appearing in mobile inventory/i });
   await expect(image).toBeVisible();
   await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.currentSrc)).toContain(
     testInfo.project.name.startsWith("mobile")
@@ -153,8 +208,8 @@ test("Growth Web Quick-Add is a responsive static proof with no product side eff
       product &&
       web &&
       installments &&
-      product.compareDocumentPosition(web) & Node.DOCUMENT_POSITION_FOLLOWING &&
-      web.compareDocumentPosition(installments) & Node.DOCUMENT_POSITION_FOLLOWING,
+      product.compareDocumentPosition(installments) & Node.DOCUMENT_POSITION_FOLLOWING &&
+      installments.compareDocumentPosition(web) & Node.DOCUMENT_POSITION_FOLLOWING,
     );
   });
   expect(order).toBe(true);
@@ -184,20 +239,20 @@ test("Growth Web Quick-Add is a responsive static proof with no product side eff
   expect(overflow.figure).toBeLessThanOrEqual(1);
 });
 
-test("FAQ explains the planned Web Quick-Add workflow and availability", async ({ page }) => {
+test("FAQ explains the intended Web Inventory workflow and availability", async ({ page }) => {
   await page.goto("/");
 
   const faq = page.locator("#faq");
   const question = faq.locator("summary").filter({
-    hasText: "What is Web Quick-Add, and is it available now?",
+    hasText: "What is Web Inventory, and is it available now?",
   });
   await question.click();
 
   await expect(
-    faq.getByText(/planned Growth feature for encoding multiple pairs.*add or duplicate rows.*available in mobile inventory/i),
+    faq.getByText(/intended Growth feature for managing the same SoleSheet inventory.*fixed columns.*adding a row means adding a pair.*appear in mobile inventory/i),
   ).toBeVisible();
   await expect(
-    faq.getByText(/not live yet.*adding one pair from your phone remains part of the core product.*spreadsheet import is a separate planned Growth feature/i),
+    faq.getByText(/not live yet.*adding one pair from your phone remains part of the core product.*spreadsheet import is another intended Growth feature/i),
   ).toBeVisible();
 });
 

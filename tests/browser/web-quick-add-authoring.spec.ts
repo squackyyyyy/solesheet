@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("enabled Web Quick-Add authoring studio", () => {
+test.describe("enabled Web Inventory authoring studio", () => {
   test.skip(
     process.env.SHOETRACK_ENABLE_WEB_QUICK_ADD_STUDIO !== "1",
     "Runs only through the gated authoring-browser command.",
@@ -14,11 +14,13 @@ test.describe("enabled Web Quick-Add authoring studio", () => {
 
       const composition = page.locator('[data-capture-ready="true"]');
       await expect(composition).toHaveAttribute("data-layout", layout);
-      const table = page.getByRole("grid", { name: "Web Quick-Add inventory batch" });
+      const table = page.getByRole("grid", { name: "Web Inventory table" });
       await expect(table.getByRole("columnheader")).toHaveCount(6);
-      await expect(table.getByRole("row")).toHaveCount(layout === "mobile" ? 4 : 5);
+      await expect(table.getByRole("row")).toHaveCount(5);
       await expect(page.getByRole("textbox", { name: /nike dunk low brand and model/i })).toHaveValue("Nike Dunk Low");
       await expect(page.getByRole("button", { name: /nike dunk low size/i })).toBeVisible();
+      await expect(page.locator('[data-new-inventory-row="true"]')).toHaveCount(2);
+      await expect(page.locator('[data-mobile-inventory-outcome="planned"]')).toContainText("Planned: web changes appear in mobile inventory.");
       await expect(page.getByText("₱53,200")).toBeVisible();
 
       const addRow = page.getByRole("button", { name: /add row/i });
