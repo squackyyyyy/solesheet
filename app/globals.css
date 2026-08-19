@@ -1,6 +1,4 @@
-@import "tailwindcss" source(none);
-
-@source "../app";
+@import "tailwindcss";
 
 :root {
   --background: #f7faf5;
@@ -51,6 +49,23 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+a.standard-link {
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration-line: underline;
+  text-decoration-color: rgba(96, 165, 250, 0.8);
+  text-underline-offset: 4px;
+}
+
+a.standard-link:hover {
+  color: #1e40af;
+}
+
+a.standard-link:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 
 button,
@@ -110,6 +125,36 @@ textarea {
   }
 }
 
+@keyframes wizard-question-forward {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes wizard-question-backward {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.wizard-question-forward {
+  animation: wizard-question-forward 190ms ease-out both;
+}
+
+.wizard-question-backward {
+  animation: wizard-question-backward 190ms ease-out both;
+}
+
+.wizard-progress-fill {
+  transition: width 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .proof-changed {
   animation: proof-change 320ms ease-out both;
 }
@@ -141,5 +186,16 @@ textarea {
   .proof-changed {
     outline: 2px solid CanvasText;
     outline-offset: -2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wizard-question-forward,
+  .wizard-question-backward {
+    animation: none !important;
+  }
+
+  .wizard-progress-fill {
+    transition: none !important;
   }
 }

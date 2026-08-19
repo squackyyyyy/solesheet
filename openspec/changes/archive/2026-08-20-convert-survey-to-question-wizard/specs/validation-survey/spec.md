@@ -1,44 +1,4 @@
-# validation-survey Specification
-
-## Purpose
-
-Define an optional, non-saving survey prototype that demonstrates the intended post-signup flow without collecting or persisting research responses.
-
-## Requirements
-
-### Requirement: Survey follows the simulated signup experience
-The survey prototype SHALL be offered after the client-side signup success transition and SHALL remain optional and dismissible.
-
-#### Scenario: Simulated signup succeeds
-- **WHEN** a visitor reaches the signup prototype's success state
-- **THEN** the visitor is offered the optional survey with clear skip and close actions
-
-#### Scenario: Visitor skips survey
-- **WHEN** the visitor dismisses the survey without answering
-- **THEN** the success state remains available and no validation error is shown
-
-### Requirement: Survey captures prioritized validation signals
-The survey SHALL support questions about primary phone platform, likely pricing plan, active inventory size, installment-sales frequency, current inventory method, highest-value feature, cloud-backup interest, sales channels, and permission for a follow-up interview. The current inventory method, highest-value feature, and sales-channel questions SHALL each include an **Other** choice that reveals an associated free-text detail field when selected. Every question and Other-detail field SHALL remain optional, and the survey SHALL NOT request information about the reseller's buyers.
-
-#### Scenario: Visitor answers only selected questions
-- **WHEN** the visitor answers one or more questions and leaves others, including any visible Other-detail field, blank
-- **THEN** the answered values are accepted without requiring completion of unanswered questions or Other details
-
-#### Scenario: Visitor selects Other for a single-choice question
-- **WHEN** the visitor selects Other for current inventory method or highest-value feature
-- **THEN** one clearly labeled text field associated with that question appears and accepts a temporary free-text response
-
-#### Scenario: Visitor selects Other as a sales channel
-- **WHEN** the visitor selects Other for the multi-select sales-channel question
-- **THEN** one clearly labeled text field associated with sales channels appears without clearing any other selected channels
-
-#### Scenario: Visitor deselects Other
-- **WHEN** the visitor changes a single-choice answer away from Other or deselects Other from sales channels
-- **THEN** that question's Other-detail field is hidden and its temporary text is cleared while unrelated answers remain unchanged
-
-#### Scenario: Prohibited buyer data
-- **WHEN** the survey is rendered
-- **THEN** no prompt asks for buyer names, buyer contact details, payment histories, or other buyer information
+## ADDED Requirements
 
 ### Requirement: Survey presents one question at a time
 The survey SHALL present the four core questions as an ordered, one-question-at-a-time wizard: primary phone platform, active inventory size, current inventory method, and highest-value feature. It SHALL identify the current core position as **Question n of 4**, provide a visible progress indicator, and keep every question optional.
@@ -118,6 +78,8 @@ The inventory-size question SHALL retain a separate **What pairs count as active
 #### Scenario: Visitor opens active-pair help
 - **WHEN** the visitor activates **What pairs count as active?** from the inventory-size question
 - **THEN** the expanded FAQ definition opens separately and the survey retains its current position and temporary answers
+
+## MODIFIED Requirements
 
 ### Requirement: Survey adapts to mobile and desktop presentation
 The survey SHALL use one stable responsive height across all questions and completion states so its outer boundary does not resize during the flow. That height SHALL accommodate the tallest question when the viewport allows, remain below a viewport-safe maximum, appear as a bottom sheet on narrow viewports, and appear as a centered accessible dialog or equivalent focused surface on desktop. Its header, current-question body, and navigation footer SHALL occupy separate layout regions. The body MAY scroll when content, viewport height, orientation, zoom, or an onscreen keyboard requires it, but the opaque navigation footer SHALL remain outside that scrolling region, meet the bottom edge of the sheet without exposing question content beneath it, and include applicable device safe-area inset padding. In every presentation, focus SHALL be managed, closing SHALL remain available, and background interaction SHALL behave appropriately.

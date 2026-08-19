@@ -7,7 +7,6 @@ import {
 	CheckField,
 	DialogSheet,
 	RadioCards,
-	SelectField,
 	TextInput,
 } from "@/app/components/ui/aria";
 import { useWaitlistJourney } from "@/app/components/waitlist/waitlist-journey";
@@ -16,15 +15,38 @@ import { foundingOffer, surveyQuestions } from "@/app/lib/site-content";
 import { isValidWaitlistEmail } from "@/app/lib/validation";
 
 type SignupState = "form" | "pending";
-type SurveyStep = "core" | "optional";
+type SurveyGroup = "core" | "optional";
+type SurveyDirection = "forward" | "backward";
+type SurveyPosition = { group: SurveyGroup; index: number };
 type SurveyAnswers = Record<string, string | string[]>;
 type SingleOtherAnswerKey = "currentTool" | "priority";
+type SingleAnswerKey = Exclude<keyof typeof surveyQuestions, "channels">;
 type OtherDetailKey =
 	| "currentToolOther"
 	| "priorityOther"
 	| "channelsOther";
 
 const OTHER_OPTION = "Other";
+const AUTO_ADVANCE_DELAY = 230;
+
+const surveyQuestionGroups = {
+	core: [
+		{ key: "phone", kind: "single" },
+		{ key: "inventorySize", kind: "single" },
+		{ key: "currentTool", kind: "single-other" },
+		{ key: "priority", kind: "single-other" },
+	],
+	optional: [
+		{ key: "plan", kind: "single" },
+		{ key: "installments", kind: "single" },
+		{ key: "backup", kind: "single" },
+		{ key: "channels", kind: "multi" },
+		{ key: "interview", kind: "single" },
+	],
+} as const;
+
+type SurveyQuestionDescriptor =
+	(typeof surveyQuestionGroups)[SurveyGroup][number];
 
 export function WaitlistCta({
 	variant = "primary",
@@ -57,183 +79,119 @@ export function WaitlistCta({
 	);
 }
 
-function SurveyForm({
+function SurveyQuestion({
 	answers,
-	setAnswers,
-	step,
-	setStep,
-	onComplete,
+	position,
+	direction,
+	onSelectSingle,
+	onSetAnswer,
+	onToggleChannel,
 }: {
 	answers: SurveyAnswers;
-	setAnswers: React.Dispatch<React.SetStateAction<SurveyAnswers>>;
-	step: SurveyStep;
-	setStep: React.Dispatch<React.SetStateAction<SurveyStep>>;
-	onComplete: () => void;
+	position: SurveyPosition;
+	direction: SurveyDirection;
+	onSelectSingle: (key: SingleAnswerKey, value: string) => void;
+	onSetAnswer: (key: string, value: string | string[]) => void;
+	onToggleChannel: (channel: string, isSelected: boolean) => void;
 }) {
-	const stepHeadingRef = useRef<HTMLHeadingElement | null>(null);
+	const questionHeadingRef = useRef<HTMLHeadingElement | null>(null);
+	const group = surveyQuestionGroups[position.group];
+	const descriptor = group[position.index] ?? group[0];
+	const question = surveyQuestions[descriptor.key];
+	const total = group.length;
+	const positionNumber = position.index + 1;
+	const progressText =
+		position.group === "core"
+			? `Question ${positionNumber} of ${total}`
+			: `Optional question ${positionNumber} of ${total}`;
+	const progress = positionNumber / total;
+	const animationClass =
+		direction === "forward"
+			? "wizard-question-forward"
+			: "wizard-question-backward";
 
 	useEffect(() => {
-		stepHeadingRef.current?.focus();
-	}, [step]);
-
-	const setAnswer = (key: string, value: string | string[]) => {
-		setAnswers((current) => ({ ...current, [key]: value }));
-	};
-
-	const setSingleOtherAnswer = (
-		key: SingleOtherAnswerKey,
-		detailKey: Exclude<OtherDetailKey, "channelsOther">,
-		value: string,
-	) => {
-		setAnswers((current) => {
-			const next = { ...current, [key]: value };
-			if (value !== OTHER_OPTION) delete next[detailKey];
-			return next;
-		});
-	};
-
-	const toggleChannel = (channel: string, isSelected: boolean) => {
-		setAnswers((current) => {
-			const channels = Array.isArray(current.channels) ? current.channels : [];
-			const next: SurveyAnswers = {
-				...current,
-				channels: isSelected
-					? [...channels, channel]
-					: channels.filter((item) => item !== channel),
-			};
-			if (channel === OTHER_OPTION && !isSelected) delete next.channelsOther;
-			return next;
-		});
-	};
+		questionHeadingRef.current?.focus();
+	}, [position.group, position.index]);
 
 	return (
-		<Form
-			onSubmit={(event) => {
-				event.preventDefault();
-				onComplete();
-			}}
-			className="grid gap-7"
-		>
-			<div className="rounded-2xl border border-[#14213d]/10 bg-white p-4">
-				<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--brand-action)]">
-					{step === "core" ? "Step 1 of 2" : "Step 2 of 2 · Optional"}
-				</p>
-				<h3
-					ref={stepHeadingRef}
-					tabIndex={-1}
-					className="mt-2 text-xl font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
+		<div className="grid gap-6">
+			<div className="grid gap-2" data-survey-progress={position.group}>
+				<p
+					id="survey-progress-label"
+					aria-live="polite"
+					aria-atomic="true"
+					className="text-[10px] font-bold uppercase tracking-[0.2em]"
+					style={{
+						color:
+							position.group === "optional"
+								? "#2563eb"
+								: "var(--brand-action)",
+					}}
 				>
-					{step === "core" ? "Four quick questions" : "Optional follow-up"}
-				</h3>
-				<p className="mt-2 text-xs leading-5 text-black/60">
-					{step === "core"
-						? "About 30 seconds. Answer what you can, or finish without answering."
-						: "These extra questions help with pricing and launch planning."}
+					{progressText}
 				</p>
+				<div
+					role="progressbar"
+					aria-labelledby="survey-progress-label"
+					aria-valuemin={1}
+					aria-valuemax={total}
+					aria-valuenow={positionNumber}
+					aria-valuetext={progressText}
+					className="h-2 overflow-hidden rounded-full bg-[#14213d]/10"
+				>
+					<span
+						aria-hidden="true"
+						data-survey-progress-fill="true"
+						className="wizard-progress-fill block h-full rounded-full"
+						style={{
+							width: `${progress * 100}%`,
+							backgroundColor:
+								position.group === "optional"
+									? "#2563eb"
+									: "var(--brand-action)",
+						}}
+					/>
+				</div>
 			</div>
 
-			{step === "core" ? (
-				<>
-					<RadioCards
-						label={surveyQuestions.phone.label}
-						options={surveyQuestions.phone.options}
-						value={String(answers.phone ?? "")}
-						onChange={(value) => setAnswer("phone", value)}
-					/>
-					<div className="grid gap-1">
-						<RadioCards
-							label={surveyQuestions.inventorySize.label}
-							options={surveyQuestions.inventorySize.options}
-							value={String(answers.inventorySize ?? "")}
-							onChange={(value) => setAnswer("inventorySize", value)}
-						/>
-						<a
-							href="/#faq-active-pairs"
-							target="_blank"
-							rel="noreferrer"
-							className="inline-flex min-h-11 w-fit items-center rounded-sm text-xs font-semibold text-[var(--brand-action)] underline decoration-[#22c55e]/65 underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
-						>
-							What counts as active?
-							<span className="sr-only"> (opens in a new tab)</span>
-						</a>
-					</div>
-					<div className="grid gap-3">
-						<SelectField
-							label={surveyQuestions.currentTool.label}
-							options={surveyQuestions.currentTool.options}
-							placeholder="Choose your current tool"
-							selectedKey={String(answers.currentTool ?? "") || null}
-							onSelectionChange={(key) =>
-								setSingleOtherAnswer(
-									"currentTool",
-									"currentToolOther",
-									key == null ? "" : String(key),
-								)
-							}
-						/>
-						{answers.currentTool === OTHER_OPTION ? (
-							<TextInput
-								label={surveyQuestions.currentTool.otherDetailLabel}
-								description="Optional — tell us what you use."
-								value={String(answers.currentToolOther ?? "")}
-								onChange={(value) => setAnswer("currentToolOther", value)}
-								inputId="survey-current-tool-other"
-								autoComplete="off"
-							/>
-						) : null}
-					</div>
-					<div className="grid gap-3">
-						<SelectField
-							label={surveyQuestions.priority.label}
-							options={surveyQuestions.priority.options}
-							placeholder="Choose one feature"
-							selectedKey={String(answers.priority ?? "") || null}
-							onSelectionChange={(key) =>
-								setSingleOtherAnswer(
-									"priority",
-									"priorityOther",
-									key == null ? "" : String(key),
-								)
-							}
-						/>
-						{answers.priority === OTHER_OPTION ? (
-							<TextInput
-								label={surveyQuestions.priority.otherDetailLabel}
-								description="Optional — tell us what would help most."
-								value={String(answers.priorityOther ?? "")}
-								onChange={(value) => setAnswer("priorityOther", value)}
-								inputId="survey-priority-other"
-								autoComplete="off"
-							/>
-						) : null}
-					</div>
-				</>
-			) : (
-				<>
-					<SelectField
-						label={surveyQuestions.plan.label}
-						options={surveyQuestions.plan.options}
-						placeholder="Choose an option"
-						selectedKey={String(answers.plan ?? "") || null}
-						onSelectionChange={(key) => setAnswer("plan", String(key))}
-					/>
-					<RadioCards
-						label={surveyQuestions.installments.label}
-						options={surveyQuestions.installments.options}
-						value={String(answers.installments ?? "")}
-						onChange={(value) => setAnswer("installments", value)}
-					/>
-					<RadioCards
-						label={surveyQuestions.backup.label}
-						options={surveyQuestions.backup.options}
-						value={String(answers.backup ?? "")}
-						onChange={(value) => setAnswer("backup", value)}
-					/>
-					<div className="grid gap-3">
-						<p className="text-sm font-semibold text-[var(--brand-ink)]">
-							{surveyQuestions.channels.label}
+			<div
+				key={`${position.group}-${descriptor.key}`}
+				data-survey-question={descriptor.key}
+				data-survey-direction={direction}
+				className={`grid gap-5 ${animationClass}`}
+			>
+				<div>
+					{position.group === "core" && position.index === 0 ? (
+						<p className="mb-2 text-xs leading-5 text-black/60">
+							About 30 seconds. Choose an answer, or skip any question.
 						</p>
-						<div className="grid gap-2 rounded-2xl border border-black/10 bg-white p-4 sm:grid-cols-2">
+					) : null}
+					<h3
+						id="survey-question-heading"
+						ref={questionHeadingRef}
+						tabIndex={-1}
+						className="rounded-sm text-xl font-semibold leading-7 tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2 sm:text-2xl"
+					>
+						{question.label}
+					</h3>
+					{descriptor.key === "interview" ? (
+						<p
+							id="survey-interview-helper"
+							className="mt-2 text-xs leading-5 text-black/60"
+						>
+							{surveyQuestions.interview.description}
+						</p>
+					) : null}
+				</div>
+
+				{descriptor.key === "channels" ? (
+					<div className="grid gap-3">
+						<div
+							role="group"
+							aria-labelledby="survey-question-heading"
+							className="grid grid-cols-2 gap-2 rounded-2xl border border-black/10 bg-white p-4"
+						>
 							{surveyQuestions.channels.options.map((channel) => (
 								<CheckField
 									key={channel}
@@ -241,7 +199,9 @@ function SurveyForm({
 										Array.isArray(answers.channels) &&
 										answers.channels.includes(channel)
 									}
-									onChange={(selected) => toggleChannel(channel, selected)}
+									onChange={(selected) =>
+										onToggleChannel(channel, selected)
+									}
 								>
 									{channel}
 								</CheckField>
@@ -253,48 +213,154 @@ function SurveyForm({
 								label={surveyQuestions.channels.otherDetailLabel}
 								description="Optional — tell us where else you sell."
 								value={String(answers.channelsOther ?? "")}
-								onChange={(value) => setAnswer("channelsOther", value)}
+								onChange={(value) => onSetAnswer("channelsOther", value)}
 								inputId="survey-channels-other"
 								autoComplete="off"
 							/>
 						) : null}
 					</div>
-					<RadioCards
-						label={surveyQuestions.interview.label}
-						options={surveyQuestions.interview.options}
-						value={String(answers.interview ?? "")}
-						onChange={(value) => setAnswer("interview", value)}
-					/>
-				</>
-			)}
-			<div className="sticky bottom-0 border-t border-[#14213d]/10 bg-[#f7faf5]/95 pb-1 pt-4 backdrop-blur">
-				{step === "core" ? (
-					<div className="grid gap-2 sm:grid-cols-2">
-						<Button type="button" onPress={() => setStep("optional")} className="w-full">
-							Continue to optional questions
-							<span aria-hidden="true">→</span>
-						</Button>
-						<Button type="submit" variant="quiet" className="w-full">
-							Finish survey now
-						</Button>
-					</div>
 				) : (
-					<div className="grid gap-2 sm:grid-cols-[auto_1fr]">
-						<Button type="button" variant="secondary" onPress={() => setStep("core")}>
+					<div className="grid gap-3">
+						<RadioCards
+							label={question.label}
+							labelClassName="sr-only"
+							options={question.options}
+							value={String(answers[descriptor.key] ?? "")}
+							onChange={(value) =>
+								onSelectSingle(descriptor.key as SingleAnswerKey, value)
+							}
+							aria-labelledby="survey-question-heading"
+							aria-describedby={
+								descriptor.key === "interview"
+									? "survey-interview-helper"
+									: undefined
+							}
+						/>
+
+						{descriptor.key === "inventorySize" ? (
+							<a
+								href="/#faq-active-pairs"
+								target="_blank"
+								rel="noreferrer"
+								className="standard-link inline-flex min-h-11 w-fit items-center rounded-sm text-xs"
+							>
+								What pairs count as active?
+								<span className="sr-only"> (opens in a new tab)</span>
+							</a>
+						) : null}
+
+						{descriptor.key === "currentTool" &&
+						answers.currentTool === OTHER_OPTION ? (
+							<TextInput
+								label={surveyQuestions.currentTool.otherDetailLabel}
+								description="Optional — tell us what you use."
+								value={String(answers.currentToolOther ?? "")}
+								onChange={(value) => onSetAnswer("currentToolOther", value)}
+								inputId="survey-current-tool-other"
+								autoComplete="off"
+							/>
+						) : null}
+
+						{descriptor.key === "priority" &&
+						answers.priority === OTHER_OPTION ? (
+							<TextInput
+								label={surveyQuestions.priority.otherDetailLabel}
+								description="Optional — tell us what would help most."
+								value={String(answers.priorityOther ?? "")}
+								onChange={(value) => onSetAnswer("priorityOther", value)}
+								inputId="survey-priority-other"
+								autoComplete="off"
+							/>
+						) : null}
+					</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+function SurveyFooter({
+	answers,
+	position,
+	onAdvance,
+	onBack,
+	onComplete,
+}: {
+	answers: SurveyAnswers;
+	position: SurveyPosition;
+	onAdvance: () => void;
+	onBack: () => void;
+	onComplete: () => void;
+}) {
+	const group = surveyQuestionGroups[position.group];
+	const descriptor = group[position.index] ?? group[0];
+	const answer = answers[descriptor.key];
+	const hasAnswer = Array.isArray(answer) ? answer.length > 0 : Boolean(answer);
+	const canGoBack = position.group === "optional" || position.index > 0;
+	const isCoreFinal = position.group === "core" && position.index === group.length - 1;
+	const isOptionalFinal =
+		position.group === "optional" && position.index === group.length - 1;
+	const needsExplicitAdvance =
+		descriptor.kind === "multi" || answer === OTHER_OPTION;
+
+	return (
+		<div data-survey-footer="true">
+			{isCoreFinal ? (
+				<div className="grid gap-2">
+					<div className="grid grid-cols-[auto_1fr] gap-2">
+						<Button variant="secondary" onPress={onBack}>
 							<span aria-hidden="true">←</span>
 							Back
 						</Button>
-						<Button type="submit" className="w-full">
-							Finish quick survey
+						<Button onPress={onAdvance} className="w-full">
+							Continue survey
 							<span aria-hidden="true">→</span>
 						</Button>
 					</div>
-				)}
-				<p className="mt-2 text-center text-[11px] text-black/65">
-					Every question is optional.
-				</p>
-			</div>
-		</Form>
+					<Button variant="quiet" onPress={onComplete} className="w-full">
+						Finish this survey
+					</Button>
+				</div>
+			) : isOptionalFinal ? (
+				<div className="grid grid-cols-[auto_1fr] gap-2">
+					<Button variant="secondary" onPress={onBack}>
+						<span aria-hidden="true">←</span>
+						Back
+					</Button>
+					<Button onPress={onComplete} className="w-full">
+						Finish this survey
+						<span aria-hidden="true">✓</span>
+					</Button>
+				</div>
+			) : (
+				<div className="grid gap-2">
+					<div className={`grid gap-2 ${canGoBack ? "grid-cols-[auto_1fr]" : "grid-cols-1"}`}>
+						{canGoBack ? (
+							<Button variant="secondary" onPress={onBack}>
+								<span aria-hidden="true">←</span>
+								Back
+							</Button>
+						) : null}
+						<Button
+							variant={needsExplicitAdvance ? "primary" : "quiet"}
+							onPress={onAdvance}
+							className="w-full"
+						>
+							{hasAnswer ? "Next question" : "Skip question"}
+							<span aria-hidden="true">→</span>
+						</Button>
+					</div>
+					{position.group === "optional" ? (
+						<Button variant="quiet" onPress={onComplete} className="w-full">
+							Finish this survey
+						</Button>
+					) : null}
+				</div>
+			)}
+			<p className="mt-2 text-center text-[11px] text-black/65">
+				Every question is optional.
+			</p>
+		</div>
 	);
 }
 
@@ -306,8 +372,16 @@ export function WaitlistExperience() {
 	const [consentError, setConsentError] = useState("");
 	const [signupState, setSignupState] = useState<SignupState>("form");
 	const [answers, setAnswers] = useState<SurveyAnswers>({});
-	const [surveyStep, setSurveyStep] = useState<SurveyStep>("core");
-	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const [surveyPosition, setSurveyPosition] = useState<SurveyPosition>({
+		group: "core",
+		index: 0,
+	});
+	const [surveyDirection, setSurveyDirection] =
+		useState<SurveyDirection>("forward");
+	const signupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const surveyAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
 	const {
 		completeSignup,
 		completeSurvey,
@@ -319,9 +393,138 @@ export function WaitlistExperience() {
 
 	useEffect(() => {
 		return () => {
-			if (timerRef.current) clearTimeout(timerRef.current);
+			if (signupTimerRef.current) clearTimeout(signupTimerRef.current);
+			if (surveyAdvanceTimerRef.current) {
+				clearTimeout(surveyAdvanceTimerRef.current);
+			}
 		};
 	}, []);
+
+	function cancelSurveyAdvance() {
+		if (!surveyAdvanceTimerRef.current) return;
+		clearTimeout(surveyAdvanceTimerRef.current);
+		surveyAdvanceTimerRef.current = null;
+	}
+
+	function setAnswer(key: string, value: string | string[]) {
+		setAnswers((current) => ({ ...current, [key]: value }));
+	}
+
+	function otherDetailKeyFor(key: SingleOtherAnswerKey): OtherDetailKey {
+		return key === "currentTool" ? "currentToolOther" : "priorityOther";
+	}
+
+	function setSingleAnswer(key: SingleAnswerKey, value: string) {
+		setAnswers((current) => {
+			if (key !== "currentTool" && key !== "priority") {
+				return { ...current, [key]: value };
+			}
+
+			const detailKey = otherDetailKeyFor(key);
+			const next = { ...current, [key]: value };
+			if (value !== OTHER_OPTION) delete next[detailKey];
+			return next;
+		});
+	}
+
+	function toggleChannel(channel: string, isSelected: boolean) {
+		setAnswers((current) => {
+			const selected = Array.isArray(current.channels)
+				? current.channels
+				: [];
+			const channels = isSelected
+				? [...new Set([...selected, channel])]
+				: selected.filter((item) => item !== channel);
+			const next: SurveyAnswers = { ...current, channels };
+			if (!channels.includes(OTHER_OPTION)) delete next.channelsOther;
+			return next;
+		});
+	}
+
+	function moveTo(position: SurveyPosition, direction: SurveyDirection) {
+		cancelSurveyAdvance();
+		setSurveyDirection(direction);
+		setSurveyPosition(position);
+	}
+
+	function advanceQuestion() {
+		const group = surveyQuestionGroups[surveyPosition.group];
+		if (
+			surveyPosition.group === "core" &&
+			surveyPosition.index === group.length - 1
+		) {
+			moveTo({ group: "optional", index: 0 }, "forward");
+			return;
+		}
+		if (surveyPosition.index >= group.length - 1) return;
+		moveTo(
+			{ group: surveyPosition.group, index: surveyPosition.index + 1 },
+			"forward",
+		);
+	}
+
+	function backQuestion() {
+		if (surveyPosition.group === "optional" && surveyPosition.index === 0) {
+			moveTo(
+				{ group: "core", index: surveyQuestionGroups.core.length - 1 },
+				"backward",
+			);
+			return;
+		}
+		if (surveyPosition.index === 0) return;
+		moveTo(
+			{ group: surveyPosition.group, index: surveyPosition.index - 1 },
+			"backward",
+		);
+	}
+
+	function finishSurvey() {
+		cancelSurveyAdvance();
+		completeSurvey();
+	}
+
+	function selectSingleAnswer(key: SingleAnswerKey, value: string) {
+		cancelSurveyAdvance();
+		setSingleAnswer(key, value);
+
+		const group = surveyQuestionGroups[surveyPosition.group];
+		const descriptor = group[surveyPosition.index] as SurveyQuestionDescriptor;
+		const canContinue =
+			surveyPosition.group === "core" || surveyPosition.index < group.length - 1;
+		if (
+			descriptor.key !== key ||
+			value === OTHER_OPTION ||
+			!canContinue
+		) {
+			return;
+		}
+
+		const origin = surveyPosition;
+		const reduceMotion = window.matchMedia?.(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+		surveyAdvanceTimerRef.current = setTimeout(
+			() => {
+				surveyAdvanceTimerRef.current = null;
+				setSurveyDirection("forward");
+				setSurveyPosition((current) => {
+					if (current.group !== origin.group || current.index !== origin.index) {
+						return current;
+					}
+					return origin.group === "core" &&
+						origin.index === surveyQuestionGroups.core.length - 1
+						? { group: "optional", index: 0 }
+						: { group: origin.group, index: origin.index + 1 };
+				});
+			},
+			reduceMotion ? 0 : AUTO_ADVANCE_DELAY,
+		);
+	}
+
+	function setSurveyDialogOpen(isOpen: boolean) {
+		if (!isOpen) cancelSurveyAdvance();
+		setSurveyOpen(isOpen);
+	}
 
 	function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -330,7 +533,7 @@ export function WaitlistExperience() {
 			: "Enter a valid email address.";
 		const nextConsentError = consent
 			? ""
-			: "Please agree to the privacy notice to continue.";
+			: "Please agree to the Privacy Policy to continue.";
 
 		setContactError(nextContactError);
 		setConsentError(nextConsentError);
@@ -338,7 +541,8 @@ export function WaitlistExperience() {
 		if (nextContactError || nextConsentError) return;
 
 		setSignupState("pending");
-		timerRef.current = setTimeout(() => {
+		signupTimerRef.current = setTimeout(() => {
+			signupTimerRef.current = null;
 			setSignupState("form");
 			completeSignup();
 		}, 650);
@@ -471,19 +675,24 @@ export function WaitlistExperience() {
 									if (consentError) setConsentError("");
 								}}
 								errorMessage={consentError}
+								supportingContent={
+									<>
+										Read how we handle your information in the{" "}
+										<a
+											href="/privacy"
+											target="_blank"
+											rel="noreferrer"
+											className="standard-link inline-flex min-h-11 items-center rounded-sm"
+										>
+											Privacy Policy
+											<span className="sr-only"> (opens in a new tab)</span>
+										</a>
+										.
+									</>
+								}
 							>
-								I agree to the collection and use of my information as described
-								in the{" "}
-								<a
-									href="/privacy"
-									target="_blank"
-									rel="noreferrer"
-									className="inline-flex min-h-11 items-center rounded-sm font-semibold underline underline-offset-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
-								>
-									Privacy Notice
-									<span className="sr-only"> (opens in a new tab)</span>
-								</a>
-								, including contact about early access.
+								I agree to the collection and use of my information, including
+								contact about early access.
 							</CheckField>
 							<Button
 								type="submit"
@@ -518,7 +727,19 @@ export function WaitlistExperience() {
 						: "Answer what you can. You can close this anytime and return while this page stays open."
 				}
 				isOpen={isSurveyOpen}
-				onOpenChange={setSurveyOpen}
+				onOpenChange={setSurveyDialogOpen}
+				layout="wizard"
+				footer={
+					journeyState !== "survey-complete" ? (
+						<SurveyFooter
+							answers={answers}
+							position={surveyPosition}
+							onAdvance={advanceQuestion}
+							onBack={backQuestion}
+							onComplete={finishSurvey}
+						/>
+					) : undefined
+				}
 			>
 				{journeyState === "survey-complete" ? (
 					<div
@@ -541,20 +762,21 @@ export function WaitlistExperience() {
 							</p>
 							<Button
 								variant="secondary"
-								onPress={() => setSurveyOpen(false)}
+								onPress={() => setSurveyDialogOpen(false)}
 								className="mt-6"
 							>
 								Close survey
 							</Button>
 						</div>
 					</div>
-				) : (
-						<SurveyForm
-							answers={answers}
-							setAnswers={setAnswers}
-							step={surveyStep}
-							setStep={setSurveyStep}
-							onComplete={completeSurvey}
+					) : (
+					<SurveyQuestion
+						answers={answers}
+						position={surveyPosition}
+						direction={surveyDirection}
+						onSelectSingle={selectSingleAnswer}
+						onSetAnswer={setAnswer}
+						onToggleChannel={toggleChannel}
 					/>
 				)}
 			</DialogSheet>

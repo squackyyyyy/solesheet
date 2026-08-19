@@ -18,8 +18,7 @@ export const foundingOffer = {
     "Planned for the first 50 eligible survey respondents. Eligibility and redemption details will be confirmed before launch; standard Starter pricing applies after the first year.",
   finalSummary:
     "Join early access and help shape the first release. The planned ₱65/month founding Starter offer is for the first 50 eligible survey respondents during their first 12 paid months. Eligibility and redemption details will be confirmed before launch.",
-  surveyOption:
-    "Founding Starter — ₱65/month (planned; first 12 paid months)",
+  surveyOption: "Founding Starter — ₱65/month",
   mockupEligibility: "Planned for first 50 eligible survey respondents.",
   mockupScope: "Starter only · first 12 paid months.",
 } as const;
@@ -277,7 +276,13 @@ export const surveyQuestions = {
     otherDetailLabel: "Other sales channel",
   },
   interview: {
-    label: "Can we message you for a short follow-up interview?",
-    options: ["Yes, happy to help", "Maybe later", "Not right now"],
+    label: "Would you be open to a 15-minute follow-up interview about how you manage your shoe inventory?",
+    description: "We’ll message you using the contact details you joined with.",
+    options: [
+      "Yes — within the next 2 weeks",
+      "Yes — next month or later",
+      "Maybe — send me more details first",
+      "No, thank you",
+    ],
   },
 } as const;

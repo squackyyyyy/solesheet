@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 test("page remains responsive and exposes the complete product story", async ({ page }) => {
   await page.goto("/");
@@ -109,11 +109,17 @@ test("mobile footer keeps the full horizontal SoleSheet lockup", async ({ page }
 test("privacy links open the complete waitlist privacy notice", async ({ page }) => {
   await page.goto("/");
 
-  const privacyLinks = page.getByRole("link", { name: /privacy notice/i });
-	await expect(privacyLinks).toHaveCount(1);
-  await expect(privacyLinks.first()).toHaveAttribute("href", "/privacy");
-	await expect(privacyLinks.first()).toHaveAttribute("target", "_blank");
-	await expect(page.getByRole("navigation", { name: "Footer navigation" }).getByRole("link", { name: "Privacy", exact: true })).toHaveAttribute("href", "/privacy");
+	const consentPrivacyLink = page.locator(
+		'#waitlist a[href="/privacy"][target="_blank"]',
+	);
+	await expect(consentPrivacyLink).toHaveCount(1);
+	await expect(consentPrivacyLink).toHaveAttribute("href", "/privacy");
+	await expect(consentPrivacyLink).toHaveAttribute("target", "_blank");
+	await expect(
+		page
+			.getByRole("navigation", { name: "Footer navigation" })
+			.getByRole("link", { name: "Privacy Policy", exact: true }),
+	).toHaveAttribute("href", "/privacy");
 
   await page.goto("/privacy");
   await expect(page).toHaveTitle(/Privacy Notice/);
@@ -344,12 +350,13 @@ test("survey active-pair help opens separately and preserves its answers", async
 	await page.getByRole("button", { name: /answer the quick survey/i }).first().click();
 
 	const dialog = page.getByRole("dialog");
-	const coreHeading = dialog.getByRole("heading", { name: "Four quick questions" });
-	await expect(coreHeading).toBeFocused();
+	const phoneHeading = dialog.getByRole("heading", { name: /what phone do you mainly use/i });
+	await expect(phoneHeading).toBeFocused();
 	const android = dialog.getByRole("radio", { name: "Android" });
 	await dialog.getByText("Android", { exact: true }).click();
-	await expect(android).toBeChecked();
-	const help = dialog.getByRole("link", { name: /what counts as active/i });
+	const inventoryHeading = dialog.getByRole("heading", { name: /how many active pairs/i });
+	await expect(inventoryHeading).toBeFocused();
+	const help = dialog.getByRole("link", { name: /what pairs count as active/i });
 	await help.focus();
 	await expect(help).toBeFocused();
 	const helpBox = await help.boundingBox();
@@ -361,14 +368,12 @@ test("survey active-pair help opens separately and preserves its answers", async
 	await popup.waitForLoadState();
 	await expect(popup).toHaveURL(/\/#faq-active-pairs$/);
 	await expect(popup.locator("#faq-active-pairs").getByText(/available or reserved/i)).toBeVisible();
-	await expect(dialog.getByText("Step 1 of 2")).toBeVisible();
-	await expect(android).toBeChecked();
+	await expect(dialog.getByText("Question 2 of 4")).toBeVisible();
 	await popup.close();
 
-	await dialog.getByRole("button", { name: /continue to optional questions/i }).click();
-	await expect(dialog.getByRole("heading", { name: "Optional follow-up" })).toBeFocused();
 	await dialog.getByRole("button", { name: "Back" }).click();
-	await expect(coreHeading).toBeFocused();
+	await expect(phoneHeading).toBeFocused();
+	await expect(android).toBeChecked();
 });
 
 test("waitlist signup accepts email only and identifies phone values as invalid", async ({ page }) => {
@@ -402,11 +407,12 @@ test("long founding offer selection does not create mobile page overflow", async
   await page.getByText(/i agree to the collection and use/i).tap();
   await page.getByRole("button", { name: /join the waitlist/i }).last().tap();
   await page.getByRole("button", { name: /answer the quick survey/i }).first().tap();
-	await page.getByRole("button", { name: /continue to optional questions/i }).tap();
-
-  const planSelect = page.getByRole("button", { name: /which planned option feels closest/i });
-  await planSelect.tap();
-  await page.getByRole("option", { name: /founding starter/i }).tap();
+	for (let index = 0; index < 3; index += 1) {
+		await page.getByRole("button", { name: /skip question/i }).tap();
+	}
+	await page.getByRole("button", { name: /continue survey/i }).tap();
+	await page.getByRole("radio", { name: /founding starter/i }).locator("xpath=ancestor::label").tap();
+	await expect(page.getByRole("heading", { name: /how often do you sell through installments/i })).toBeFocused();
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -442,16 +448,46 @@ test("progress-aware CTAs synchronize through the non-saving survey flow", async
   const surveyCtas = page.getByRole("button", { name: /answer the quick survey/i });
 	await expect(surveyCtas).toHaveCount(5);
   await expect(page.getByText(/you’re on the waitlist\. help shape what we build first/i)).toBeVisible();
-  await surveyCtas.last().click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+	await surveyCtas.last().click();
+	const surveyDialog = page.getByRole("dialog");
+	await expect(surveyDialog).toBeVisible();
+	const progressFill = surveyDialog.locator('[data-survey-progress-fill="true"]');
+	const initialProgressWidth = (await progressFill.boundingBox())?.width ?? 0;
+	await progressFill.evaluate((element) => {
+		(window as typeof window & { __surveyProgressFill?: Element }).__surveyProgressFill = element;
+	});
   const android = page.getByRole("radio", { name: "Android" });
   await android.focus();
   await page.keyboard.press("Space");
-  await expect(android).toBeChecked();
+	await expect(page.getByRole("heading", { name: /how many active pairs/i })).toBeFocused();
+	expect(
+		await progressFill.evaluate(
+			(element) =>
+				(window as typeof window & { __surveyProgressFill?: Element }).__surveyProgressFill === element,
+		),
+	).toBe(true);
+	await expect.poll(async () => (await progressFill.boundingBox())?.width ?? 0).toBeGreaterThan(initialProgressWidth);
+	await expect(progressFill).toHaveCSS("transition-property", "width");
+	const questionFrames = await surveyDialog.locator('[data-survey-question="inventorySize"]').evaluate((element) =>
+		element.getAnimations().flatMap((animation) =>
+			animation.effect instanceof KeyframeEffect
+				? animation.effect.getKeyframes().map((frame) => ({
+					opacity: frame.opacity ?? null,
+					transform: String(frame.transform ?? "none"),
+				}))
+				: [],
+		),
+	);
+	expect(questionFrames.length).toBeGreaterThan(0);
+	expect(questionFrames.every((frame) => frame.opacity === null)).toBe(true);
+	expect(questionFrames[0]?.transform).not.toBe("none");
   await page.getByRole("button", { name: /close survey/i }).click();
   await surveyCtas.first().click();
-  await expect(page.getByRole("radio", { name: "Android" })).toBeChecked();
-	await page.getByRole("button", { name: /finish survey now/i }).click();
+	await expect(page.getByText("Question 2 of 4")).toBeVisible();
+	await page.getByRole("button", { name: /skip question/i }).click();
+	await page.getByRole("button", { name: /skip question/i }).click();
+	await expect(page.getByText("Question 4 of 4")).toBeVisible();
+	await page.getByRole("button", { name: /finish this survey/i }).click();
   await expect(page.getByText(/that’s the full flow/i)).toBeVisible();
   await page.getByRole("button", { name: /close survey/i }).first().click();
   await expect(page.getByText(/thanks for helping shape solesheet/i)).toBeVisible();
@@ -472,151 +508,225 @@ test("progress-aware CTAs synchronize through the non-saving survey flow", async
 
   await page.reload();
 	await expect(page.getByRole("button", { name: /join the waitlist/i })).toHaveCount(5);
-  await expect(page.getByRole("button", { name: /answer the quick survey/i })).toHaveCount(0);
+	await expect(page.getByRole("button", { name: /answer the quick survey/i })).toHaveCount(0);
 });
 
-test("survey Other details work with keyboard and touch without persistence or overflow", async ({ page }, testInfo) => {
-  const dataRequests: string[] = [];
-  page.on("request", (request) => {
-    if (!["GET", "HEAD"].includes(request.method())) dataRequests.push(request.url());
-  });
+test("compact mobile survey keeps its footer attached with only its body scrolling", async ({ page }) => {
+	await page.setViewportSize({ width: 360, height: 800 });
+	await page.goto("/");
+	await page.getByRole("button", { name: /join the waitlist/i }).first().click();
+	await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
+	await page.getByText(/i agree to the collection and use/i).click();
+	await page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }).click();
+	await page.getByRole("button", { name: /answer the quick survey/i }).first().click();
 
-  await page.goto("/");
-  const initialStored = await page.evaluate(() => ({
-    local: { ...localStorage },
-    session: { ...sessionStorage },
-    cookie: document.cookie,
-  }));
-  const isMobile = testInfo.project.name.startsWith("mobile");
+	const dialog = page.getByRole("dialog");
+	const assertSheetGeometry = async (expectCompact: boolean) => {
+		await page.waitForTimeout(350);
+		const geometry = await dialog.evaluate((element) => {
+			const body = element.querySelector<HTMLElement>('[data-dialog-body="true"]')!;
+			const footer = element.querySelector<HTMLElement>('[data-dialog-footer="true"]')!;
+			const dialogBox = element.getBoundingClientRect();
+			const bodyBox = body.getBoundingClientRect();
+			const footerBox = footer.getBoundingClientRect();
+			const footerStyle = getComputedStyle(footer);
+				return {
+					dialogBottom: dialogBox.bottom,
+					dialogHeight: dialogBox.height,
+				viewportBottom: window.innerHeight,
+				footerBottom: footerBox.bottom,
+				bodyBottom: bodyBox.bottom,
+				footerTop: footerBox.top,
+				footerPaddingBottom: Number.parseFloat(footerStyle.paddingBottom),
+				footerPosition: footerStyle.position,
+				footerBackground: footerStyle.backgroundColor,
+				bodyOverflowY: getComputedStyle(body).overflowY,
+				pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+			};
+		});
+		expect(Math.abs(geometry.dialogBottom - geometry.viewportBottom)).toBeLessThanOrEqual(1);
+		expect(Math.abs(geometry.footerBottom - geometry.viewportBottom)).toBeLessThanOrEqual(1);
+		expect(geometry.bodyBottom).toBeLessThanOrEqual(geometry.footerTop + 1);
+		expect(geometry.footerPaddingBottom).toBeGreaterThanOrEqual(16);
+		expect(geometry.footerPosition).toBe("static");
+		expect(geometry.footerBackground).not.toBe("rgba(0, 0, 0, 0)");
+		expect(geometry.bodyOverflowY).toBe("auto");
+		expect(geometry.pageOverflow).toBeLessThanOrEqual(1);
+		if (expectCompact) {
+			expect(geometry.dialogHeight).toBeLessThanOrEqual(
+				geometry.viewportBottom * 0.94,
+			);
+		}
+	};
 
-  const join = page.getByRole("button", { name: /join the waitlist/i });
-  if (isMobile) await join.first().tap();
-  else await join.first().click();
-  await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
-  const consent = page.getByRole("checkbox", { name: /i agree to the collection/i });
-  if (isMobile) await page.locator("label", { has: consent }).tap();
-  else {
-    await consent.focus();
-    await page.keyboard.press("Space");
-  }
-  await expect(consent).toBeChecked();
-	const submitWaitlist = page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i });
-	if (isMobile) await submitWaitlist.tap();
-	else await submitWaitlist.click();
-  await expect(page.getByText(/part of the first look/i)).toBeVisible();
+	await assertSheetGeometry(true);
+	await dialog.getByRole("button", { name: /skip question/i }).click();
+	await dialog.getByRole("button", { name: /skip question/i }).click();
+	await page.setViewportSize({ width: 360, height: 568 });
+	await dialog.getByRole("radio", { name: "Other" }).locator("xpath=ancestor::label").click();
+	const otherField = dialog.getByRole("textbox", { name: "Other inventory method" });
+	await otherField.fill("Airtable");
+	await otherField.scrollIntoViewIfNeeded();
+	await expect(otherField).toBeVisible();
+	await expect(dialog.getByRole("button", { name: /next question/i })).toBeVisible();
+	await assertSheetGeometry(false);
+});
 
-  const surveyTrigger = page.getByRole("button", { name: /answer the quick survey/i }).first();
-  if (isMobile) await surveyTrigger.tap();
-  else await surveyTrigger.click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
+test("survey reduced motion keeps focus, progress, and Back behavior", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	await page.goto("/");
+	await page.getByRole("button", { name: /join the waitlist/i }).first().click();
+	await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
+	const consent = page.getByRole("checkbox", { name: /i agree to the collection/i });
+	await consent.focus();
+	await page.keyboard.press("Space");
+	await page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }).click();
+	await page.getByRole("button", { name: /answer the quick survey/i }).first().click();
 
-  const chooseOther = async (question: RegExp) => {
-    const select = dialog.getByRole("button", { name: question });
-    if (isMobile) {
-      await select.tap();
-      await page.getByRole("option", { name: "Other" }).tap();
-    } else {
-      await select.focus();
-      await page.keyboard.press("Enter");
-      await page.keyboard.press("End");
-      await page.keyboard.press("Enter");
-    }
-    await expect(select).toContainText("Other");
-  };
+	const dialog = page.getByRole("dialog");
+	const compactGeometry = await dialog.evaluate((element) => ({
+		height: element.getBoundingClientRect().height,
+		viewportHeight: window.innerHeight,
+	}));
+	expect(compactGeometry.height).toBeLessThanOrEqual(
+		compactGeometry.viewportHeight * 0.94,
+	);
+	const android = dialog.getByRole("radio", { name: "Android" });
+	await android.focus();
+	await page.keyboard.press("Space");
+	const inventoryHeading = dialog.getByRole("heading", { name: /how many active pairs/i });
+	await expect(inventoryHeading).toBeFocused();
+	await expect(dialog.getByRole("progressbar", { name: "Question 2 of 4" })).toHaveAttribute("aria-valuenow", "2");
+	const motion = await dialog.evaluate((element) => ({
+		question: getComputedStyle(element.querySelector<HTMLElement>('[data-survey-question]')!).animationDuration,
+		progress: getComputedStyle(element.querySelector<HTMLElement>('[data-survey-progress-fill]')!).transitionDuration,
+	}));
+	expect(motion).toEqual({ question: "0s", progress: "0s" });
+	await dialog.getByRole("button", { name: "Back" }).click();
+	await expect(dialog.getByRole("heading", { name: /what phone do you mainly use/i })).toBeFocused();
+	await expect(dialog.getByRole("radio", { name: "Android" })).toBeChecked();
+});
 
-  await chooseOther(/what do you use to track inventory today/i);
-  const inventoryOther = dialog.getByRole("textbox", { name: "Other inventory method" });
-  await expect(inventoryOther).toBeVisible();
-  await inventoryOther.fill("Airtable");
+test("survey wizard supports keyboard and touch Other details without persistence or overflow", async ({ page }, testInfo) => {
+	const dataRequests: string[] = [];
+	page.on("request", (request) => {
+		if (!["GET", "HEAD"].includes(request.method())) dataRequests.push(request.url());
+	});
 
-  await chooseOther(/which feature matters most/i);
-  const featureOther = dialog.getByRole("textbox", { name: "Other feature" });
-  await expect(featureOther).toBeVisible();
-  await featureOther.fill("Supplier purchase tracking");
+	await page.goto("/");
+	const initialStored = await page.evaluate(() => ({
+		local: { ...localStorage },
+		session: { ...sessionStorage },
+		cookie: document.cookie,
+	}));
+	const isMobile = testInfo.project.name.startsWith("mobile");
+	const activate = async (control: Locator) => {
+		if (isMobile) {
+			const type = await control.getAttribute("type");
+			await (type === "radio" || type === "checkbox"
+				? control.locator("xpath=ancestor::label")
+				: control
+			).tap();
+		}
+		else {
+			await control.focus();
+			await page.keyboard.press("Space");
+		}
+	};
 
-	const continueButton = dialog.getByRole("button", { name: /continue to optional questions/i });
-	if (isMobile) await continueButton.tap();
-	else await continueButton.click();
-	await expect(dialog.getByText("Step 2 of 2 · Optional")).toBeVisible();
+	await activate(page.getByRole("button", { name: /join the waitlist/i }).first());
+	await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
+	const consent = page.getByRole("checkbox", { name: /i agree to the collection/i });
+	await activate(isMobile ? page.locator("label", { has: consent }) : consent);
+	await expect(consent).toBeChecked();
+	await activate(page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }));
+	await expect(page.getByText(/part of the first look/i)).toBeVisible();
+	await activate(page.getByRole("button", { name: /answer the quick survey/i }).first());
 
-  const instagram = dialog.getByRole("checkbox", { name: "Instagram" });
-  const channelOther = dialog.getByRole("checkbox", { name: "Other" });
-  const instagramLabel = instagram.locator("xpath=ancestor::label");
-  const channelOtherLabel = channelOther.locator("xpath=ancestor::label");
-  if (isMobile) {
-    await instagramLabel.tap();
-    await channelOtherLabel.tap();
-  } else {
-    await instagram.focus();
-    await page.keyboard.press("Space");
-    await channelOther.focus();
-    await page.keyboard.press("Space");
-  }
-  await expect(instagram).toBeChecked();
-  await expect(channelOther).toBeChecked();
-  const salesChannelOther = dialog.getByRole("textbox", { name: "Other sales channel" });
-  await salesChannelOther.fill("Weekend pop-ups");
+	const dialog = page.getByRole("dialog");
+	await expect(dialog).toBeVisible();
+	await activate(dialog.getByRole("button", { name: /skip question/i }));
+	await activate(dialog.getByRole("button", { name: /skip question/i }));
+	await expect(dialog.getByText("Question 3 of 4")).toBeVisible();
 
-  await expect(salesChannelOther).toHaveValue("Weekend pop-ups");
+	await activate(dialog.getByRole("radio", { name: "Other" }));
+	const inventoryOther = dialog.getByRole("textbox", { name: "Other inventory method" });
+	await inventoryOther.fill("Airtable");
+	await activate(dialog.getByRole("button", { name: /next question/i }));
+	await activate(dialog.getByRole("radio", { name: "Other" }));
+	const featureOther = dialog.getByRole("textbox", { name: "Other feature" });
+	await featureOther.fill("Supplier purchase tracking");
+	await activate(dialog.getByRole("button", { name: /continue survey/i }));
 
-	const back = dialog.getByRole("button", { name: "Back" });
-	if (isMobile) await back.tap();
-	else await back.click();
-	await expect(inventoryOther).toHaveValue("Airtable");
-	await expect(featureOther).toHaveValue("Supplier purchase tracking");
-	if (isMobile) await continueButton.tap();
-	else await continueButton.click();
+	await activate(dialog.getByRole("radio", { name: "Free" }));
+	await expect(dialog.getByText("Optional question 2 of 5")).toBeVisible();
+	await activate(dialog.getByRole("radio", { name: "Often" }));
+	await expect(dialog.getByText("Optional question 3 of 5")).toBeVisible();
+	await activate(dialog.getByRole("radio", { name: "Yes" }));
+	await expect(dialog.getByText("Optional question 4 of 5")).toBeVisible();
+
+	const instagram = dialog.getByRole("checkbox", { name: "Instagram" });
+	const channelOther = dialog.getByRole("checkbox", { name: "Other" });
+	await activate(isMobile ? instagram.locator("xpath=ancestor::label") : instagram);
+	await activate(isMobile ? channelOther.locator("xpath=ancestor::label") : channelOther);
+	await expect(instagram).toBeChecked();
+	await expect(channelOther).toBeChecked();
+	const salesChannelOther = dialog.getByRole("textbox", { name: "Other sales channel" });
+	await salesChannelOther.fill("Weekend pop-ups");
+
+	await activate(dialog.getByRole("button", { name: /close survey/i }));
+	await activate(page.getByRole("button", { name: /answer the quick survey/i }).first());
+	await expect(dialog.getByText("Optional question 4 of 5")).toBeVisible();
 	await expect(salesChannelOther).toHaveValue("Weekend pop-ups");
+	await expect(instagram).toBeChecked();
 
-  if (isMobile) await channelOtherLabel.tap();
-  else {
-    await channelOther.focus();
-    await page.keyboard.press("Space");
-  }
-  await expect(dialog.getByRole("textbox", { name: "Other sales channel" })).toHaveCount(0);
-  await expect(instagram).toBeChecked();
+	await activate(dialog.getByRole("button", { name: "Back" }));
+	await expect(dialog.getByRole("radio", { name: "Yes" })).toBeChecked();
+	await activate(dialog.getByRole("button", { name: /next question/i }));
+	await expect(salesChannelOther).toHaveValue("Weekend pop-ups");
+	await activate(isMobile ? channelOther.locator("xpath=ancestor::label") : channelOther);
+	await expect(dialog.getByRole("textbox", { name: "Other sales channel" })).toHaveCount(0);
+	await expect(instagram).toBeChecked();
+	await activate(isMobile ? channelOther.locator("xpath=ancestor::label") : channelOther);
+	await expect(dialog.getByRole("textbox", { name: "Other sales channel" })).toHaveValue("");
 
-  if (isMobile) await channelOtherLabel.tap();
-  else {
-    await channelOther.focus();
-    await page.keyboard.press("Space");
-  }
-  const blankSalesChannelOther = dialog.getByRole("textbox", { name: "Other sales channel" });
-  await expect(blankSalesChannelOther).toHaveValue("");
+	const geometry = await page.evaluate(() => {
+		const surveyDialog = document.querySelector<HTMLElement>('[role="dialog"]');
+		const body = surveyDialog?.querySelector<HTMLElement>('[data-dialog-body="true"]');
+		const footer = surveyDialog?.querySelector<HTMLElement>('[data-dialog-footer="true"]');
+		const bodyBox = body?.getBoundingClientRect();
+		const footerBox = footer?.getBoundingClientRect();
+		return {
+			pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+			dialogOverflow: surveyDialog ? surveyDialog.scrollWidth - surveyDialog.clientWidth : 0,
+			bodyOverflow: body ? body.scrollWidth - body.clientWidth : 0,
+			bodyOverflowY: body ? getComputedStyle(body).overflowY : "",
+			footerPosition: footer ? getComputedStyle(footer).position : "",
+			footerBackground: footer ? getComputedStyle(footer).backgroundColor : "",
+			bodyEndsBeforeFooter: Boolean(bodyBox && footerBox && bodyBox.bottom <= footerBox.top + 1),
+		};
+	});
+	expect(geometry.pageOverflow).toBeLessThanOrEqual(1);
+	expect(geometry.dialogOverflow).toBeLessThanOrEqual(1);
+	expect(geometry.bodyOverflow).toBeLessThanOrEqual(1);
+	expect(geometry.bodyOverflowY).toBe("auto");
+	expect(geometry.footerPosition).toBe("static");
+	expect(geometry.footerBackground).not.toBe("rgba(0, 0, 0, 0)");
+	expect(geometry.bodyEndsBeforeFooter).toBe(true);
 
-  const geometry = await page.evaluate(() => {
-    const surveyDialog = document.querySelector('[role="dialog"]');
-    const scroller = surveyDialog?.querySelector(".overflow-y-auto");
-    return {
-      pageOverflow:
-        document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      dialogOverflow: surveyDialog
-        ? surveyDialog.scrollWidth - surveyDialog.clientWidth
-        : 0,
-		scrollerOverflow: scroller ? scroller.scrollWidth - scroller.clientWidth : 0,
-		scrollerOffset: scroller?.scrollLeft ?? 0,
-      canScroll: scroller ? scroller.scrollHeight >= scroller.clientHeight : false,
-    };
-  });
-  expect(geometry.pageOverflow).toBeLessThanOrEqual(1);
-  expect(geometry.dialogOverflow).toBeLessThanOrEqual(1);
-	expect(geometry.scrollerOverflow).toBeLessThanOrEqual(1);
-	expect(geometry.scrollerOffset).toBe(0);
-  expect(geometry.canScroll).toBe(true);
-
-  const finish = dialog.getByRole("button", { name: /finish quick survey/i });
-  await finish.scrollIntoViewIfNeeded();
-  if (isMobile) await finish.tap();
-  else await finish.click();
-  await expect(page.getByText(/that’s the full flow/i)).toBeVisible();
-
-  expect(dataRequests).toEqual([]);
-  expect(await page.evaluate(() => ({
-    local: { ...localStorage },
-    session: { ...sessionStorage },
-    cookie: document.cookie,
-  }))).toEqual(initialStored);
+	await activate(dialog.getByRole("button", { name: /next question/i }));
+	await expect(dialog.getByText("Optional question 5 of 5")).toBeVisible();
+	await activate(
+		dialog.getByRole("radio", { name: "Yes — within the next 2 weeks" }),
+	);
+	await activate(dialog.getByRole("button", { name: /finish this survey/i }));
+	await expect(page.getByText(/that’s the full flow/i)).toBeVisible();
+	expect(dataRequests).toEqual([]);
+	expect(await page.evaluate(() => ({
+		local: { ...localStorage },
+		session: { ...sessionStorage },
+		cookie: document.cookie,
+	}))).toEqual(initialStored);
 });
 
 test("physical-touch controls activate through the LAN page", async ({ page }, testInfo) => {
@@ -641,7 +751,8 @@ test("physical-touch controls activate through the LAN page", async ({ page }, t
 
   await page.getByRole("button", { name: /answer the quick survey/i }).first().tap();
   await page.getByText("Android", { exact: true }).tap();
-  await expect(page.getByRole("radio", { name: "Android" })).toBeChecked();
+	await expect(page.getByRole("heading", { name: /how many active pairs/i })).toBeFocused();
+	await expect(page.getByText("Question 2 of 4")).toBeVisible();
 });
 
 test("backup photograph names Starter as the plan and backup as its feature", async ({ page }) => {

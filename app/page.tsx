@@ -365,8 +365,8 @@ export default function Home() {
 								<div className="my-6 h-px bg-black/10" />
 								<ul className="grid gap-3 text-sm text-black/68">
 									{plan.features.map((feature) => (
-										<li key={feature} className="flex gap-2">
-											<span className="text-[var(--brand-action)]">✓</span>
+										<li key={feature} className="flex items-center gap-2">
+											<span className="shrink-0 text-[var(--brand-action)]">✓</span>
 											<span>
 												<ActivePairsText text={feature} />
 											</span>
@@ -461,7 +461,7 @@ export default function Home() {
 								href="/privacy"
 								className="inline-flex min-h-11 items-center rounded-sm outline-none hover:text-[var(--brand-action)] focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
 							>
-								Privacy
+								Privacy Policy
 							</a>
 							<span className="inline-flex min-h-11 items-center">
 								© 2026 SoleSheet concept

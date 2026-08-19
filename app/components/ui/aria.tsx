@@ -139,8 +139,13 @@ export function TextInput({
 export function CheckField({
   children,
   errorMessage,
+  supportingContent,
   ...props
-}: AriaCheckboxProps & { children: ReactNode; errorMessage?: string }) {
+}: AriaCheckboxProps & {
+  children: ReactNode;
+  errorMessage?: string;
+  supportingContent?: ReactNode;
+}) {
   return (
     <div className="grid gap-1.5">
       <AriaCheckbox
@@ -165,6 +170,11 @@ export function CheckField({
           </>
         )}
       </AriaCheckbox>
+      {supportingContent ? (
+        <div className="pl-8 text-xs leading-5 text-black/65">
+          {supportingContent}
+        </div>
+      ) : null}
       {errorMessage ? (
         <p className="pl-8 text-xs font-medium text-red-700">{errorMessage}</p>
       ) : null}
@@ -175,15 +185,19 @@ export function CheckField({
 export function RadioCards({
   label,
   options,
+  labelClassName,
+  optionsClassName,
   ...props
 }: Omit<RadioGroupProps, "children"> & {
   label: string;
   options: readonly string[];
+  labelClassName?: string;
+  optionsClassName?: string;
 }) {
   return (
     <RadioGroup {...props} className="grid gap-3">
-      <Label className="text-sm font-semibold text-[var(--brand-ink)]">{label}</Label>
-      <div className="grid grid-cols-2 gap-2">
+      <Label className={labelClassName ?? "text-sm font-semibold text-[var(--brand-ink)]"}>{label}</Label>
+      <div className={optionsClassName ?? "grid grid-cols-2 gap-2"}>
         {options.map((option) => (
           <Radio
             key={option}
@@ -248,13 +262,19 @@ export function DialogSheet({
   title,
   description,
   children,
+  footer,
+  layout = "default",
   isOpen,
   onOpenChange,
 }: Pick<ModalOverlayProps, "isOpen" | "onOpenChange"> & {
   title: string;
   description: string;
   children: ReactNode;
+  footer?: ReactNode;
+  layout?: "default" | "wizard";
 }) {
+  const isWizardLayout = layout === "wizard";
+
   return (
     <ModalOverlay
       isOpen={isOpen}
@@ -262,8 +282,12 @@ export function DialogSheet({
       isDismissable
       className="fixed inset-0 z-50 flex items-end justify-center bg-[#111]/55 p-0 backdrop-blur-sm data-[entering]:animate-[fade-in_.18s_ease-out] data-[exiting]:animate-[fade-out_.14s_ease-in] sm:items-center sm:p-5"
     >
-      <Modal className="max-h-[94dvh] w-full overflow-hidden rounded-t-[2rem] bg-[var(--brand-soft)] outline-none shadow-[0_30px_100px_rgba(0,0,0,.3)] data-[entering]:animate-[sheet-in_.24s_ease-out] data-[exiting]:animate-[sheet-out_.18s_ease-in] sm:max-w-2xl sm:rounded-[2rem]">
-        <Dialog className="grid max-h-[94dvh] grid-rows-[auto_1fr] outline-none">
+      <Modal
+        className={`${isWizardLayout ? "h-[min(94dvh,46rem)] max-h-[94dvh] sm:h-[min(82dvh,44rem)] sm:max-h-[min(82dvh,44rem)]" : "max-h-[94dvh]"} w-full overflow-hidden rounded-t-[2rem] bg-[var(--brand-soft)] outline-none shadow-[0_30px_100px_rgba(0,0,0,.3)] data-[entering]:animate-[sheet-in_.24s_ease-out] data-[exiting]:animate-[sheet-out_.18s_ease-in] sm:max-w-2xl sm:rounded-[2rem]`}
+      >
+        <Dialog
+          className={`${isWizardLayout ? "h-full" : "max-h-[94dvh]"} ${footer ? "grid-rows-[auto_minmax(0,1fr)_auto]" : "grid-rows-[auto_minmax(0,1fr)]"} grid outline-none`}
+        >
           {({ close }) => (
             <>
               <div className="flex items-start justify-between gap-5 border-b border-black/10 px-5 py-5 sm:px-7">
@@ -279,9 +303,20 @@ export function DialogSheet({
                   ×
                 </Button>
               </div>
-              <div className="overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-7">
+              <div
+                data-dialog-body="true"
+                className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-7"
+              >
                 {children}
               </div>
+              {footer ? (
+                <div
+                  data-dialog-footer="true"
+                  className="border-t border-[#14213d]/10 bg-[var(--brand-soft)] px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-7 sm:pb-5"
+                >
+                  {footer}
+                </div>
+              ) : null}
             </>
           )}
         </Dialog>
