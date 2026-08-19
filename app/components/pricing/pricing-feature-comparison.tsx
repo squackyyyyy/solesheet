@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { ActivePairsText } from "@/app/components/active-pairs-link";
 import { planComparisonRows } from "@/app/lib/site-content";
 
 type ComparisonCell = (typeof planComparisonRows)[number]["free"];
@@ -16,8 +17,6 @@ function FeatureState({ cell }: { cell: ComparisonCell }) {
 }
 
 function ComparisonTable() {
-  let previousCategory: string | undefined;
-
   return (
     <table data-pricing-comparison-table="true" className="w-full min-w-[38rem] border-separate border-spacing-0 text-left text-sm">
       <caption className="sr-only">Compare every SoleSheet plan feature</caption>
@@ -30,9 +29,8 @@ function ComparisonTable() {
         </tr>
       </thead>
       <tbody>
-        {planComparisonRows.map((row) => {
-          const showCategory = row.category !== previousCategory;
-          previousCategory = row.category;
+        {planComparisonRows.map((row, index) => {
+          const showCategory = row.category !== planComparisonRows[index - 1]?.category;
 
           return (
             <Fragment key={row.feature}>
@@ -42,7 +40,7 @@ function ComparisonTable() {
                 </tr>
               ) : null}
               <tr>
-                <th scope="row" className="sticky left-0 z-10 border-b border-black/10 bg-white px-4 py-3.5 font-semibold text-[var(--brand-ink)]">{row.feature}</th>
+                <th scope="row" className="sticky left-0 z-10 border-b border-black/10 bg-white px-4 py-3.5 font-semibold text-[var(--brand-ink)]"><ActivePairsText text={row.feature} /></th>
                 <td className="border-b border-black/10 px-4 py-3.5 text-center"><FeatureState cell={row.free} /></td>
                 <td className="border-b border-black/10 bg-[var(--brand-mist)] px-4 py-3.5 text-center"><FeatureState cell={row.starter} /></td>
                 <td className="border-b border-black/10 px-4 py-3.5 text-center"><FeatureState cell={row.growth} /></td>

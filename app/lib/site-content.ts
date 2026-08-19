@@ -1,6 +1,6 @@
 export const siteContent = {
   brand: "SoleSheet",
-  eyebrow: "Built with Filipino resellers",
+  eyebrow: "Being built for Filipino resellers",
   heroTitle: "Your shoe business, out of the spreadsheet.",
   heroCopy:
     "A faster way to track pairs, profit, and installment payments—designed for resellers who run their business from a phone.",
@@ -197,31 +197,43 @@ export const planComparisonRows: readonly PlanComparisonRow[] = [
 
 export const faqs = [
   {
+	id: "faq-founding-offer",
 	question: "How does the founding Starter offer work?",
 	answer:
 		"The planned ₱65/month rate applies only to Starter for the first 50 eligible survey respondents during their first 12 paid months. Eligibility and redemption details will be confirmed before launch, and standard Starter pricing applies after that first year.",
   },
   {
+    id: "faq-active-pairs",
+    question: "What counts as an active pair?",
+    answer:
+      "An active pair is any pair marked Available or Reserved. Sold pairs do not count toward your plan limit, but they stay in sold history. If a sold pair still has an installment balance, SoleSheet continues tracking the balance without making the pair active again.",
+  },
+  {
+    id: "faq-availability",
     question: "Is the app available now?",
     answer:
       "Not yet. We are validating the core workflow with real resellers before deciding the first release platform and final feature mix.",
   },
   {
+    id: "faq-web-inventory",
     question: "What is Web Inventory, and is it available now?",
     answer:
       "Web Inventory is an intended Growth feature for managing the same SoleSheet inventory from a browser. Its fixed columns keep the table structured; adding a row means adding a pair, and completed row edits are intended to appear in mobile inventory. It is not live yet—the page shows a static preview—and adding one pair from your phone remains part of the core product. Spreadsheet import is another intended Growth feature.",
   },
   {
+    id: "faq-installment-plan",
     question: "Will installment tracking be paid-only?",
     answer:
       "The current plan includes installment tracking in the free tier because it is part of the everyday local reseller workflow.",
   },
   {
+    id: "faq-launch-platform",
     question: "Will it launch on Android or iPhone?",
     answer:
       "Android is the likely first launch, but qualified waitlist and interview responses will guide the final platform decision.",
   },
   {
+    id: "faq-sold-pairs",
     question: "What happens to sold pairs?",
     answer:
       "Sold records stay in history. They are not planned to disappear automatically, so profit and payment context remains available.",

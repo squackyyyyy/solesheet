@@ -279,7 +279,7 @@ export function DialogSheet({
                   ×
                 </Button>
               </div>
-              <div className="overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-7">
+              <div className="overflow-x-hidden overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-7">
                 {children}
               </div>
             </>

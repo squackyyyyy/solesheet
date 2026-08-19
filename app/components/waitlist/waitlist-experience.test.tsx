@@ -45,6 +45,12 @@ function chooseSelectOption(question: RegExp, option: string) {
   fireEvent.click(screen.getByRole("option", { name: option }));
 }
 
+function continueToOptionalQuestions() {
+	fireEvent.click(
+		screen.getByRole("button", { name: /continue to optional questions/i }),
+	);
+}
+
 describe("WaitlistExperience", () => {
   beforeEach(() => {
     vi.spyOn(Storage.prototype, "setItem");
@@ -94,7 +100,7 @@ describe("WaitlistExperience", () => {
     expect(screen.queryByText(/part of the first look/i)).not.toBeInTheDocument();
   });
 
-  it("moves through signup and survey without network or storage writes", async () => {
+	it("moves through signup and survey without network or storage writes", async () => {
     renderExperience({ withPageCtas: true });
 
     fireEvent.change(
@@ -123,7 +129,14 @@ describe("WaitlistExperience", () => {
     fireEvent.click(
       screen.getAllByRole("button", { name: /answer the quick survey/i })[0],
     );
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+		expect(screen.getByRole("dialog")).toBeInTheDocument();
+		expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
+		expect(screen.getByText(/about 30 seconds/i)).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", {
+				name: /which planned option feels closest/i,
+			}),
+		).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("radio", { name: "Android" }));
     expect(screen.getByRole("radio", { name: "Android" })).toBeChecked();
@@ -134,7 +147,7 @@ describe("WaitlistExperience", () => {
     );
     expect(screen.getByRole("radio", { name: "Android" })).toBeChecked();
 
-    fireEvent.click(screen.getByRole("button", { name: /finish quick survey/i }));
+		fireEvent.click(screen.getByRole("button", { name: /finish survey now/i }));
     expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole("button", { name: /close survey/i })[0]);
     expect(
@@ -150,7 +163,7 @@ describe("WaitlistExperience", () => {
     expect(Storage.prototype.setItem).not.toHaveBeenCalled();
   });
 
-  it("captures independent Other details and retains them while the page stays open", async () => {
+	it("captures independent Other details and retains them while the page stays open", async () => {
     renderExperience();
     await joinAndOpenSurvey();
 
@@ -161,9 +174,12 @@ describe("WaitlistExperience", () => {
     );
 
     chooseSelectOption(/which feature matters most/i, "Other");
-    fireEvent.change(screen.getByRole("textbox", { name: "Other feature" }), {
-      target: { value: "Supplier purchase tracking" },
-    });
+		fireEvent.change(screen.getByRole("textbox", { name: "Other feature" }), {
+			target: { value: "Supplier purchase tracking" },
+		});
+
+		continueToOptionalQuestions();
+		expect(screen.getByText("Step 2 of 2 · Optional")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Instagram" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
@@ -172,36 +188,43 @@ describe("WaitlistExperience", () => {
       { target: { value: "Weekend pop-ups" } },
     );
 
+		expect(
+			screen.getByRole("textbox", { name: "Other sales channel" }),
+		).toHaveValue("Weekend pop-ups");
+		expect(screen.getByRole("checkbox", { name: "Instagram" })).toBeChecked();
+
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(
       screen.getByRole("textbox", { name: "Other inventory method" }),
     ).toHaveValue("Airtable");
     expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
       "Supplier purchase tracking",
     );
-    expect(
-      screen.getByRole("textbox", { name: "Other sales channel" }),
-    ).toHaveValue("Weekend pop-ups");
-    expect(screen.getByRole("checkbox", { name: "Instagram" })).toBeChecked();
+
+		continueToOptionalQuestions();
 
     fireEvent.click(screen.getByRole("button", { name: /close survey/i }));
-    fireEvent.click(
-      screen.getByRole("button", { name: /answer the quick survey/i }),
+		fireEvent.click(
+			screen.getByRole("button", { name: /answer the quick survey/i }),
     );
-
-    expect(
-      screen.getByRole("textbox", { name: "Other inventory method" }),
-    ).toHaveValue("Airtable");
-    expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
-      "Supplier purchase tracking",
-    );
+		expect(screen.getByText("Step 2 of 2 · Optional")).toBeInTheDocument();
     expect(
       screen.getByRole("textbox", { name: "Other sales channel" }),
     ).toHaveValue("Weekend pop-ups");
+		expect(screen.getByRole("checkbox", { name: "Instagram" })).toBeChecked();
+
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		expect(
+			screen.getByRole("textbox", { name: "Other inventory method" }),
+		).toHaveValue("Airtable");
+		expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
+			"Supplier purchase tracking",
+		);
     expect(globalThis.fetch).not.toHaveBeenCalled();
     expect(Storage.prototype.setItem).not.toHaveBeenCalled();
   });
 
-  it("clears only a deselected Other detail and permits blank Other completion", async () => {
+	it("clears only a deselected Other detail and permits blank Other completion", async () => {
     renderExperience();
     await joinAndOpenSurvey();
 
@@ -211,28 +234,34 @@ describe("WaitlistExperience", () => {
       { target: { value: "Airtable" } },
     );
     chooseSelectOption(/which feature matters most/i, "Other");
-    fireEvent.change(screen.getByRole("textbox", { name: "Other feature" }), {
-      target: { value: "Purchase orders" },
-    });
-    fireEvent.click(screen.getByRole("checkbox", { name: "Instagram" }));
+		fireEvent.change(screen.getByRole("textbox", { name: "Other feature" }), {
+			target: { value: "Purchase orders" },
+		});
+
+		continueToOptionalQuestions();
+		fireEvent.click(screen.getByRole("checkbox", { name: "Instagram" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
     fireEvent.change(
       screen.getByRole("textbox", { name: "Other sales channel" }),
       { target: { value: "Weekend pop-ups" } },
     );
 
-    chooseSelectOption(/what do you use to track inventory today/i, "Excel");
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		chooseSelectOption(/what do you use to track inventory today/i, "Excel");
     expect(
       screen.queryByRole("textbox", { name: "Other inventory method" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
-      "Purchase orders",
-    );
-    expect(
-      screen.getByRole("textbox", { name: "Other sales channel" }),
-    ).toHaveValue("Weekend pop-ups");
+		expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
+			"Purchase orders",
+		);
 
-    chooseSelectOption(/what do you use to track inventory today/i, "Other");
+		continueToOptionalQuestions();
+		expect(
+			screen.getByRole("textbox", { name: "Other sales channel" }),
+		).toHaveValue("Weekend pop-ups");
+
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		chooseSelectOption(/what do you use to track inventory today/i, "Other");
     expect(
       screen.getByRole("textbox", { name: "Other inventory method" }),
     ).toHaveValue("");
@@ -242,11 +271,12 @@ describe("WaitlistExperience", () => {
       screen.queryByRole("textbox", { name: "Other feature" }),
     ).not.toBeInTheDocument();
     chooseSelectOption(/which feature matters most/i, "Other");
-    expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
-      "",
-    );
+		expect(screen.getByRole("textbox", { name: "Other feature" })).toHaveValue(
+			"",
+		);
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
+		continueToOptionalQuestions();
+		fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
     expect(
       screen.queryByRole("textbox", { name: "Other sales channel" }),
     ).not.toBeInTheDocument();
@@ -257,8 +287,32 @@ describe("WaitlistExperience", () => {
     ).toHaveValue("");
 
     fireEvent.click(screen.getByRole("button", { name: /finish quick survey/i }));
-    expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
-  });
+		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
+	});
+
+	it("moves forward and back with blank answers while preserving core values", async () => {
+		renderExperience();
+		await joinAndOpenSurvey();
+
+		fireEvent.click(screen.getByRole("radio", { name: "Android" }));
+		const activeHelp = screen.getByRole("link", {
+			name: /what counts as active/i,
+		});
+		expect(activeHelp).toHaveAttribute("href", "/#faq-active-pairs");
+		expect(activeHelp).toHaveAttribute("target", "_blank");
+
+		continueToOptionalQuestions();
+		expect(screen.getByText("Step 2 of 2 · Optional")).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: /which planned option feels closest/i }),
+		).toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: "Android" })).toBeChecked();
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
+	});
 
   it("resets Other details when the experience is remounted", async () => {
     const view = renderExperience();

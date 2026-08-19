@@ -14,6 +14,14 @@ The priorities are:
 
 The current `add-modern-waitlist-page` change should be completed and archived before these phases are implemented, unless a new change has a deliberately non-overlapping scope.
 
+## Front-End Discovery Notes — August 19, 2026
+
+- **Active-pair definition:** Treat this as an explicit user-facing requirement, not incidental pricing copy. The current fixture calculates active pairs as `Available + Reserved` and excludes `Sold`; confirm that domain rule before applying one consistent explanation across the dashboard, pricing limits, founding-offer summary, and inventory-size survey.
+- **Primary outcome proof:** Lead with one deterministic before/action/after story using the paid branch of Quick Sale: a Nike Dunk Low · Cacao Wow sale is recorded at ₱6,500 against a ₱4,800 cost; active stock updates from 12 to 11; and ₱1,700 profit is calculated and added to the monthly result. The intended impression is **sale recorded → stock updated → profit calculated**. Keep the separate installment branch for the later sold-versus-settled proof.
+- **Survey commitment:** Prefer a short first step containing phone, inventory size, current tool, and top priority, followed by the remaining optional research questions as a second step.
+- **Trust wording:** `Built for Filipino resellers` is acceptable without implying direct collaboration. `Being built for Filipino resellers` is the more precise validation-stage version.
+- **Privacy:** Maintain a dedicated collection-ready privacy notice linked from both consent copy and the site footer. Keep its contact, providers, retention period, and actual processing behavior synchronized with the eventual form backend.
+
 ## Recommended Phase Order
 
 | Phase | Proposed OpenSpec change                | Main outcome                                                                        | Priority           | Relative size     |

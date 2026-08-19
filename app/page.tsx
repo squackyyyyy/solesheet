@@ -6,6 +6,7 @@ import {
 import { BrandLogo } from "@/app/components/brand/brand-logo";
 import { formatPeso, recordedInstallmentPayment } from "@/app/lib/mock-data";
 import { MockupShowcase } from "@/app/components/mockups/mockup-showcase";
+import { ActivePairsText } from "@/app/components/active-pairs-link";
 import { PricingFeatureComparison } from "@/app/components/pricing/pricing-feature-comparison";
 import { WebQuickAddSection } from "@/app/components/web-quick-add/web-quick-add-section";
 import {
@@ -240,6 +241,27 @@ export default function Home() {
 							</p>
 						</div>
 						<MockupShowcase />
+						<section
+							aria-labelledby="product-waitlist-title"
+							data-product-waitlist-cta="true"
+							className="mt-10 grid gap-5 rounded-[2rem] border border-[#14213d]/10 bg-white p-6 shadow-[0_18px_55px_rgba(20,33,61,.08)] sm:grid-cols-[1fr_auto] sm:items-center sm:p-8"
+						>
+							<div>
+								<p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--brand-action)]">
+									Seen enough to have an opinion?
+								</p>
+								<h3
+									id="product-waitlist-title"
+									className="mt-2 text-2xl font-semibold tracking-[-0.035em] sm:text-3xl"
+								>
+									Help shape what we build first.
+								</h3>
+								<p className="mt-2 max-w-xl text-sm leading-6 text-black/65">
+									Join the waitlist, then answer four quick questions if you’d like.
+								</p>
+							</div>
+							<WaitlistCta className="w-full sm:w-auto sm:min-w-52" />
+						</section>
 					</div>
 				</section>
 
@@ -345,7 +367,9 @@ export default function Home() {
 									{plan.features.map((feature) => (
 										<li key={feature} className="flex gap-2">
 											<span className="text-[var(--brand-action)]">✓</span>
-											{feature}
+											<span>
+												<ActivePairsText text={feature} />
+											</span>
 										</li>
 									))}
 								</ul>
@@ -387,9 +411,10 @@ export default function Home() {
 						<div className="border-t border-black/12">
 							{faqs.map((faq, index) => (
 								<details
-									key={faq.question}
-									className="group border-b border-black/12 py-5"
-									open={index === 0}
+									key={faq.id}
+									id={faq.id}
+									className="group scroll-mt-24 border-b border-black/12 py-5"
+									open={index === 0 || faq.id === "faq-active-pairs"}
 								>
 									<summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-4">
 										{faq.question}
@@ -414,24 +439,34 @@ export default function Home() {
 				</div>
 
 				<footer id="privacy" className="border-t border-black/10">
-					<div className="mx-auto grid max-w-[1440px] gap-8 px-4 py-10 text-sm text-black/65 sm:px-6 md:grid-cols-[1fr_auto] md:items-end lg:px-10">
-						<div>
-							<BrandMark />
-							<p className="mt-4 max-w-xl text-xs leading-6">
-								Privacy note: waitlist contact details and optional research
-								answers are intended only for early access and product research.
-								We do not sell personal information.
-							</p>
-						</div>
-						<div className="flex flex-wrap gap-5 text-xs font-semibold">
-							<a href="#top" className="hover:text-[var(--brand-action)]">
+					<div className="mx-auto grid max-w-[1440px] gap-5 px-4 py-8 text-sm text-black/65 sm:px-6 md:grid-cols-[1fr_auto] md:items-center lg:px-10">
+						<BrandMark />
+						<nav
+							aria-label="Footer navigation"
+							className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs font-semibold"
+						>
+							<a
+								href="#top"
+								className="inline-flex min-h-11 items-center rounded-sm outline-none hover:text-[var(--brand-action)] focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
+							>
 								Back to top
 							</a>
-							<a href="#faq" className="hover:text-[var(--brand-action)]">
+							<a
+								href="#faq"
+								className="inline-flex min-h-11 items-center rounded-sm outline-none hover:text-[var(--brand-action)] focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
+							>
 								FAQ
 							</a>
-							<span>© 2026 SoleSheet concept</span>
-						</div>
+							<a
+								href="/privacy"
+								className="inline-flex min-h-11 items-center rounded-sm outline-none hover:text-[var(--brand-action)] focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
+							>
+								Privacy
+							</a>
+							<span className="inline-flex min-h-11 items-center">
+								© 2026 SoleSheet concept
+							</span>
+						</nav>
 					</div>
 				</footer>
 			</main>

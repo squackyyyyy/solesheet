@@ -11,10 +11,12 @@ import {
 	TextInput,
 } from "@/app/components/ui/aria";
 import { useWaitlistJourney } from "@/app/components/waitlist/waitlist-journey";
+import { ActivePairsLink } from "@/app/components/active-pairs-link";
 import { foundingOffer, surveyQuestions } from "@/app/lib/site-content";
 import { isValidWaitlistEmail } from "@/app/lib/validation";
 
 type SignupState = "form" | "pending";
+type SurveyStep = "core" | "optional";
 type SurveyAnswers = Record<string, string | string[]>;
 type SingleOtherAnswerKey = "currentTool" | "priority";
 type OtherDetailKey =
@@ -58,12 +60,22 @@ export function WaitlistCta({
 function SurveyForm({
 	answers,
 	setAnswers,
+	step,
+	setStep,
 	onComplete,
 }: {
 	answers: SurveyAnswers;
 	setAnswers: React.Dispatch<React.SetStateAction<SurveyAnswers>>;
+	step: SurveyStep;
+	setStep: React.Dispatch<React.SetStateAction<SurveyStep>>;
 	onComplete: () => void;
 }) {
+	const stepHeadingRef = useRef<HTMLHeadingElement | null>(null);
+
+	useEffect(() => {
+		stepHeadingRef.current?.focus();
+	}, [step]);
+
 	const setAnswer = (key: string, value: string | string[]) => {
 		setAnswers((current) => ({ ...current, [key]: value }));
 	};
@@ -102,128 +114,182 @@ function SurveyForm({
 			}}
 			className="grid gap-7"
 		>
-			<RadioCards
-				label={surveyQuestions.phone.label}
-				options={surveyQuestions.phone.options}
-				value={String(answers.phone ?? "")}
-				onChange={(value) => setAnswer("phone", value)}
-			/>
-			<SelectField
-				label={surveyQuestions.plan.label}
-				options={surveyQuestions.plan.options}
-				placeholder="Choose an option"
-				selectedKey={String(answers.plan ?? "") || null}
-				onSelectionChange={(key) => setAnswer("plan", String(key))}
-			/>
-			<RadioCards
-				label={surveyQuestions.inventorySize.label}
-				options={surveyQuestions.inventorySize.options}
-				value={String(answers.inventorySize ?? "")}
-				onChange={(value) => setAnswer("inventorySize", value)}
-			/>
-			<RadioCards
-				label={surveyQuestions.installments.label}
-				options={surveyQuestions.installments.options}
-				value={String(answers.installments ?? "")}
-				onChange={(value) => setAnswer("installments", value)}
-			/>
-			<div className="grid gap-3">
-				<SelectField
-					label={surveyQuestions.currentTool.label}
-					options={surveyQuestions.currentTool.options}
-					placeholder="Choose your current tool"
-					selectedKey={String(answers.currentTool ?? "") || null}
-					onSelectionChange={(key) =>
-						setSingleOtherAnswer(
-							"currentTool",
-							"currentToolOther",
-							key == null ? "" : String(key),
-						)
-					}
-				/>
-				{answers.currentTool === OTHER_OPTION ? (
-					<TextInput
-						label={surveyQuestions.currentTool.otherDetailLabel}
-						description="Optional — tell us what you use."
-						value={String(answers.currentToolOther ?? "")}
-						onChange={(value) => setAnswer("currentToolOther", value)}
-						inputId="survey-current-tool-other"
-						autoComplete="off"
-					/>
-				) : null}
-			</div>
-			<div className="grid gap-3">
-				<SelectField
-					label={surveyQuestions.priority.label}
-					options={surveyQuestions.priority.options}
-					placeholder="Choose one feature"
-					selectedKey={String(answers.priority ?? "") || null}
-					onSelectionChange={(key) =>
-						setSingleOtherAnswer(
-							"priority",
-							"priorityOther",
-							key == null ? "" : String(key),
-						)
-					}
-				/>
-				{answers.priority === OTHER_OPTION ? (
-					<TextInput
-						label={surveyQuestions.priority.otherDetailLabel}
-						description="Optional — tell us what would help most."
-						value={String(answers.priorityOther ?? "")}
-						onChange={(value) => setAnswer("priorityOther", value)}
-						inputId="survey-priority-other"
-						autoComplete="off"
-					/>
-				) : null}
-			</div>
-			<RadioCards
-				label={surveyQuestions.backup.label}
-				options={surveyQuestions.backup.options}
-				value={String(answers.backup ?? "")}
-				onChange={(value) => setAnswer("backup", value)}
-			/>
-			<div className="grid gap-3">
-				<p className="text-sm font-semibold text-[var(--brand-ink)]">
-					{surveyQuestions.channels.label}
+			<div className="rounded-2xl border border-[#14213d]/10 bg-white p-4">
+				<p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--brand-action)]">
+					{step === "core" ? "Step 1 of 2" : "Step 2 of 2 · Optional"}
 				</p>
-				<div className="grid gap-2 rounded-2xl border border-black/10 bg-white p-4 sm:grid-cols-2">
-					{surveyQuestions.channels.options.map((channel) => (
-						<CheckField
-							key={channel}
-							isSelected={
-								Array.isArray(answers.channels) &&
-								answers.channels.includes(channel)
-							}
-							onChange={(selected) => toggleChannel(channel, selected)}
-						>
-							{channel}
-						</CheckField>
-					))}
-				</div>
-				{Array.isArray(answers.channels) &&
-				answers.channels.includes(OTHER_OPTION) ? (
-					<TextInput
-						label={surveyQuestions.channels.otherDetailLabel}
-						description="Optional — tell us where else you sell."
-						value={String(answers.channelsOther ?? "")}
-						onChange={(value) => setAnswer("channelsOther", value)}
-						inputId="survey-channels-other"
-						autoComplete="off"
-					/>
-				) : null}
+				<h3
+					ref={stepHeadingRef}
+					tabIndex={-1}
+					className="mt-2 text-xl font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
+				>
+					{step === "core" ? "Four quick questions" : "Optional follow-up"}
+				</h3>
+				<p className="mt-2 text-xs leading-5 text-black/60">
+					{step === "core"
+						? "About 30 seconds. Answer what you can, or finish without answering."
+						: "These extra questions help with pricing and launch planning."}
+				</p>
 			</div>
-			<RadioCards
-				label={surveyQuestions.interview.label}
-				options={surveyQuestions.interview.options}
-				value={String(answers.interview ?? "")}
-				onChange={(value) => setAnswer("interview", value)}
-			/>
-			<div className="sticky bottom-0 -mx-5 border-t border-[#14213d]/10 bg-[#f7faf5]/95 px-5 pb-1 pt-4 backdrop-blur sm:-mx-7 sm:px-7">
-				<Button type="submit" className="w-full">
-					Finish quick survey
-					<span aria-hidden="true">→</span>
-				</Button>
+
+			{step === "core" ? (
+				<>
+					<RadioCards
+						label={surveyQuestions.phone.label}
+						options={surveyQuestions.phone.options}
+						value={String(answers.phone ?? "")}
+						onChange={(value) => setAnswer("phone", value)}
+					/>
+					<div className="grid gap-1">
+						<RadioCards
+							label={surveyQuestions.inventorySize.label}
+							options={surveyQuestions.inventorySize.options}
+							value={String(answers.inventorySize ?? "")}
+							onChange={(value) => setAnswer("inventorySize", value)}
+						/>
+						<a
+							href="/#faq-active-pairs"
+							target="_blank"
+							rel="noreferrer"
+							className="inline-flex min-h-11 w-fit items-center rounded-sm text-xs font-semibold text-[var(--brand-action)] underline decoration-[#22c55e]/65 underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
+						>
+							What counts as active?
+							<span className="sr-only"> (opens in a new tab)</span>
+						</a>
+					</div>
+					<div className="grid gap-3">
+						<SelectField
+							label={surveyQuestions.currentTool.label}
+							options={surveyQuestions.currentTool.options}
+							placeholder="Choose your current tool"
+							selectedKey={String(answers.currentTool ?? "") || null}
+							onSelectionChange={(key) =>
+								setSingleOtherAnswer(
+									"currentTool",
+									"currentToolOther",
+									key == null ? "" : String(key),
+								)
+							}
+						/>
+						{answers.currentTool === OTHER_OPTION ? (
+							<TextInput
+								label={surveyQuestions.currentTool.otherDetailLabel}
+								description="Optional — tell us what you use."
+								value={String(answers.currentToolOther ?? "")}
+								onChange={(value) => setAnswer("currentToolOther", value)}
+								inputId="survey-current-tool-other"
+								autoComplete="off"
+							/>
+						) : null}
+					</div>
+					<div className="grid gap-3">
+						<SelectField
+							label={surveyQuestions.priority.label}
+							options={surveyQuestions.priority.options}
+							placeholder="Choose one feature"
+							selectedKey={String(answers.priority ?? "") || null}
+							onSelectionChange={(key) =>
+								setSingleOtherAnswer(
+									"priority",
+									"priorityOther",
+									key == null ? "" : String(key),
+								)
+							}
+						/>
+						{answers.priority === OTHER_OPTION ? (
+							<TextInput
+								label={surveyQuestions.priority.otherDetailLabel}
+								description="Optional — tell us what would help most."
+								value={String(answers.priorityOther ?? "")}
+								onChange={(value) => setAnswer("priorityOther", value)}
+								inputId="survey-priority-other"
+								autoComplete="off"
+							/>
+						) : null}
+					</div>
+				</>
+			) : (
+				<>
+					<SelectField
+						label={surveyQuestions.plan.label}
+						options={surveyQuestions.plan.options}
+						placeholder="Choose an option"
+						selectedKey={String(answers.plan ?? "") || null}
+						onSelectionChange={(key) => setAnswer("plan", String(key))}
+					/>
+					<RadioCards
+						label={surveyQuestions.installments.label}
+						options={surveyQuestions.installments.options}
+						value={String(answers.installments ?? "")}
+						onChange={(value) => setAnswer("installments", value)}
+					/>
+					<RadioCards
+						label={surveyQuestions.backup.label}
+						options={surveyQuestions.backup.options}
+						value={String(answers.backup ?? "")}
+						onChange={(value) => setAnswer("backup", value)}
+					/>
+					<div className="grid gap-3">
+						<p className="text-sm font-semibold text-[var(--brand-ink)]">
+							{surveyQuestions.channels.label}
+						</p>
+						<div className="grid gap-2 rounded-2xl border border-black/10 bg-white p-4 sm:grid-cols-2">
+							{surveyQuestions.channels.options.map((channel) => (
+								<CheckField
+									key={channel}
+									isSelected={
+										Array.isArray(answers.channels) &&
+										answers.channels.includes(channel)
+									}
+									onChange={(selected) => toggleChannel(channel, selected)}
+								>
+									{channel}
+								</CheckField>
+							))}
+						</div>
+						{Array.isArray(answers.channels) &&
+						answers.channels.includes(OTHER_OPTION) ? (
+							<TextInput
+								label={surveyQuestions.channels.otherDetailLabel}
+								description="Optional — tell us where else you sell."
+								value={String(answers.channelsOther ?? "")}
+								onChange={(value) => setAnswer("channelsOther", value)}
+								inputId="survey-channels-other"
+								autoComplete="off"
+							/>
+						) : null}
+					</div>
+					<RadioCards
+						label={surveyQuestions.interview.label}
+						options={surveyQuestions.interview.options}
+						value={String(answers.interview ?? "")}
+						onChange={(value) => setAnswer("interview", value)}
+					/>
+				</>
+			)}
+			<div className="sticky bottom-0 border-t border-[#14213d]/10 bg-[#f7faf5]/95 pb-1 pt-4 backdrop-blur">
+				{step === "core" ? (
+					<div className="grid gap-2 sm:grid-cols-2">
+						<Button type="button" onPress={() => setStep("optional")} className="w-full">
+							Continue to optional questions
+							<span aria-hidden="true">→</span>
+						</Button>
+						<Button type="submit" variant="quiet" className="w-full">
+							Finish survey now
+						</Button>
+					</div>
+				) : (
+					<div className="grid gap-2 sm:grid-cols-[auto_1fr]">
+						<Button type="button" variant="secondary" onPress={() => setStep("core")}>
+							<span aria-hidden="true">←</span>
+							Back
+						</Button>
+						<Button type="submit" className="w-full">
+							Finish quick survey
+							<span aria-hidden="true">→</span>
+						</Button>
+					</div>
+				)}
 				<p className="mt-2 text-center text-[11px] text-black/65">
 					Every question is optional.
 				</p>
@@ -240,6 +306,7 @@ export function WaitlistExperience() {
 	const [consentError, setConsentError] = useState("");
 	const [signupState, setSignupState] = useState<SignupState>("form");
 	const [answers, setAnswers] = useState<SurveyAnswers>({});
+	const [surveyStep, setSurveyStep] = useState<SurveyStep>("core");
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const {
 		completeSignup,
@@ -308,7 +375,10 @@ export function WaitlistExperience() {
 					<div className="mt-8 grid grid-cols-3 gap-3 border-t border-white/12 pt-5 text-xs text-white/70">
 						<p>
 							<span className="block text-xl font-semibold text-white">20</span>
-							free active pairs
+							free{" "}
+							<ActivePairsLink className="text-white decoration-[#86efac] hover:text-[#86efac] focus-visible:ring-[#86efac] focus-visible:ring-offset-[var(--brand-ink)]">
+								active pairs
+							</ActivePairsLink>
 						</p>
 						<p>
 							<span className="block text-xl font-semibold text-white">
@@ -405,10 +475,13 @@ export function WaitlistExperience() {
 								I agree to the collection and use of my information as described
 								in the{" "}
 								<a
-									href="#privacy"
-									className="font-semibold underline underline-offset-2"
+									href="/privacy"
+									target="_blank"
+									rel="noreferrer"
+									className="inline-flex min-h-11 items-center rounded-sm font-semibold underline underline-offset-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
 								>
 									Privacy Notice
+									<span className="sr-only"> (opens in a new tab)</span>
 								</a>
 								, including contact about early access.
 							</CheckField>
@@ -476,10 +549,12 @@ export function WaitlistExperience() {
 						</div>
 					</div>
 				) : (
-					<SurveyForm
-						answers={answers}
-						setAnswers={setAnswers}
-						onComplete={completeSurvey}
+						<SurveyForm
+							answers={answers}
+							setAnswers={setAnswers}
+							step={surveyStep}
+							setStep={setSurveyStep}
+							onComplete={completeSurvey}
 					/>
 				)}
 			</DialogSheet>
