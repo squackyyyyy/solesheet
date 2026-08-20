@@ -637,7 +637,18 @@ test("survey wizard supports keyboard and touch Other details without persistenc
 	};
 
 	await activate(page.getByRole("button", { name: /join the waitlist/i }).first());
-	await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
+	const signupName = page.getByRole("textbox", { name: "Name" });
+	const signupEmail = page.getByRole("textbox", { name: "Email address" });
+	await expect(signupName).toHaveAttribute("maxlength", "60");
+	await expect(signupEmail).toHaveAttribute("maxlength", "254");
+	await signupName.fill("x".repeat(70));
+	await expect(signupName).toHaveValue("x".repeat(60));
+	expect(
+		await page.evaluate(
+			() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+		),
+	).toBeLessThanOrEqual(1);
+	await signupEmail.fill("seller@example.com");
 	const consent = page.getByRole("checkbox", { name: /i agree to the collection/i });
 	await activate(isMobile ? page.locator("label", { has: consent }) : consent);
 	await expect(consent).toBeChecked();
@@ -653,10 +664,48 @@ test("survey wizard supports keyboard and touch Other details without persistenc
 
 	await activate(dialog.getByRole("radio", { name: "Other" }));
 	const inventoryOther = dialog.getByRole("textbox", { name: "Other inventory method" });
+	await expect(inventoryOther).toHaveAttribute("maxlength", "100");
 	await inventoryOther.fill("Airtable");
 	await activate(dialog.getByRole("button", { name: /next question/i }));
 	await activate(dialog.getByRole("radio", { name: "Other" }));
 	const featureOther = dialog.getByRole("textbox", { name: "Other feature" });
+	await expect(featureOther).toHaveAttribute("maxlength", "300");
+	await expect(featureOther).toHaveAttribute("rows", "4");
+	await expect(featureOther).toHaveCSS("resize", "none");
+	const longFeatureAnswer = `${"a".repeat(180)}\n${"b".repeat(130)}`;
+	await featureOther.fill(longFeatureAnswer);
+	await expect(featureOther).toHaveValue(longFeatureAnswer.slice(0, 300));
+	await expect(dialog.getByText("300 / 300")).toBeVisible();
+	const featureGeometry = await page.evaluate(() => {
+		const surveyDialog = document.querySelector<HTMLElement>('[role="dialog"]');
+		const body = surveyDialog?.querySelector<HTMLElement>('[data-dialog-body="true"]');
+		const footer = surveyDialog?.querySelector<HTMLElement>('[data-dialog-footer="true"]');
+		const textarea = surveyDialog?.querySelector<HTMLTextAreaElement>(
+			"#survey-priority-other",
+		);
+		const bodyBox = body?.getBoundingClientRect();
+		const footerBox = footer?.getBoundingClientRect();
+		return {
+			pageOverflow:
+				document.documentElement.scrollWidth - document.documentElement.clientWidth,
+			dialogOverflow: surveyDialog
+				? surveyDialog.scrollWidth - surveyDialog.clientWidth
+				: 0,
+			bodyOverflow: body ? body.scrollWidth - body.clientWidth : 0,
+			bodyOverflowY: body ? getComputedStyle(body).overflowY : "",
+			bodyEndsBeforeFooter: Boolean(
+				bodyBox && footerBox && bodyBox.bottom <= footerBox.top + 1,
+			),
+			textareaHeight: textarea?.getBoundingClientRect().height ?? 0,
+		};
+	});
+	expect(featureGeometry.pageOverflow).toBeLessThanOrEqual(1);
+	expect(featureGeometry.dialogOverflow).toBeLessThanOrEqual(1);
+	expect(featureGeometry.bodyOverflow).toBeLessThanOrEqual(1);
+	expect(featureGeometry.bodyOverflowY).toBe("auto");
+	expect(featureGeometry.bodyEndsBeforeFooter).toBe(true);
+	expect(featureGeometry.textareaHeight).toBeGreaterThanOrEqual(110);
+	expect(featureGeometry.textareaHeight).toBeLessThanOrEqual(114);
 	await featureOther.fill("Supplier purchase tracking");
 	await activate(dialog.getByRole("button", { name: /continue survey/i }));
 
@@ -674,6 +723,7 @@ test("survey wizard supports keyboard and touch Other details without persistenc
 	await expect(instagram).toBeChecked();
 	await expect(channelOther).toBeChecked();
 	const salesChannelOther = dialog.getByRole("textbox", { name: "Other sales channel" });
+	await expect(salesChannelOther).toHaveAttribute("maxlength", "100");
 	await salesChannelOther.fill("Weekend pop-ups");
 
 	await activate(dialog.getByRole("button", { name: /close survey/i }));

@@ -39,6 +39,7 @@ import {
   Input,
   Label,
   Text,
+  TextArea,
   TextField,
   type TextFieldProps,
 } from "react-aria-components/TextField";
@@ -134,6 +135,59 @@ export function TextInput({
       </FieldError>
     </TextField>
   );
+}
+
+export type TextAreaFieldProps = Omit<TextFieldProps, "children"> & {
+	label: string;
+	description?: string;
+	errorMessage?: string;
+	inputId?: string;
+	value: string;
+	maxLength: number;
+	rows?: number;
+};
+
+export function TextAreaField({
+	label,
+	description,
+	errorMessage,
+	inputId,
+	value,
+	maxLength,
+	rows = 4,
+	...props
+}: TextAreaFieldProps) {
+	return (
+		<TextField
+			{...props}
+			value={value}
+			maxLength={maxLength}
+			isInvalid={Boolean(errorMessage)}
+			className="group grid gap-2"
+		>
+			<Label className="text-sm font-semibold text-[var(--brand-ink)]">
+				{label}
+			</Label>
+			<TextArea
+				id={inputId}
+				rows={rows}
+				maxLength={maxLength}
+				className="h-28 min-h-28 max-h-28 w-full resize-none overflow-x-hidden overflow-y-auto rounded-2xl border border-[#14213d]/15 bg-white px-4 py-3 text-base leading-6 text-[var(--brand-ink)] outline-none transition placeholder:text-[#14213d]/55 data-[focused]:border-[var(--brand-action)] data-[focused]:ring-3 data-[focused]:ring-[#22c55e]/18 data-[invalid]:border-red-600"
+			/>
+			<Text
+				slot="description"
+				className="flex items-start justify-between gap-4 text-xs leading-5 text-black/65"
+			>
+				<span>{description}</span>
+				<span className="shrink-0 tabular-nums">
+					{value.length} / {maxLength}
+				</span>
+			</Text>
+			<FieldError className="text-xs font-medium text-red-700">
+				{errorMessage}
+			</FieldError>
+		</TextField>
+	);
 }
 
 export function CheckField({

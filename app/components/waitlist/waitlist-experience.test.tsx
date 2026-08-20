@@ -137,8 +137,11 @@ describe("WaitlistExperience", () => {
 
 	it("shows accessible contact and consent feedback", () => {
 		renderExperience();
+		const name = screen.getByRole("textbox", { name: "Name" });
 		const email = screen.getByRole("textbox", { name: "Email address" });
+		expect(name).toHaveAttribute("maxlength", "60");
 		expect(email).toHaveAttribute("type", "email");
+		expect(email).toHaveAttribute("maxlength", "254");
 		expect(email).toHaveAttribute("autocomplete", "email");
 		expect(email).toHaveAttribute("placeholder", "you@email.com");
 		fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
@@ -147,6 +150,33 @@ describe("WaitlistExperience", () => {
 		expect(
 			screen.getByText(/agree to the privacy policy/i),
 		).toBeInTheDocument();
+	});
+
+	it("bounds and normalizes the optional signup name", async () => {
+		renderExperience();
+		const name = screen.getByRole("textbox", { name: "Name" });
+		const email = screen.getByRole("textbox", { name: "Email address" });
+
+		fireEvent.change(name, { target: { value: "x".repeat(70) } });
+		expect(name).toHaveValue("x".repeat(60));
+
+		fireEvent.change(name, { target: { value: "   " } });
+		fireEvent.blur(name);
+		expect(name).toHaveValue("");
+
+		fireEvent.change(name, { target: { value: "  Sapatos ni José 👟  " } });
+		fireEvent.change(email, { target: { value: " seller@example.com " } });
+		fireEvent.click(
+			screen.getByRole("checkbox", { name: /i agree to the collection/i }),
+		);
+		fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
+
+		const confirmation = await screen.findByRole(
+			"heading",
+			{ name: "Thanks, Sapatos ni José 👟." },
+			{ timeout: 1500 },
+		);
+		expect(confirmation).toHaveClass("break-words");
 	});
 
 	it("rejects a Philippine mobile number as a waitlist contact", () => {
@@ -296,8 +326,12 @@ describe("WaitlistExperience", () => {
 		skipQuestion();
 		skipQuestion();
 		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
+		const currentToolOther = screen.getByRole("textbox", {
+			name: "Other inventory method",
+		});
+		expect(currentToolOther).toHaveAttribute("maxlength", "100");
 		fireEvent.change(
-			screen.getByRole("textbox", { name: "Other inventory method" }),
+			currentToolOther,
 			{ target: { value: "Airtable" } },
 		);
 		fireEvent.click(screen.getByRole("radio", { name: "Excel" }));
@@ -313,9 +347,18 @@ describe("WaitlistExperience", () => {
 		);
 		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
 		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
-		fireEvent.change(screen.getByRole("textbox", { name: "Other feature" }), {
+		const priorityOther = screen.getByRole("textbox", {
+			name: "Other feature",
+		});
+		expect(priorityOther.tagName).toBe("TEXTAREA");
+		expect(priorityOther).toHaveAttribute("maxlength", "300");
+		expect(priorityOther).toHaveAttribute("rows", "4");
+		expect(priorityOther).toHaveClass("h-28", "resize-none", "overflow-y-auto");
+		expect(screen.getByText("0 / 300")).toBeInTheDocument();
+		fireEvent.change(priorityOther, {
 			target: { value: "Supplier purchase tracking" },
 		});
+		expect(screen.getByText("26 / 300")).toBeInTheDocument();
 		fireEvent.click(screen.getByRole("button", { name: /continue survey/i }));
 
 		await expectQuestion(/which planned option feels closest/i, "Optional question 1 of 5");
@@ -327,8 +370,12 @@ describe("WaitlistExperience", () => {
 		await expectQuestion(/where do you usually sell/i, "Optional question 4 of 5");
 		fireEvent.click(screen.getByRole("checkbox", { name: "Instagram" }));
 		fireEvent.click(screen.getByRole("checkbox", { name: "Other" }));
+		const channelsOther = screen.getByRole("textbox", {
+			name: "Other sales channel",
+		});
+		expect(channelsOther).toHaveAttribute("maxlength", "100");
 		fireEvent.change(
-			screen.getByRole("textbox", { name: "Other sales channel" }),
+			channelsOther,
 			{ target: { value: "Weekend pop-ups" } },
 		);
 
@@ -365,6 +412,55 @@ describe("WaitlistExperience", () => {
 		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
 		expect(globalThis.fetch).not.toHaveBeenCalled();
 		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
+	});
+
+	it("bounds and trims optional Other details without requiring them", async () => {
+		renderExperience();
+		await joinAndOpenSurvey();
+		skipQuestion();
+		skipQuestion();
+		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
+
+		const currentToolOther = screen.getByRole("textbox", {
+			name: "Other inventory method",
+		});
+		fireEvent.change(currentToolOther, {
+			target: { value: `  ${"x".repeat(110)}` },
+		});
+		expect(currentToolOther).toHaveValue(`  ${"x".repeat(98)}`);
+		fireEvent.change(currentToolOther, { target: { value: "   " } });
+		fireEvent.blur(currentToolOther);
+		expect(currentToolOther).toHaveValue("");
+		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
+
+		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
+		const priorityOther = screen.getByRole("textbox", {
+			name: "Other feature",
+		});
+		const longMultilineAnswer = `${"a".repeat(180)}\n${"b".repeat(130)}`;
+		fireEvent.change(priorityOther, {
+			target: { value: longMultilineAnswer },
+		});
+		expect(priorityOther).toHaveValue(longMultilineAnswer.slice(0, 300));
+		expect(screen.getByText("300 / 300")).toBeInTheDocument();
+
+		fireEvent.change(priorityOther, {
+			target: { value: "  Supplier notes\nand purchase tracking  " },
+		});
+		fireEvent.blur(priorityOther);
+		expect(priorityOther).toHaveValue(
+			"Supplier notes\nand purchase tracking",
+		);
+		fireEvent.click(screen.getByRole("radio", { name: "Reports" }));
+		await expectQuestion(
+			/which planned option feels closest/i,
+			"Optional question 1 of 5",
+		);
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
+		expect(
+			screen.getByRole("textbox", { name: "Other feature" }),
+		).toHaveValue("");
 	});
 
 	it("moves backward across the optional boundary without losing core answers", async () => {

@@ -8,13 +8,19 @@ import {
 	CheckField,
 	DialogSheet,
 	RadioCards,
+	TextAreaField,
 	TextInput,
 } from "@/app/components/ui/aria";
 import { BrandLoader } from "@/app/components/brand/brand-loader";
 import { useWaitlistJourney } from "@/app/components/waitlist/waitlist-journey";
 import { ActivePairsLink } from "@/app/components/active-pairs-link";
 import { foundingOffer, surveyQuestions } from "@/app/lib/site-content";
-import { isValidWaitlistEmail } from "@/app/lib/validation";
+import {
+	boundTextValue,
+	isValidWaitlistEmail,
+	normalizeOptionalText,
+	waitlistTextLimits,
+} from "@/app/lib/validation";
 
 type SignupState = "form" | "pending";
 type SurveySubmissionState = "idle" | "pending";
@@ -217,7 +223,21 @@ function SurveyQuestion({
 								label={surveyQuestions.channels.otherDetailLabel}
 								description="Optional — tell us where else you sell."
 								value={String(answers.channelsOther ?? "")}
-								onChange={(value) => onSetAnswer("channelsOther", value)}
+								onChange={(value) =>
+									onSetAnswer(
+										"channelsOther",
+										boundTextValue(value, waitlistTextLimits.channelsOther),
+									)
+								}
+								onBlur={() =>
+									onSetAnswer(
+										"channelsOther",
+										normalizeOptionalText(
+											String(answers.channelsOther ?? ""),
+										),
+									)
+								}
+								maxLength={waitlistTextLimits.channelsOther}
 								inputId="survey-channels-other"
 								autoComplete="off"
 							/>
@@ -259,7 +279,21 @@ function SurveyQuestion({
 								label={surveyQuestions.currentTool.otherDetailLabel}
 								description="Optional — tell us what you use."
 								value={String(answers.currentToolOther ?? "")}
-								onChange={(value) => onSetAnswer("currentToolOther", value)}
+								onChange={(value) =>
+									onSetAnswer(
+										"currentToolOther",
+										boundTextValue(value, waitlistTextLimits.currentToolOther),
+									)
+								}
+								onBlur={() =>
+									onSetAnswer(
+										"currentToolOther",
+										normalizeOptionalText(
+											String(answers.currentToolOther ?? ""),
+										),
+									)
+								}
+								maxLength={waitlistTextLimits.currentToolOther}
 								inputId="survey-current-tool-other"
 								autoComplete="off"
 							/>
@@ -267,11 +301,26 @@ function SurveyQuestion({
 
 						{descriptor.key === "priority" &&
 						answers.priority === OTHER_OPTION ? (
-							<TextInput
+							<TextAreaField
 								label={surveyQuestions.priority.otherDetailLabel}
 								description="Optional — tell us what would help most."
 								value={String(answers.priorityOther ?? "")}
-								onChange={(value) => onSetAnswer("priorityOther", value)}
+								onChange={(value) =>
+									onSetAnswer(
+										"priorityOther",
+										boundTextValue(value, waitlistTextLimits.priorityOther),
+									)
+								}
+								onBlur={() =>
+									onSetAnswer(
+										"priorityOther",
+										normalizeOptionalText(
+											String(answers.priorityOther ?? ""),
+										),
+									)
+								}
+								maxLength={waitlistTextLimits.priorityOther}
+								rows={4}
 								inputId="survey-priority-other"
 								autoComplete="off"
 							/>
@@ -551,7 +600,9 @@ export function WaitlistExperience() {
 
 	function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		const nextContactError = isValidWaitlistEmail(contact)
+		const normalizedName = normalizeOptionalText(name);
+		const normalizedContact = normalizeOptionalText(contact);
+		const nextContactError = isValidWaitlistEmail(normalizedContact)
 			? ""
 			: "Enter a valid email address.";
 		const nextConsentError = consent
@@ -563,6 +614,8 @@ export function WaitlistExperience() {
 
 		if (nextContactError || nextConsentError) return;
 
+		setName(normalizedName);
+		setContact(normalizedContact);
 		setSignupState("pending");
 		signupTimerRef.current = setTimeout(() => {
 			signupTimerRef.current = null;
@@ -639,7 +692,7 @@ export function WaitlistExperience() {
 									? "Your early-access flow is complete"
 									: "You’re part of the first look"}
 							</p>
-							<h3 className="mx-auto mt-3 max-w-sm text-3xl font-semibold tracking-tight">
+							<h3 className="mx-auto mt-3 max-w-sm break-words text-3xl font-semibold tracking-tight">
 								Thanks, {name.trim() || "seller"}.
 							</h3>
 							<p className="mx-auto mt-3 max-w-md text-sm leading-6 text-black/65">
@@ -673,7 +726,11 @@ export function WaitlistExperience() {
 								label="Name"
 								description="Optional — a first name or reseller alias is enough."
 								value={name}
-								onChange={setName}
+								onChange={(value) =>
+									setName(boundTextValue(value, waitlistTextLimits.name))
+								}
+								onBlur={() => setName((value) => normalizeOptionalText(value))}
+								maxLength={waitlistTextLimits.name}
 								placeholder="e.g. Jules or Sole Supply MNL"
 								autoComplete="name"
 							/>
@@ -681,10 +738,11 @@ export function WaitlistExperience() {
 								label="Email address"
 								value={contact}
 								onChange={(value) => {
-									setContact(value);
+									setContact(boundTextValue(value, waitlistTextLimits.email));
 									if (contactError) setContactError("");
 								}}
 								errorMessage={contactError}
+								maxLength={waitlistTextLimits.email}
 								placeholder="you@email.com"
 								type="email"
 								name="email"
