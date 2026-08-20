@@ -16,6 +16,15 @@ describe("flowMockupAssets", () => {
       "backup",
     ]);
     expect(flowMockupAssets.filter((asset) => asset.fastestPath).map((asset) => asset.id)).toEqual(["quick-sale"]);
+    const quickSale = flowMockupAssets.find((asset) => asset.id === "quick-sale");
+    expect(quickSale).toMatchObject({
+      title: "One sale updates stock and profit",
+      desktop: { captureId: "quick-sale-desktop" },
+      mobile: { captureId: "quick-sale-mobile" },
+    });
+    expect(quickSale?.description).toMatch(
+      /paid Nike Dunk Low sale.*US 8.5.*Cacao Wow.*₱4,800 cost.*₱6,500 sale price.*Paid in full.*active pairs from 12 to 11.*₱1,700 sale profit.*monthly profit from ₱8,950 to ₱10,650/i,
+    );
     expect(flowMockupAssets.find((asset) => asset.id === "backup")?.description).toMatch(
       /Starter plan.*cloud backup and restore.*Starter feature/i,
     );

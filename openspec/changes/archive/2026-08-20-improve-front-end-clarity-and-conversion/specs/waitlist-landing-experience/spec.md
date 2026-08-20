@@ -40,7 +40,7 @@ The landing experience SHALL define an **active pair** as an inventory record ma
 - **THEN** the browser moves to the expanded active-pair FAQ entry and the full definition is visible
 
 #### Scenario: Visitor asks from the survey
-- **WHEN** a visitor activates **What counts as active?** beside the inventory-size survey question
+- **WHEN** a visitor activates **What pairs count as active?** beside the inventory-size survey question
 - **THEN** the active-pair FAQ opens in a separate browser context so the in-progress survey remains available in its original context
 
 #### Scenario: Static preview contains active-pair text

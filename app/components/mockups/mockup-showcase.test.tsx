@@ -14,7 +14,7 @@ describe("MockupShowcase", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /select a moment to switch the preview image.*controls pictured inside the phone are illustrative and do not operate here/i,
+        /sale recorded → stock updated → profit calculated.*select a moment to switch the preview image.*controls pictured inside the phone are illustrative and do not operate here/i,
       ),
     ).toBeInTheDocument();
 
@@ -23,7 +23,9 @@ describe("MockupShowcase", () => {
     expect(quickSale).toHaveClass("bg-emerald-900");
     expect(screen.getByText("Fastest path")).toBeInTheDocument();
 
-    const image = screen.getByRole("img", { name: /nike dunk low sale found by model, size, or colorway/i });
+    const image = screen.getByRole("img", {
+      name: /paid Nike Dunk Low sale found by model, size, or colorway.*active pairs from 12 to 11.*₱1,700 sale profit.*monthly profit from ₱8,950 to ₱10,650/i,
+    });
     expect(image).toHaveAttribute("src", "/flow-mockups/quick-sale-desktop.webp");
     const mobileSource = image.parentElement?.querySelector("source");
     expect(mobileSource).toHaveAttribute("srcset", "/flow-mockups/quick-sale-mobile.webp");

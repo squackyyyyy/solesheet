@@ -185,6 +185,19 @@ export const installmentSale = {
   paymentStatus: "Partially paid" as PaymentStatus,
 };
 
+const quickSaleShoe = stockroomShoes[0];
+const quickSaleProfit = installmentSale.salePrice - quickSaleShoe.cost;
+
+export const quickSaleOutcome = {
+  shoe: quickSaleShoe,
+  salePrice: installmentSale.salePrice,
+  activePairsBefore: dashboard.activePairs,
+  activePairsAfter: dashboard.activePairs - 1,
+  saleProfit: quickSaleProfit,
+  monthlyProfitBefore: dashboard.monthlyProfit,
+  monthlyProfitAfter: dashboard.monthlyProfit + quickSaleProfit,
+} as const;
+
 export const recordedInstallmentPayment = {
   amount: installmentSale.secondPayment,
   collectedBefore: installmentSale.collected,

@@ -1,10 +1,17 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import type { FlowMockupCapture, FlowMockupId } from "@/app/lib/flow-mockup-assets";
-import { dashboard, formatPeso, installmentSale, quickLogExample, recordedInstallmentPayment, stockroomShoes } from "@/app/lib/mock-data";
+import {
+  dashboard,
+  formatPeso,
+  installmentSale,
+  quickLogExample,
+  quickSaleOutcome,
+  recordedInstallmentPayment,
+} from "@/app/lib/mock-data";
 import { starterPlan } from "@/app/lib/site-content";
 
-const saleShoe = stockroomShoes[0];
+const saleShoe = quickSaleOutcome.shoe;
 
 function Logo({ inverse = false, compact = false }: { inverse?: boolean; compact?: boolean }) {
   return (
@@ -97,6 +104,71 @@ function Action({ children }: { children: ReactNode }) {
 
 function SaleScreen({ mobile = false }: { mobile?: boolean }) {
   return <div className="px-7 pb-10 pt-8"><ScreenHeading eyebrow="Quick Sale" title="Sell a pair" /><SearchField /><SelectedShoe />{mobile ? null : <div className="mt-4 grid grid-cols-2 gap-3"><Field label="Size" value={saleShoe.size} /><Field label="Colorway" value={saleShoe.colorway} /></div>}<div className="mt-4"><Field label="Sale price" value={formatPeso(installmentSale.salePrice)} emphasis /></div><div className="mt-4"><Field label="Sold date" value="Today · Aug 11, 2026" /></div><div className="mt-4"><PaymentChoice /></div><div className="mt-5"><Action>Save sale →</Action></div></div>;
+}
+
+function QuickSaleOutcomeProof({ mobile }: { mobile: boolean }) {
+  const metrics = [
+    {
+      label: "Active pairs",
+      before: String(quickSaleOutcome.activePairsBefore),
+      after: String(quickSaleOutcome.activePairsAfter),
+    },
+    {
+      label: "Sale profit",
+      after: `+${formatPeso(quickSaleOutcome.saleProfit)}`,
+    },
+    {
+      label: "Monthly profit",
+      before: formatPeso(quickSaleOutcome.monthlyProfitBefore),
+      after: formatPeso(quickSaleOutcome.monthlyProfitAfter),
+    },
+  ];
+
+  return (
+    <aside
+      data-quick-sale-outcome="paid-in-full"
+      className={`absolute z-30 rounded-[28px] border border-white/20 bg-white/95 text-stone-950 shadow-[0_28px_80px_rgba(0,0,0,.28)] backdrop-blur-sm ${
+        mobile
+          ? "bottom-[34px] left-[45px] w-[460px] p-6"
+          : "bottom-[76px] left-[92px] w-[700px] p-7"
+      }`}
+    >
+      <div className={`flex ${mobile ? "items-start gap-3" : "items-center justify-between gap-6"}`}>
+        <div className="flex items-center gap-3">
+          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-emerald-700 text-[24px] font-black text-white">
+            ✓
+          </span>
+          <div>
+            <p className={`${mobile ? "text-[17px]" : "text-[16px]"} font-black`}>Paid sale recorded</p>
+            <p className="mt-1 text-[12px] font-medium text-stone-500">
+              {saleShoe.brand} {saleShoe.model} · {saleShoe.size} · {formatPeso(quickSaleOutcome.salePrice)}
+            </p>
+          </div>
+        </div>
+        {mobile ? null : (
+          <p className="shrink-0 text-[11px] font-black uppercase tracking-[0.15em] text-emerald-700">
+            Stock and profit updated
+          </p>
+        )}
+      </div>
+
+      <div className={`${mobile ? "mt-5 space-y-2.5" : "mt-6 grid grid-cols-3 gap-3"}`}>
+        {metrics.map((metric) => (
+          <div
+            key={metric.label}
+            className={`${mobile ? "flex items-center justify-between gap-4 px-4 py-3.5" : "px-4 py-4"} rounded-[18px] bg-stone-100`}
+          >
+            <p className={`${mobile ? "text-[13px]" : "text-[11px]"} font-bold text-stone-500`}>{metric.label}</p>
+            <p className={`${mobile ? "text-[22px]" : "mt-2 text-[20px]"} whitespace-nowrap font-black`}>
+              {metric.before ? <span className="text-stone-400 line-through decoration-1">{metric.before}</span> : null}
+              {metric.before ? <span className="mx-2 text-emerald-700">→</span> : null}
+              <span className="text-emerald-800">{metric.after}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
 }
 
 function BottomNavigation() {
@@ -214,7 +286,7 @@ function BackupScreen() {
 }
 
 const content: Record<FlowMockupId, { eyebrow: string; headline: ReactNode; mobileHeadline: ReactNode; body: string; dark: boolean; screen: (mobile: boolean) => ReactNode }> = {
-  "quick-sale": { eyebrow: "Quick Sale · One tap", headline: <>Sell a pair<br />in seconds.</>, mobileHeadline: <>Sell a pair<br />in seconds.</>, body: "Find the shoe by model, size, or colorway. Everything known is filled in—enter the sale price and save.", dark: true, screen: (mobile) => <SaleScreen mobile={mobile} /> },
+  "quick-sale": { eyebrow: "Quick Sale · One saved sale", headline: <>Sale recorded.<br />Everything updates.</>, mobileHeadline: <>One sale.<br />Three updates.</>, body: "Save one paid sale and SoleSheet updates stock, sale profit, and monthly profit together.", dark: true, screen: (mobile) => <SaleScreen mobile={mobile} /> },
   "quick-actions": { eyebrow: "Quick Log · Press and hold", headline: <>One button.<br />Three shortcuts.</>, mobileHeadline: <>Hold for<br />quick actions.</>, body: "Tap starts a sale. Hold the same button for payments or new stock—the menu stays anchored to your thumb.", dark: false, screen: DashboardScreen },
   "search-stock": { eyebrow: "Stock search · All details", headline: <>Find the exact<br />pair, quickly.</>, mobileHeadline: <>Search all stock<br />at once.</>, body: "One compact search checks the model, size, and colorway, then keeps the exact variant and status visible.", dark: true, screen: StockSearchScreen },
   "add-stock": { eyebrow: "Inventory · Essentials first", headline: <>Add stock<br />without the admin.</>, mobileHeadline: <>Add only<br />what matters.</>, body: "Model, size, colorway, and cost are enough to start. Target price and other details can be added or edited later.", dark: false, screen: AddStockScreen },
@@ -226,6 +298,7 @@ const content: Record<FlowMockupId, { eyebrow: string; headline: ReactNode; mobi
 function Board({ capture }: { capture: FlowMockupCapture }) {
   const item = content[capture.destination.id];
   const mobile = capture.layout === "mobile";
+  const isQuickSale = capture.destination.id === "quick-sale";
   return (
     <div className={`relative h-full overflow-hidden ${item.dark ? "bg-[radial-gradient(circle_at_76%_22%,#356345_0%,#173522_34%,#0d2116_72%,#09150f_100%)] text-white" : "bg-[radial-gradient(circle_at_18%_18%,#fffdf5_0%,#f2eee4_46%,#dce8d7_100%)] text-stone-950"} ${mobile ? "px-[45px] py-[42px]" : "px-[92px] py-[76px]"}`}>
       <div className={`absolute rounded-full blur-[18px] ${mobile ? "-right-[170px] top-[300px] size-[520px]" : "-left-[190px] bottom-[-310px] size-[710px]"} ${item.dark ? "bg-[#e8ff9f]/10" : "bg-emerald-700/8"}`} />
@@ -235,7 +308,19 @@ function Board({ capture }: { capture: FlowMockupCapture }) {
         <h1 className={`${mobile ? "mt-5 text-[62px] leading-[.91]" : "mt-7 text-[88px] leading-[.9]"} font-black tracking-[-0.075em]`}>{mobile ? item.mobileHeadline : item.headline}</h1>
         {!mobile ? <p className={`mt-8 max-w-[610px] text-[25px] leading-[1.4] ${item.dark ? "text-white/70" : "text-stone-600"}`}>{item.body}</p> : <p className={`mt-5 max-w-[650px] text-[20px] leading-[1.35] ${item.dark ? "text-white/70" : "text-stone-600"}`}>{item.body}</p>}
       </div>
-      <div data-phone-placement={mobile ? "mobile-cropped-tilted" : "desktop-tilted"} className={`absolute z-10 [perspective:1600px] ${mobile ? "left-[185px] top-[410px] origin-top-left [transform:rotateZ(3deg)_scale(.74)]" : "bottom-[-105px] right-[140px] [transform:rotateY(-8deg)_rotateZ(4deg)]"}`}><Phone mobile={mobile}>{item.screen(mobile)}</Phone></div>
+      <div
+        data-phone-placement={mobile ? "mobile-cropped-tilted" : "desktop-tilted"}
+        className={`absolute z-10 [perspective:1600px] ${
+          mobile
+            ? isQuickSale
+              ? "left-[400px] top-[430px] origin-top-left [transform:rotateZ(3deg)_scale(.72)]"
+              : "left-[185px] top-[410px] origin-top-left [transform:rotateZ(3deg)_scale(.74)]"
+            : "bottom-[-105px] right-[140px] [transform:rotateY(-8deg)_rotateZ(4deg)]"
+        }`}
+      >
+        <Phone mobile={mobile}>{item.screen(mobile)}</Phone>
+      </div>
+      {isQuickSale ? <QuickSaleOutcomeProof mobile={mobile} /> : null}
       {capture.destination.id === "quick-actions" ? <div className={`absolute z-30 flex items-center gap-3 rounded-[20px] border border-emerald-900/10 bg-white/90 px-5 py-4 text-stone-900 shadow-xl ${mobile ? "bottom-[26px] left-[45px]" : "bottom-[80px] left-[92px]"}`}><span className="grid size-10 place-items-center rounded-full bg-emerald-700 text-[23px] text-white">+</span><div><p className="text-[12px] font-black uppercase tracking-[.13em] text-emerald-800">Hold + for more</p><p className="mt-1 text-[12px] text-stone-500">Anchored to the same button.</p></div></div> : null}
     </div>
   );

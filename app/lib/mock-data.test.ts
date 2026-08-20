@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   dashboard,
+  quickSaleOutcome,
   stockroomShoes,
   webInventoryNewRowIds,
   webInventoryRows,
@@ -23,6 +24,27 @@ describe("dashboard mock data", () => {
       monthlyProfit: 8950,
       unpaidBalance: 2500,
     });
+  });
+
+  it("derives the paid Quick Sale outcome from the canonical sale and dashboard", () => {
+    expect(quickSaleOutcome.shoe).toBe(stockroomShoes[0]);
+    expect(quickSaleOutcome).toMatchObject({
+      salePrice: 6500,
+      activePairsBefore: 12,
+      activePairsAfter: 11,
+      saleProfit: 1700,
+      monthlyProfitBefore: 8950,
+      monthlyProfitAfter: 10650,
+    });
+    expect(quickSaleOutcome.saleProfit).toBe(
+      quickSaleOutcome.salePrice - quickSaleOutcome.shoe.cost,
+    );
+    expect(quickSaleOutcome.activePairsAfter).toBe(
+      quickSaleOutcome.activePairsBefore - 1,
+    );
+    expect(quickSaleOutcome.monthlyProfitAfter).toBe(
+      quickSaleOutcome.monthlyProfitBefore + quickSaleOutcome.saleProfit,
+    );
   });
 
   it("derives the Web Inventory table and newly added state from the canonical 12 pairs", () => {

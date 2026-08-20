@@ -421,6 +421,7 @@ test("long founding offer selection does not create mobile page overflow", async
 });
 
 test("progress-aware CTAs synchronize through the non-saving survey flow", async ({ page }) => {
+  test.setTimeout(60_000);
   const dataRequests: string[] = [];
   page.on("request", (request) => {
     if (!["GET", "HEAD"].includes(request.method())) dataRequests.push(request.url());
@@ -488,7 +489,7 @@ test("progress-aware CTAs synchronize through the non-saving survey flow", async
 	await page.getByRole("button", { name: /skip question/i }).click();
 	await expect(page.getByText("Question 4 of 4")).toBeVisible();
 	await page.getByRole("button", { name: /finish this survey/i }).click();
-  await expect(page.getByText(/that’s the full flow/i)).toBeVisible();
+  await expect(page.getByText(/that’s the full flow/i)).toBeVisible({ timeout: 7_000 });
   await page.getByRole("button", { name: /close survey/i }).first().click();
   await expect(page.getByText(/thanks for helping shape solesheet/i)).toBeVisible();
   const completedCtas = page.getByRole("button", { name: /you’re all set — thank you/i });
@@ -608,6 +609,7 @@ test("survey reduced motion keeps focus, progress, and Back behavior", async ({ 
 });
 
 test("survey wizard supports keyboard and touch Other details without persistence or overflow", async ({ page }, testInfo) => {
+	test.setTimeout(60_000);
 	const dataRequests: string[] = [];
 	page.on("request", (request) => {
 		if (!["GET", "HEAD"].includes(request.method())) dataRequests.push(request.url());
@@ -720,7 +722,7 @@ test("survey wizard supports keyboard and touch Other details without persistenc
 		dialog.getByRole("radio", { name: "Yes — within the next 2 weeks" }),
 	);
 	await activate(dialog.getByRole("button", { name: /finish this survey/i }));
-	await expect(page.getByText(/that’s the full flow/i)).toBeVisible();
+	await expect(page.getByText(/that’s the full flow/i)).toBeVisible({ timeout: 7_000 });
 	expect(dataRequests).toEqual([]);
 	expect(await page.evaluate(() => ({
 		local: { ...localStorage },

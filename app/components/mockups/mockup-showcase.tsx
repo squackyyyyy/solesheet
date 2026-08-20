@@ -24,7 +24,7 @@ export function MockupShowcase() {
           </h3>
         </div>
         <p className="max-w-md text-xs leading-6 text-black/55 sm:justify-self-end">
-          Select a moment to switch the preview image. Controls pictured inside the phone are illustrative and do not operate here.
+          Start with one paid sale: sale recorded → stock updated → profit calculated. Then select a moment to switch the preview image. Controls pictured inside the phone are illustrative and do not operate here.
         </p>
       </div>
 
