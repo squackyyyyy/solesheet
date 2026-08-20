@@ -1,6 +1,7 @@
 "use client";
 
 import { Form } from "react-aria-components/Form";
+import { ProgressBar } from "react-aria-components/ProgressBar";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
 	Button,
@@ -9,12 +10,14 @@ import {
 	RadioCards,
 	TextInput,
 } from "@/app/components/ui/aria";
+import { BrandLoader } from "@/app/components/brand/brand-loader";
 import { useWaitlistJourney } from "@/app/components/waitlist/waitlist-journey";
 import { ActivePairsLink } from "@/app/components/active-pairs-link";
 import { foundingOffer, surveyQuestions } from "@/app/lib/site-content";
 import { isValidWaitlistEmail } from "@/app/lib/validation";
 
 type SignupState = "form" | "pending";
+type SurveySubmissionState = "idle" | "pending";
 type SurveyGroup = "core" | "optional";
 type SurveyDirection = "forward" | "backward";
 type SurveyPosition = { group: SurveyGroup; index: number };
@@ -28,6 +31,7 @@ type OtherDetailKey =
 
 const OTHER_OPTION = "Other";
 const AUTO_ADVANCE_DELAY = 230;
+const SURVEY_SUBMISSION_TEST_DELAY = 5_000;
 
 const surveyQuestionGroups = {
 	core: [
@@ -378,8 +382,13 @@ export function WaitlistExperience() {
 	});
 	const [surveyDirection, setSurveyDirection] =
 		useState<SurveyDirection>("forward");
+	const [surveySubmissionState, setSurveySubmissionState] =
+		useState<SurveySubmissionState>("idle");
 	const signupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const surveyAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
+	const surveySubmissionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
 	const {
@@ -390,12 +399,19 @@ export function WaitlistExperience() {
 		setSurveyOpen,
 		supportCopy,
 	} = useWaitlistJourney();
+	const isSurveySubmissionPending = surveySubmissionState === "pending";
+	const isSurveySubmissionComplete = journeyState === "survey-complete";
+	const isSurveyOutcomeVisible =
+		isSurveySubmissionPending || isSurveySubmissionComplete;
 
 	useEffect(() => {
 		return () => {
 			if (signupTimerRef.current) clearTimeout(signupTimerRef.current);
 			if (surveyAdvanceTimerRef.current) {
 				clearTimeout(surveyAdvanceTimerRef.current);
+			}
+			if (surveySubmissionTimerRef.current) {
+				clearTimeout(surveySubmissionTimerRef.current);
 			}
 		};
 	}, []);
@@ -480,7 +496,14 @@ export function WaitlistExperience() {
 
 	function finishSurvey() {
 		cancelSurveyAdvance();
-		completeSurvey();
+		if (surveySubmissionTimerRef.current) return;
+
+		setSurveySubmissionState("pending");
+		surveySubmissionTimerRef.current = setTimeout(() => {
+			surveySubmissionTimerRef.current = null;
+			setSurveySubmissionState("idle");
+			completeSurvey();
+		}, SURVEY_SUBMISSION_TEST_DELAY);
 	}
 
 	function selectSingleAnswer(key: SingleAnswerKey, value: string) {
@@ -605,13 +628,13 @@ export function WaitlistExperience() {
 							aria-live="polite"
 							className="flex min-h-[430px] flex-col justify-center text-center"
 						>
-							<span
-								aria-hidden="true"
-								className="mx-auto grid size-16 place-items-center rounded-full bg-[#e8ff9f] text-2xl"
-							>
-								✓
-							</span>
-							<p className="mt-6 text-xs font-bold uppercase tracking-[0.24em] text-[var(--brand-action)]">
+							<BrandLoader
+								state="success"
+								background="light"
+								decorative
+								className="mx-auto"
+							/>
+							<p className="mt-1 text-xs font-bold uppercase tracking-[0.24em] text-[var(--brand-action)]">
 								{journeyState === "survey-complete"
 									? "Your early-access flow is complete"
 									: "You’re part of the first look"}
@@ -696,17 +719,48 @@ export function WaitlistExperience() {
 							</CheckField>
 							<Button
 								type="submit"
-								isDisabled={signupState === "pending"}
+								isPending={signupState === "pending"}
 								className="mt-1 w-full"
 							>
-								{signupState === "pending" ? "Joining…" : "Join the waitlist"}
-								{signupState !== "pending" ? (
-									<span aria-hidden="true">↗</span>
-								) : null}
+								{signupState === "pending" ? (
+									<>
+										<ProgressBar
+											isIndeterminate
+											aria-label="Joining waitlist"
+											className="size-4 shrink-0"
+										>
+											<svg
+												aria-hidden="true"
+												viewBox="0 0 24 24"
+												className="size-full animate-spin"
+											>
+												<circle
+													cx="12"
+													cy="12"
+													r="9"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="3"
+													opacity="0.35"
+												/>
+												<path
+													d="M12 3a9 9 0 0 1 9 9"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="3"
+													strokeLinecap="round"
+												/>
+											</svg>
+										</ProgressBar>
+										Joining waitlist…
+									</>
+								) : (
+									<>
+										Join the waitlist
+										<span aria-hidden="true">↗</span>
+									</>
+								)}
 							</Button>
-							<p aria-live="polite" className="sr-only">
-								{signupState === "pending" ? "Joining the waitlist" : ""}
-							</p>
 							<p className="text-center text-[11px] leading-5 text-black/65">
 								No payment today. Survey questions are optional.
 							</p>
@@ -717,12 +771,12 @@ export function WaitlistExperience() {
 
 			<DialogSheet
 				title={
-					journeyState === "survey-complete"
+					isSurveyOutcomeVisible
 						? "Thank you for the signal"
 						: "A few quick questions"
 				}
 				description={
-					journeyState === "survey-complete"
+					isSurveyOutcomeVisible
 						? "Your perspective helps keep the first release focused on real reseller work."
 						: "Answer what you can. You can close this anytime and return while this page stays open."
 				}
@@ -730,7 +784,8 @@ export function WaitlistExperience() {
 				onOpenChange={setSurveyDialogOpen}
 				layout="wizard"
 				footer={
-					journeyState !== "survey-complete" ? (
+					!isSurveySubmissionComplete &&
+					surveySubmissionState === "idle" ? (
 						<SurveyFooter
 							answers={answers}
 							position={surveyPosition}
@@ -741,35 +796,47 @@ export function WaitlistExperience() {
 					) : undefined
 				}
 			>
-				{journeyState === "survey-complete" ? (
+				{isSurveyOutcomeVisible ? (
 					<div
-						aria-live="polite"
-						className="grid min-h-80 place-items-center text-center"
+						aria-busy={isSurveySubmissionPending || undefined}
+						data-survey-outcome-stage="true"
+						className="grid min-h-full content-center text-center"
 					>
-						<div>
-							<span
-								aria-hidden="true"
-								className="mx-auto grid size-16 place-items-center rounded-full bg-[#e8ff9f] text-2xl"
-							>
-								✓
-							</span>
-							<h3 className="mt-5 text-2xl font-semibold tracking-tight">
-								That’s the full flow.
-							</h3>
-							<p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-black/65">
-								Thanks for helping us prioritize speed, clarity, and the
-								features that matter in a real reseller workflow.
-							</p>
-							<Button
-								variant="secondary"
-								onPress={() => setSurveyDialogOpen(false)}
-								className="mt-6"
-							>
-								Close survey
-							</Button>
+						<BrandLoader
+							state={isSurveySubmissionPending ? "loading" : "success"}
+							background="light"
+							label={
+								isSurveySubmissionPending
+									? "Submitting survey"
+									: "Survey submitted successfully"
+							}
+							className="mx-auto"
+						/>
+						<div className="min-h-[13rem]">
+							{isSurveySubmissionComplete ? (
+								<div
+									data-survey-completion-content="true"
+									className="survey-completion-content"
+								>
+									<h3 className="mt-1 text-2xl font-semibold tracking-tight">
+										That’s the full flow.
+									</h3>
+									<p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-black/65">
+										Thanks for helping us prioritize speed, clarity, and the
+										features that matter in a real reseller workflow.
+									</p>
+									<Button
+										variant="secondary"
+										onPress={() => setSurveyDialogOpen(false)}
+										className="mt-6"
+									>
+										Close survey
+									</Button>
+								</div>
+							) : null}
 						</div>
 					</div>
-					) : (
+				) : (
 					<SurveyQuestion
 						answers={answers}
 						position={surveyPosition}

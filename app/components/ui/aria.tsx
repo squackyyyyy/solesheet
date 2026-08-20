@@ -77,7 +77,7 @@ export function Button({
       className={(state) =>
         cx(
           "inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold outline-none transition duration-200",
-          "data-[focus-visible]:ring-2 data-[focus-visible]:ring-offset-2 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-55",
+          "data-[focus-visible]:ring-2 data-[focus-visible]:ring-offset-2 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-55 data-[pending]:cursor-wait data-[pending]:opacity-70",
           variant === "primary" &&
             "bg-[var(--brand-action)] text-white shadow-[0_12px_30px_rgba(4,120,87,.24)] data-[hovered]:bg-[var(--brand-action-hover)] data-[pressed]:translate-y-px data-[focus-visible]:ring-[var(--brand-green)]",
           variant === "secondary" &&

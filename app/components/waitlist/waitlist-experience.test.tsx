@@ -52,6 +52,74 @@ async function expectQuestion(name: RegExp, progress: string) {
 	return heading;
 }
 
+async function finishSurveyThroughTestDelay() {
+	vi.useFakeTimers();
+	const finishButton = screen.getByRole("button", {
+		name: /finish this survey/i,
+	});
+
+	fireEvent.click(finishButton);
+
+	const loadingStatus = screen.getByRole("status");
+	expect(loadingStatus).toHaveAttribute("data-state", "loading");
+	expect(loadingStatus).toHaveAttribute("data-background", "light");
+	expect(screen.getByText("Submitting survey")).toHaveClass("sr-only");
+	expect(
+		screen.getByRole("heading", { name: /thank you for the signal/i }),
+	).toBeInTheDocument();
+	expect(
+		screen.queryByRole("button", { name: /finish this survey/i }),
+	).not.toBeInTheDocument();
+	expect(
+		document.querySelector('[data-survey-footer="true"]'),
+	).not.toBeInTheDocument();
+	const outcomeStage = document.querySelector(
+		'[data-survey-outcome-stage="true"]',
+	);
+	expect(outcomeStage).toHaveAttribute("aria-busy", "true");
+	expect(
+		document.querySelector('[data-survey-completion-content="true"]'),
+	).not.toBeInTheDocument();
+
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(4_999);
+	});
+	expect(screen.getByRole("status")).toHaveAttribute("data-state", "loading");
+	expect(screen.queryByText(/that’s the full flow/i)).not.toBeInTheDocument();
+
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1);
+	});
+	vi.useRealTimers();
+
+	const successStatus = screen.getByRole("status");
+	expect(successStatus).toBe(loadingStatus);
+	expect(
+		document.querySelector('[data-survey-outcome-stage="true"]'),
+	).toBe(outcomeStage);
+	expect(outcomeStage).not.toHaveAttribute("aria-busy");
+	expect(successStatus).toHaveAttribute("data-state", "success");
+	expect(successStatus).toHaveAttribute("data-background", "light");
+	expect(screen.getByText("Survey submitted successfully")).toHaveClass(
+		"sr-only",
+	);
+	expect(
+		successStatus.querySelector('[data-layer="shoe-fill"]'),
+	).toBeInTheDocument();
+	expect(
+		successStatus.querySelector('[data-layer="shoe-grid"]'),
+	).toBeInTheDocument();
+	expect(
+		successStatus.querySelector('[data-layer="sole"]'),
+	).toBeInTheDocument();
+	expect(
+		successStatus.querySelector('[data-layer="success-cue"]'),
+	).toBeInTheDocument();
+	expect(
+		document.querySelector('[data-survey-completion-content="true"]'),
+	).toHaveClass("survey-completion-content");
+}
+
 describe("WaitlistExperience", () => {
 	beforeEach(() => {
 		vi.spyOn(Storage.prototype, "setItem");
@@ -64,6 +132,7 @@ describe("WaitlistExperience", () => {
 
 	afterEach(() => {
 		vi.restoreAllMocks();
+		vi.useRealTimers();
 	});
 
 	it("shows accessible contact and consent feedback", () => {
@@ -92,6 +161,56 @@ describe("WaitlistExperience", () => {
 		expect(email).toHaveAttribute("aria-invalid", "true");
 		expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
 		expect(screen.queryByText(/part of the first look/i)).not.toBeInTheDocument();
+	});
+
+	it("uses native pending feedback while joining and the full success mark afterward", async () => {
+		renderExperience();
+		fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), {
+			target: { value: "seller@example.com" },
+		});
+		fireEvent.click(
+			screen.getByRole("checkbox", { name: /i agree to the collection/i }),
+		);
+		const submitButton = screen.getByRole("button", {
+			name: /join the waitlist/i,
+		});
+
+		vi.useFakeTimers();
+		fireEvent.click(submitButton);
+
+		const pendingButton = screen.getByRole("button", {
+			name: /joining waitlist/i,
+		});
+		expect(pendingButton).toBe(submitButton);
+		expect(pendingButton).not.toBeDisabled();
+		expect(pendingButton).toHaveAttribute("aria-disabled", "true");
+		expect(pendingButton).toHaveAttribute("data-pending", "true");
+		expect(pendingButton).toHaveAttribute("type", "button");
+		expect(pendingButton).toHaveClass("min-h-12", "w-full");
+		expect(
+			screen.getByRole("progressbar", { name: "Joining waitlist" }),
+		).toBeInTheDocument();
+		expect(pendingButton.querySelector('[data-state="loading"]')).not.toBeInTheDocument();
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(649);
+		});
+		expect(
+			screen.getByRole("button", { name: /joining waitlist/i }),
+		).toHaveAttribute("data-pending", "true");
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(1);
+		});
+		vi.useRealTimers();
+
+		expect(screen.getByText(/part of the first look/i)).toBeInTheDocument();
+		const successMark = document.querySelector('[data-state="success"]');
+		expect(successMark).toHaveAttribute("data-background", "light");
+		expect(successMark).toHaveAttribute("aria-hidden", "true");
+		expect(screen.getByRole("button", { name: /answer the quick survey/i })).toBeInTheDocument();
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
 	});
 
 	it("walks through the four core questions and completes without writes", async () => {
@@ -137,7 +256,7 @@ describe("WaitlistExperience", () => {
 		);
 		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
 		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
-		fireEvent.click(screen.getByRole("button", { name: /finish this survey/i }));
+		await finishSurveyThroughTestDelay();
 
 		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
 		fireEvent.click(screen.getAllByRole("button", { name: /close survey/i })[0]);
@@ -242,7 +361,7 @@ describe("WaitlistExperience", () => {
 		expect(
 			screen.getByRole("radio", { name: "Yes — within the next 2 weeks" }),
 		).toBeChecked();
-		fireEvent.click(screen.getByRole("button", { name: /finish this survey/i }));
+		await finishSurveyThroughTestDelay();
 		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
 		expect(globalThis.fetch).not.toHaveBeenCalled();
 		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
@@ -276,6 +395,27 @@ describe("WaitlistExperience", () => {
 		await joinAndOpenSurvey();
 		fireEvent.click(screen.getByRole("radio", { name: "Android" }));
 		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
+	});
+
+	it("clears the test submission timer when the survey unmounts", async () => {
+		const view = renderExperience();
+		await joinAndOpenSurvey();
+		skipQuestion();
+		skipQuestion();
+		skipQuestion();
+		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
+
+		vi.useFakeTimers();
+		const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+		const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
+		fireEvent.click(screen.getByRole("button", { name: /finish this survey/i }));
+		expect(screen.getByRole("status")).toHaveAttribute("data-state", "loading");
+		const submissionTimer = setTimeoutSpy.mock.results.at(-1)?.value;
+		expect(submissionTimer).toBeDefined();
+
+		view.unmount();
+
+		expect(clearTimeoutSpy).toHaveBeenCalledWith(submissionTimer);
 	});
 
 	it("starts the survey and its answers clean when remounted", async () => {
