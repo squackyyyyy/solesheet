@@ -1,0 +1,106 @@
+<mxfile host="app.diagrams.net" agent="Codex" version="26.0.9">
+  <diagram id="solesheet-d1-schema" name="SoleSheet D1 Schema">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="&lt;b&gt;SoleSheet Proposed D1 Database Schema&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=24;fontColor=#111827;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="700" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="Waitlist signups are saved first; completed surveys and their selected sales channels are linked afterward." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontColor=#6B7280;" vertex="1" parent="1">
+          <mxGeometry x="40" y="58" width="900" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist" value="waitlist_signups" style="swimlane;html=1;rounded=1;startSize=36;horizontal=1;fillColor=#DCFCE7;swimlaneFillColor=#FFFFFF;strokeColor=#16A34A;strokeWidth=2;fontStyle=1;fontSize=15;fontColor=#14532D;collapsible=0;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="360" height="342" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_id" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp;&amp;nbsp;id &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · UUID&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F0FDF4;strokeColor=#BBF7D0;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="36" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_email" value="email &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · required&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="70" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_email_normalized" value="&lt;b&gt;UQ&lt;/b&gt;&amp;nbsp;&amp;nbsp;email_normalized &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="104" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_name" value="name &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="138" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_consented" value="consented_at &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · required&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="172" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_policy" value="privacy_policy_version &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="206" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_created" value="created_at &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · required&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="240" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_updated" value="updated_at &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · required&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="274" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="waitlist_survey_completed" value="survey_completed_at &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="waitlist">
+          <mxGeometry x="0" y="308" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey" value="survey_responses" style="swimlane;html=1;rounded=1;startSize=36;horizontal=1;fillColor=#DBEAFE;swimlaneFillColor=#FFFFFF;strokeColor=#2563EB;strokeWidth=2;fontStyle=1;fontSize=15;fontColor=#1E3A8A;collapsible=0;container=1;" vertex="1" parent="1">
+          <mxGeometry x="530" y="100" width="420" height="478" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_signup_id" value="&lt;b&gt;PK · FK&lt;/b&gt;&amp;nbsp;&amp;nbsp;signup_id &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#EFF6FF;strokeColor=#BFDBFE;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="36" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_phone" value="phone_type &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="70" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_inventory_range" value="active_inventory_range &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="104" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_method" value="inventory_method &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="138" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_method_other" value="inventory_method_other &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="172" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_priority" value="priority_feature &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="206" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_priority_other" value="priority_other &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="240" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_plan" value="likely_plan &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="274" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_installments" value="installment_frequency &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="308" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_backup" value="cloud_backup_preference &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="342" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_followup" value="follow_up_availability &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · optional&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="376" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_submitted" value="submitted_at &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · required&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="410" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_updated" value="updated_at &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · required&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#F9FAFB;strokeColor=#E5E7EB;" vertex="1" parent="survey">
+          <mxGeometry x="0" y="444" width="420" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="channels" value="survey_sales_channels" style="swimlane;html=1;rounded=1;startSize=36;horizontal=1;fillColor=#FEF3C7;swimlaneFillColor=#FFFFFF;strokeColor=#D97706;strokeWidth=2;fontStyle=1;fontSize=15;fontColor=#78350F;collapsible=0;container=1;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="230" width="390" height="104" as="geometry"/>
+        </mxCell>
+        <mxCell id="channels_signup_id" value="&lt;b&gt;PK · FK&lt;/b&gt;&amp;nbsp;&amp;nbsp;signup_id &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFBEB;strokeColor=#FDE68A;" vertex="1" parent="channels">
+          <mxGeometry x="0" y="36" width="390" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="channels_channel" value="&lt;b&gt;PK&lt;/b&gt;&amp;nbsp;&amp;nbsp;channel &amp;nbsp;&lt;font color=&quot;#6B7280&quot;&gt;TEXT · selected value&lt;/font&gt;" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;spacingLeft=10;fillColor=#FFFFFF;strokeColor=#E5E7EB;" vertex="1" parent="channels">
+          <mxGeometry x="0" y="70" width="390" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="signup_to_survey" value="1 signup → 0 or 1 survey" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;strokeColor=#4B5563;strokeWidth=2;endArrow=classic;endFill=1;fontSize=12;fontColor=#374151;labelBackgroundColor=#FFFFFF;" edge="1" source="waitlist" target="survey" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="survey_to_channels" value="1 survey → 0 or many channels" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;strokeColor=#4B5563;strokeWidth=2;endArrow=classic;endFill=1;fontSize=12;fontColor=#374151;labelBackgroundColor=#FFFFFF;" edge="1" source="survey" target="channels" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&amp;nbsp;&amp;nbsp; PK = primary key &amp;nbsp;·&amp;nbsp; FK = foreign key &amp;nbsp;·&amp;nbsp; UQ = unique constraint&lt;br&gt;&lt;font color=&quot;#6B7280&quot;&gt;Proposed schema: exact columns and constraints will be finalized in the relevant OpenSpec changes.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacing=12;fillColor=#F9FAFB;strokeColor=#D1D5DB;fontSize=12;fontColor=#111827;" vertex="1" parent="1">
+          <mxGeometry x="40" y="640" width="910" height="74" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

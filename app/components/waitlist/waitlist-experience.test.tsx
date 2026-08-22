@@ -35,10 +35,7 @@ async function joinAndOpenSurvey() {
 		() => expect(screen.getByText(/part of the first look/i)).toBeInTheDocument(),
 		{ timeout: 1500 },
 	);
-	fireEvent.click(
-		screen.getAllByRole("button", { name: /answer the quick survey/i })[0],
-	);
-	expect(screen.getByRole("dialog")).toBeInTheDocument();
+	expect(await screen.findByRole("dialog")).toBeInTheDocument();
 }
 
 function skipQuestion() {
@@ -126,7 +123,9 @@ describe("WaitlistExperience", () => {
 		Object.defineProperty(globalThis, "fetch", {
 			configurable: true,
 			writable: true,
-			value: vi.fn(),
+			value: vi
+				.fn()
+				.mockImplementation(() => Promise.resolve(Response.json({ ok: true }))),
 		});
 	});
 
@@ -171,6 +170,8 @@ describe("WaitlistExperience", () => {
 		);
 		fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
 
+		expect(await screen.findByRole("dialog")).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: /close survey/i }));
 		const confirmation = await screen.findByRole(
 			"heading",
 			{ name: "Thanks, Sapatos ni José 👟." },
@@ -193,7 +194,7 @@ describe("WaitlistExperience", () => {
 		expect(screen.queryByText(/part of the first look/i)).not.toBeInTheDocument();
 	});
 
-	it("uses native pending feedback while joining and the full success mark afterward", async () => {
+	it("uses native pending feedback, prevents repeats, then opens the survey after new-or-duplicate generic success", async () => {
 		renderExperience();
 		fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), {
 			target: { value: "seller@example.com" },
@@ -205,7 +206,13 @@ describe("WaitlistExperience", () => {
 			name: /join the waitlist/i,
 		});
 
-		vi.useFakeTimers();
+		let resolveRequest: ((response: Response) => void) | undefined;
+		vi.mocked(globalThis.fetch).mockImplementationOnce(
+			() =>
+				new Promise<Response>((resolve) => {
+					resolveRequest = resolve;
+				}),
+		);
 		fireEvent.click(submitButton);
 
 		const pendingButton = screen.getByRole("button", {
@@ -222,25 +229,64 @@ describe("WaitlistExperience", () => {
 		).toBeInTheDocument();
 		expect(pendingButton.querySelector('[data-state="loading"]')).not.toBeInTheDocument();
 
-		await act(async () => {
-			await vi.advanceTimersByTimeAsync(649);
-		});
-		expect(
-			screen.getByRole("button", { name: /joining waitlist/i }),
-		).toHaveAttribute("data-pending", "true");
+		fireEvent.click(pendingButton);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
 		await act(async () => {
-			await vi.advanceTimersByTimeAsync(1);
+			resolveRequest?.(Response.json({ ok: true }));
 		});
-		vi.useRealTimers();
 
 		expect(screen.getByText(/part of the first look/i)).toBeInTheDocument();
+		expect(await screen.findByRole("dialog")).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: /close survey/i }));
 		const successMark = document.querySelector('[data-state="success"]');
 		expect(successMark).toHaveAttribute("data-background", "light");
 		expect(successMark).toHaveAttribute("aria-hidden", "true");
 		expect(screen.getByRole("button", { name: /answer the quick survey/i })).toBeInTheDocument();
-		expect(globalThis.fetch).not.toHaveBeenCalled();
+		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
 		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
+	});
+
+	it("retains values after a failed request and opens no survey until retry succeeds", async () => {
+		vi.mocked(globalThis.fetch)
+			.mockResolvedValueOnce(
+				Response.json(
+					{
+						ok: false,
+						error: { code: "service_unavailable" },
+					},
+					{ status: 503 },
+				),
+			)
+			.mockResolvedValueOnce(Response.json({ ok: true }));
+		renderExperience();
+		fireEvent.change(screen.getByRole("textbox", { name: "Name" }), {
+			target: { value: "  Sole Supply MNL  " },
+		});
+		fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), {
+			target: { value: " Seller@Example.com " },
+		});
+		fireEvent.click(
+			screen.getByRole("checkbox", { name: /i agree to the collection/i }),
+		);
+		fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
+
+		const retryMessage = await screen.findByText(/couldn’t save your signup/i);
+		expect(retryMessage).toHaveAttribute("role", "alert");
+		expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue(
+			"Sole Supply MNL",
+		);
+		expect(screen.getByRole("textbox", { name: "Email address" })).toHaveValue(
+			"Seller@Example.com",
+		);
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+		expect(screen.queryByText(/part of the first look/i)).not.toBeInTheDocument();
+
+		fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
+		expect(await screen.findByRole("dialog")).toBeInTheDocument();
+		expect(screen.getByText(/part of the first look/i)).toBeInTheDocument();
+		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 	});
 
 	it("walks through the four core questions and completes without writes", async () => {
@@ -297,7 +343,7 @@ describe("WaitlistExperience", () => {
 			expect(cta).toBeDisabled();
 			expect(cta).toHaveTextContent("✓");
 		}
-		expect(globalThis.fetch).not.toHaveBeenCalled();
+		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
 		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
 	});
 
@@ -410,7 +456,7 @@ describe("WaitlistExperience", () => {
 		).toBeChecked();
 		await finishSurveyThroughTestDelay();
 		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
-		expect(globalThis.fetch).not.toHaveBeenCalled();
+		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
 		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
 	});
 

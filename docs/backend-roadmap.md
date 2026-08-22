@@ -49,10 +49,10 @@ If the visitor closes the survey or browser after the first database confirmatio
 | Phase | OpenSpec change | Outcome | Status |
 |---|---|---|---|
 | 0 | `migrate-landing-site-to-zero-cost-hosting` | Establish the Cloudflare Worker deployment foundation | Complete |
-| 1 | `add-cloudflare-traffic-analytics` | Measure visits and page views without writing each visit to D1 | Planned |
-| 2 | `persist-waitlist-signups-with-d1` | Store validated waitlist signups and consent records | Planned |
-| 3 | `persist-validation-survey-with-d1` | Store completed surveys linked to their waitlist signup | Planned |
-| 4 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Planned |
+| 1 | `persist-waitlist-signups-with-d1` | Store validated waitlist signups and consent records | Proposed |
+| 2 | `persist-validation-survey-with-d1` | Store completed surveys linked to their waitlist signup | Planned |
+| 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Planned |
+| 4 | `add-cloudflare-traffic-analytics` | Measure visits and page views without writing each visit to D1 | Planned |
 | 5 | To be proposed only if needed | Add protected reporting or lightweight administration | Optional |
 
 ## Phase 0: Cloudflare hosting foundation (complete)
@@ -68,30 +68,7 @@ Completed outcomes:
 
 This phase does not create or bind a database. Custom-domain purchase and attachment, DNS cutover, and Vercel detachment are intentionally deferred until the website is otherwise finished and will belong to a separate future change.
 
-## Phase 1: Add Cloudflare traffic analytics
-
-Proposed change: `add-cloudflare-traffic-analytics`
-
-Goal: answer questions such as how many people visited, where visits came from, and which public pages were viewed.
-
-Planned scope:
-
-- Enable Cloudflare Web Analytics for the public site.
-- Confirm the analytics setup works on the current production provider URL and remains ready for a future custom domain.
-- Document where to view traffic reports.
-- Define which measurements matter initially, such as visits, page views, referrers, countries, devices, and waitlist conversion rate.
-- Review privacy-page wording and cookie implications for the chosen analytics configuration.
-- Use Workers observability for operational errors rather than treating request logs as product analytics.
-
-Why this is separate from D1: Cloudflare already provides a purpose-built traffic analytics service. Recording every page view in D1 would create unnecessary writes, additional privacy responsibilities, and reporting work.
-
-Completion criteria:
-
-- Production visits appear in the Cloudflare analytics dashboard.
-- The analytics configuration does not collect more information than the privacy policy describes.
-- No individual visit is manually inserted into D1.
-
-## Phase 2: Persist waitlist signups with D1
+## Phase 1: Persist waitlist signups with D1
 
 Proposed change: `persist-waitlist-signups-with-d1`
 
@@ -159,7 +136,7 @@ Completion criteria:
 - Closing the survey after signup does not remove the saved signup.
 - Local and production migrations are reproducible from the repository.
 
-## Phase 3: Persist completed survey responses with D1
+## Phase 2: Persist completed survey responses with D1
 
 Proposed change: `persist-validation-survey-with-d1`
 
@@ -188,7 +165,7 @@ Completion criteria:
 - Failed requests retain the answers for retry while the page remains open.
 - The database does not contain survey records without a valid signup relationship.
 
-## Phase 4: Harden and operate collected data
+## Phase 3: Harden and operate collected data
 
 Proposed change: `harden-and-operate-waitlist-data`
 
@@ -211,6 +188,30 @@ Completion criteria:
 - Data can be exported, deleted on request, and restored using documented procedures.
 - Operators can diagnose failures without exposing form contents in logs.
 - The privacy policy and actual retention/deletion behavior agree.
+
+## Phase 4: Add Cloudflare traffic analytics
+
+Proposed change: `add-cloudflare-traffic-analytics`
+
+Goal: answer questions such as how many people visited, where visits came from, and which public pages were viewed after the forms can reliably store conversions.
+
+Planned scope:
+
+- Enable Cloudflare Web Analytics for the public site.
+- Confirm the analytics setup works on the current production provider URL and remains ready for a future custom domain.
+- Document where to view traffic reports.
+- Define which measurements matter initially, such as visits, page views, referrers, countries, devices, and waitlist conversion rate.
+- Review privacy-page wording and cookie implications for the chosen analytics configuration.
+- Use Workers observability for operational errors rather than treating request logs as product analytics.
+
+Why this is separate from D1: Cloudflare already provides a purpose-built traffic analytics service. Recording every page view in D1 would create unnecessary writes, additional privacy responsibilities, and reporting work.
+
+Completion criteria:
+
+- Production visits appear in the Cloudflare analytics dashboard.
+- The analytics configuration does not collect more information than the privacy policy describes.
+- Visit counts can be compared with stored D1 signup counts to calculate waitlist conversion.
+- No individual visit is manually inserted into D1.
 
 ## Phase 5: Optional reporting or administration
 
@@ -277,4 +278,4 @@ This is deliberately deferred. A public waitlist does not initially need a custo
 
 ## Recommended next action
 
-Create the `add-cloudflare-traffic-analytics` OpenSpec proposal. After analytics is verified, create and implement `persist-waitlist-signups-with-d1`.
+Review and apply `persist-waitlist-signups-with-d1`. After signup persistence is verified and archived, proceed to `persist-validation-survey-with-d1`.

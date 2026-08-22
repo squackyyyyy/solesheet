@@ -7,5 +7,13 @@
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".open-next/assets"
-	}
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "solesheet-waitlist",
+			"database_id": "502f9965-9ccc-420c-8a1c-f55cd8ded88d",
+			"migrations_dir": "migrations"
+		}
+	]
 }

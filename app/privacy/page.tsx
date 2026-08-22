@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "@/app/components/brand/brand-logo";
+import { privacyContactEmail, privacyNotice } from "@/app/lib/privacy";
 
 export const metadata: Metadata = {
 	title: "Privacy Notice",
 	description:
 		"How SoleSheet collects, uses, protects, and retains waitlist and product-research information.",
 };
-
-const privacyEmail = "privacy@solesheet.ph";
 
 const noticeSections = [
 	{
@@ -17,7 +16,7 @@ const noticeSections = [
 			<p>
 				SoleSheet is responsible for the personal information described in this
 				notice. Questions, requests, and withdrawals of consent can be sent to{" "}
-				<a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>.
+				<a href={`mailto:${privacyContactEmail}`}>{privacyContactEmail}</a>.
 			</p>
 		),
 	},
@@ -29,20 +28,19 @@ const noticeSections = [
 				<ul>
 					<li>your email address;</li>
 					<li>an optional name, reseller name, or alias;</li>
-					<li>
-						optional survey answers about your device, inventory size, current
-						tools, preferred plan, selling workflow, and product priorities;
-					</li>
-					<li>
-						your preferred selling channels and whether you agree to a follow-up
-						interview; and
-					</li>
+					<li>the time you consented and the privacy-notice version you accepted;</li>
 					<li>messages or requests you send to our privacy contact.</li>
 				</ul>
 				<p>
-					When you use the website, our hosting and security providers may also
-					process limited technical information such as your IP address, browser
-					type, device type, requested page, referring page, and request time.
+					Optional survey answers about your reseller workflow currently remain
+					in the open page only. They are not sent to or stored in our database in
+					this version of the website.
+				</p>
+				<p>
+					Waitlist submissions are processed by Cloudflare Workers and stored in
+					Cloudflare D1. Cloudflare may also process limited technical information
+					such as your IP address, browser type, device type, requested page,
+					referring page, and request time to host and protect the website.
 				</p>
 			</>
 		),
@@ -59,8 +57,8 @@ const noticeSections = [
 						research you agreed to receive;
 					</li>
 					<li>
-						to understand reseller needs and prioritize product, platform, and
-						pricing decisions using individual responses or aggregated results;
+						to understand waitlist demand and prioritize product, platform, and
+						pricing decisions using individual signups or aggregated counts;
 					</li>
 					<li>to arrange an optional follow-up interview;</li>
 					<li>to prevent duplicate submissions, spam, fraud, and misuse; and</li>
@@ -82,11 +80,12 @@ const noticeSections = [
 					We ask for your consent before registering your waitlist interest and
 					contacting you about early access or product research. Your survey
 					answers are optional, and you may join the waitlist without answering
-					the survey.
+					the survey. Survey answers are not submitted or stored in D1 in this
+					version of the website.
 				</p>
 				<p>
 					You may withdraw consent or ask us to stop contacting you at any time by
-					emailing <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>. Withdrawal
+				emailing <a href={`mailto:${privacyContactEmail}`}>{privacyContactEmail}</a>. Withdrawal
 					does not affect processing that was lawful before it was withdrawn.
 				</p>
 			</>
@@ -99,8 +98,8 @@ const noticeSections = [
 				<p>We may share information only with:</p>
 				<ul>
 					<li>
-						service providers that host the website, store waitlist submissions,
-						deliver email, secure the service, or help operate product research;
+						Cloudflare, which hosts the Worker, stores waitlist submissions in D1,
+						and helps secure and operate the website;
 					</li>
 					<li>
 						professional advisers when reasonably necessary to obtain legal,
@@ -124,7 +123,7 @@ const noticeSections = [
 		body: (
 			<>
 				<p>
-					We retain waitlist and survey information only while it is needed for
+					We retain stored waitlist information only while it is needed for
 					early-access planning and product research. Unless a longer period is
 					required by law or you ask to remain informed, we delete or anonymize
 					inactive waitlist information within 12 months after your last
@@ -162,7 +161,7 @@ const noticeSections = [
 					damages, and file a complaint.
 				</p>
 				<p>
-					To exercise a right, email <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>.
+					To exercise a right, email <a href={`mailto:${privacyContactEmail}`}>{privacyContactEmail}</a>.
 					 We may ask for information needed to verify your identity before acting
 					on a request. You can learn more from the{" "}
 					<a
@@ -200,7 +199,7 @@ const noticeSections = [
 					appropriate direct notice before they take effect when required.
 				</p>
 				<p>
-					Please contact us first at <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a> so
+					Please contact us first at <a href={`mailto:${privacyContactEmail}`}>{privacyContactEmail}</a> so
 					we can try to address your concern. You also have the right to file a
 					complaint with the{" "}
 					<a href="https://privacy.gov.ph/" target="_blank" rel="noreferrer">
@@ -246,7 +245,8 @@ export default function PrivacyPage() {
 						experience.
 					</p>
 					<p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-black/50">
-						Effective <time dateTime="2026-08-19">August 19, 2026</time>
+						Effective <time dateTime={privacyNotice.effectiveDate}>{privacyNotice.effectiveDateLabel}</time>
+						<span aria-hidden="true"> · </span>Version {privacyNotice.version}
 					</p>
 				</div>
 
@@ -261,8 +261,9 @@ export default function PrivacyPage() {
 						Your information is for early access and product research.
 					</h2>
 					<p className="mt-3 max-w-3xl text-sm leading-7 text-white/72">
-						Survey questions are optional. We do not sell personal information, and
-						you may withdraw consent or ask us to delete your information.
+						Waitlist details are stored with Cloudflare D1. Survey questions are
+						optional and are not submitted yet. We do not sell personal information,
+						and you may withdraw consent or ask us to delete your information.
 					</p>
 				</section>
 
@@ -272,10 +273,10 @@ export default function PrivacyPage() {
 							Privacy contact
 						</p>
 						<a
-							href={`mailto:${privacyEmail}`}
+							href={`mailto:${privacyContactEmail}`}
 							className="mt-3 block break-all text-sm font-semibold text-[var(--brand-action)] underline decoration-[#22c55e]/60 underline-offset-4"
 						>
-							{privacyEmail}
+							{privacyContactEmail}
 						</a>
 						<ul className="mt-5 grid gap-3 border-t border-black/10 pt-5 text-sm leading-6 text-black/68">
 							<li>✓ Waitlist and research use only</li>

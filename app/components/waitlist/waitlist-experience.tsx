@@ -21,6 +21,7 @@ import {
 	normalizeOptionalText,
 	waitlistTextLimits,
 } from "@/app/lib/validation";
+import type { WaitlistSignupRequest } from "@/app/lib/waitlist";
 
 type SignupState = "form" | "pending";
 type SurveySubmissionState = "idle" | "pending";
@@ -423,6 +424,7 @@ export function WaitlistExperience() {
 	const [consent, setConsent] = useState(false);
 	const [contactError, setContactError] = useState("");
 	const [consentError, setConsentError] = useState("");
+	const [signupError, setSignupError] = useState("");
 	const [signupState, setSignupState] = useState<SignupState>("form");
 	const [answers, setAnswers] = useState<SurveyAnswers>({});
 	const [surveyPosition, setSurveyPosition] = useState<SurveyPosition>({
@@ -433,7 +435,7 @@ export function WaitlistExperience() {
 		useState<SurveyDirection>("forward");
 	const [surveySubmissionState, setSurveySubmissionState] =
 		useState<SurveySubmissionState>("idle");
-	const signupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const signupRequestRef = useRef<AbortController | null>(null);
 	const surveyAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
@@ -455,7 +457,7 @@ export function WaitlistExperience() {
 
 	useEffect(() => {
 		return () => {
-			if (signupTimerRef.current) clearTimeout(signupTimerRef.current);
+			signupRequestRef.current?.abort();
 			if (surveyAdvanceTimerRef.current) {
 				clearTimeout(surveyAdvanceTimerRef.current);
 			}
@@ -598,8 +600,11 @@ export function WaitlistExperience() {
 		setSurveyOpen(isOpen);
 	}
 
-	function submit(event: FormEvent<HTMLFormElement>) {
+	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
+		if (signupState === "pending") return;
+
+		const website = new FormData(event.currentTarget).get("website");
 		const normalizedName = normalizeOptionalText(name);
 		const normalizedContact = normalizeOptionalText(contact);
 		const nextContactError = isValidWaitlistEmail(normalizedContact)
@@ -611,17 +616,54 @@ export function WaitlistExperience() {
 
 		setContactError(nextContactError);
 		setConsentError(nextConsentError);
+		setSignupError("");
 
 		if (nextContactError || nextConsentError) return;
 
 		setName(normalizedName);
 		setContact(normalizedContact);
 		setSignupState("pending");
-		signupTimerRef.current = setTimeout(() => {
-			signupTimerRef.current = null;
+
+		const controller = new AbortController();
+		signupRequestRef.current = controller;
+		const requestBody: WaitlistSignupRequest = {
+			email: normalizedContact,
+			...(normalizedName ? { name: normalizedName } : {}),
+			consent: true,
+			website: typeof website === "string" ? website : "",
+		};
+
+		try {
+			const response = await fetch("/api/waitlist", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify(requestBody),
+				signal: controller.signal,
+			});
+			const result = (await response.json()) as unknown;
+			const isConfirmed =
+				typeof result === "object" &&
+				result !== null &&
+				"ok" in result &&
+				result.ok === true;
+
+			if (!response.ok || !isConfirmed) {
+				throw new Error("Waitlist signup was not confirmed.");
+			}
+
 			setSignupState("form");
 			completeSignup();
-		}, 650);
+		} catch {
+			if (controller.signal.aborted) return;
+			setSignupError(
+				"We couldn’t save your signup right now. Please try again.",
+			);
+			setSignupState("form");
+		} finally {
+			if (signupRequestRef.current === controller) {
+				signupRequestRef.current = null;
+			}
+		}
 	}
 
 	return (
@@ -726,13 +768,15 @@ export function WaitlistExperience() {
 								label="Name"
 								description="Optional — a first name or reseller alias is enough."
 								value={name}
-								onChange={(value) =>
-									setName(boundTextValue(value, waitlistTextLimits.name))
-								}
+								onChange={(value) => {
+									setName(boundTextValue(value, waitlistTextLimits.name));
+									if (signupError) setSignupError("");
+								}}
 								onBlur={() => setName((value) => normalizeOptionalText(value))}
 								maxLength={waitlistTextLimits.name}
 								placeholder="e.g. Jules or Sole Supply MNL"
 								autoComplete="name"
+								name="name"
 							/>
 							<TextInput
 								label="Email address"
@@ -740,6 +784,7 @@ export function WaitlistExperience() {
 								onChange={(value) => {
 									setContact(boundTextValue(value, waitlistTextLimits.email));
 									if (contactError) setContactError("");
+									if (signupError) setSignupError("");
 								}}
 								errorMessage={contactError}
 								maxLength={waitlistTextLimits.email}
@@ -754,6 +799,7 @@ export function WaitlistExperience() {
 								onChange={(selected) => {
 									setConsent(selected);
 									if (consentError) setConsentError("");
+									if (signupError) setSignupError("");
 								}}
 								errorMessage={consentError}
 								supportingContent={
@@ -775,6 +821,19 @@ export function WaitlistExperience() {
 								I agree to the collection and use of my information, including
 								contact about early access.
 							</CheckField>
+							<input
+								type="text"
+								name="website"
+								tabIndex={-1}
+								autoComplete="off"
+								aria-hidden="true"
+								className="absolute left-[-10000px] size-px overflow-hidden"
+							/>
+							{signupError ? (
+								<p role="alert" className="text-sm font-medium text-red-700">
+									{signupError}
+								</p>
+							) : null}
 							<Button
 								type="submit"
 								isPending={signupState === "pending"}

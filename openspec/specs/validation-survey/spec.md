@@ -6,16 +6,20 @@ Define an optional, non-saving survey prototype that demonstrates the intended p
 
 ## Requirements
 
-### Requirement: Survey follows the simulated signup experience
-The survey prototype SHALL be offered after the client-side signup success transition and SHALL remain optional and dismissible.
+### Requirement: Survey follows a confirmed persisted signup
+The existing optional survey SHALL open automatically after the server confirms the waitlist signup outcome, SHALL remain dismissible without an explicit encouragement to skip, and SHALL retain its temporary-answer behavior in this phase. It SHALL NOT open while the signup request is pending or after the request fails.
 
-#### Scenario: Simulated signup succeeds
-- **WHEN** a visitor reaches the signup prototype's success state
-- **THEN** the visitor is offered the optional survey with clear skip and close actions
+#### Scenario: Persisted signup succeeds
+- **WHEN** the visitor reaches the signup success state after server confirmation
+- **THEN** the optional survey opens at its first core question and the visitor can close it without affecting the stored signup
 
-#### Scenario: Visitor skips survey
-- **WHEN** the visitor dismisses the survey without answering
-- **THEN** the success state remains available and no validation error is shown
+#### Scenario: Visitor closes the survey
+- **WHEN** the visitor dismisses the automatically opened survey without finishing it
+- **THEN** the signup success state remains available, the durable signup remains stored, and no validation error encourages the visitor to answer
+
+#### Scenario: Signup is not confirmed
+- **WHEN** the signup request is pending or has failed
+- **THEN** the survey does not open
 
 ### Requirement: Survey captures prioritized validation signals
 The survey SHALL support questions about primary phone platform, likely pricing plan, active inventory size, installment-sales frequency, current inventory method, highest-value feature, cloud-backup interest, sales channels, and permission for a follow-up interview. The current inventory method, highest-value feature, and sales-channel questions SHALL each include an **Other** choice that reveals an associated free-text detail control when selected. Current-inventory-method and sales-channel Other details SHALL be single-line and limited to 100 characters each. The highest-value-feature Other detail SHALL be a fixed-height multiline response limited to 300 characters with a visible associated character count. Whitespace-only Other details SHALL be treated as empty. Every question and Other-detail control SHALL remain optional, and the survey SHALL NOT request information about the reseller's buyers.

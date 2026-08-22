@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import { networkInterfaces } from "node:os";
+
+void initOpenNextCloudflareForDev();
 
 const localDevOrigins = Object.values(networkInterfaces())
   .flatMap((interfaces) => interfaces ?? [])

@@ -11,17 +11,17 @@ bun install
 bun run dev
 ```
 
-The existing `bun run build`, `bun run typecheck`, `bun run lint`, and `bun run test` commands remain independent of the Cloudflare production preview. Node.js 22 or newer is required for current Wrangler-based Worker tooling.
+The existing `bun run build`, `bun run typecheck`, `bun run lint`, and `bun run test` commands remain independent of the Cloudflare production preview. The project standardizes local and hosted tooling on Node.js 24; run `nvm use` from the repository root to select it.
 
 ## Cloudflare Worker workflow
 
 Production uses the Cloudflare OpenNext adapter. Its configuration stays at the repository root:
 
 - `open-next.config.ts` contains OpenNext configuration.
-- `wrangler.jsonc` declares the Worker, Node compatibility, and static asset binding.
+- `wrangler.jsonc` declares the Worker, Node compatibility, static assets, and the server-only D1 binding.
 - `.open-next/` and `.wrangler/` are generated and ignored.
 
-The Worker configuration intentionally has no Cloudflare Images, R2, D1, or other paid or potentially billable binding. Database and analytics work belongs to later changes.
+The Worker uses one D1 database for waitlist contacts. It intentionally has no Cloudflare Images, R2, analytics, or other paid or potentially billable binding. See [docs/d1-operations.md](docs/d1-operations.md) for the local-versus-remote model and safe migration commands.
 
 Run a production Worker build:
 
@@ -49,7 +49,7 @@ bunx wrangler deploy --dry-run
 
 The dry-run output reports both uncompressed and gzip sizes. The gzip size must remain below the active Workers Free upload limit before a deployment is approved. Also confirm in the Cloudflare dashboard that the project is on Workers Free and that no paid Images or R2 bindings have been enabled.
 
-Last verified on August 22, 2026: 93 static files, 6,239.84 KiB uncompressed, and 1,533.50 KiB gzip, with only the `ASSETS` binding configured.
+Last verified on August 23, 2026: 93 static files, 6,262.68 KiB uncompressed, and 1,540.83 KiB gzip, with only the approved `ASSETS` and `DB` bindings configured. The compressed Worker remains below the current 3 MiB Workers Free limit. D1 remains subject to its Free-plan row and storage quotas; reaching a Free quota causes queries to fail rather than creating paid overage. Recheck the official [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/) before a production release.
 
 ### Environment configuration
 
@@ -60,7 +60,7 @@ Set build variables in the Cloudflare project rather than committing `.env` file
 - `SHOETRACK_ENABLE_SOCIAL_STUDIO` — leave unset in production.
 - `SHOETRACK_ENABLE_WEB_QUICK_ADD_STUDIO` — leave unset in production.
 
-There are no production secrets required by the landing site in this change.
+The D1 database is exposed to server code through a Worker binding and does not require a browser-visible credential or committed secret.
 
 ## Open Graph image
 
@@ -100,7 +100,7 @@ Before attaching the production domain, verify the candidate provider URL:
 - Waitlist and survey interactions work at desktop and mobile viewport sizes.
 - Capture-studio routes return not found while their enablement flags are unset.
 - The compressed Worker is below the active Free upload limit.
-- The Worker has no paid Images or R2 bindings.
+- The Worker has only the approved static-assets and D1 bindings, with no paid Images or R2 binding.
 
 Do not point the custom domain at the candidate if any critical check fails.
 
@@ -124,6 +124,6 @@ Rollback immediately for persistent 5xx responses, TLS or DNS failures, missing 
 
 After the rollback window passes without a critical regression, the custom domain can be removed from Vercel. Do not delete the Vercel project unless that separate destructive action is explicitly requested.
 
-## Constraint for later persistence work
+## Persistence boundary
 
-The Cloudflare compatibility spike showed that Firebase Admin's Firestore module does not execute in this Worker bundle. A later persistence change should prefer a Worker-native server binding such as Cloudflare D1 or deliberately design and test a Firestore REST integration. It must not add `firebase-admin` unless a new runtime compatibility test proves the failure has been resolved. Browser code must not receive privileged database credentials.
+Waitlist persistence uses Cloudflare D1 through the server-only `DB` binding. Firebase Admin remains incompatible with this Worker bundle and must not be added unless a separate runtime compatibility test proves otherwise. Browser code must never receive privileged database credentials.

@@ -1,10 +1,4 @@
-# waitlist-signup Specification
-
-## Purpose
-
-Define an accessible waitlist interaction that validates visitor consent, confirms durable signup persistence, and leads into the optional product-research survey.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Signup prototype presents a realistic low-friction form
 The waitlist SHALL present an optional name field, an email-address field, an unticked consent checkbox, concise privacy-link presentation, and one primary submit action. The optional name or reseller alias SHALL accept no more than 60 characters, whitespace-only input SHALL be treated as omitted, and any displayed confirmation name SHALL be trimmed and wrap without overflowing its container. The email field SHALL accept no more than 254 characters. The form SHALL NOT ask for or accept a mobile number as the signup contact method.
@@ -32,6 +26,8 @@ The waitlist SHALL validate the email field and consent control in the browser, 
 - **WHEN** a visitor activates submit without checking the consent control
 - **THEN** the consent error is announced and no signup request or success state occurs
 
+## ADDED Requirements
+
 ### Requirement: Valid submission transitions only after durable signup succeeds
 When the visible fields pass client-side validation, the waitlist SHALL submit them to the server, prevent repeated activation while the request is pending, and transition to the existing polished success state only after the server confirms the durable signup outcome. Pending, failure, retry, and success changes SHALL be announced to assistive technology.
 
@@ -46,3 +42,13 @@ When the visible fields pass client-side validation, the waitlist SHALL submit t
 #### Scenario: Signup request fails
 - **WHEN** validation, network, binding, or database failure prevents a confirmed signup outcome
 - **THEN** the form retains the visitor's entered values, presents a safe retryable error, and does not claim that the visitor joined
+
+## REMOVED Requirements
+
+### Requirement: Valid submission transitions to a simulated success state
+**Reason**: The waitlist now requires a confirmed server-side persistence outcome before presenting success.
+**Migration**: Replace the simulated delay with the real pending, success, and retryable failure behavior defined by `Valid submission transitions only after durable signup succeeds`.
+
+### Requirement: Prototype does not submit or persist visitor data
+**Reason**: The purpose of this change is to begin collecting consented waitlist contacts in D1.
+**Migration**: Apply the `waitlist-persistence` data boundary and retain the existing temporary-storage rule only for survey answers until their separate persistence change.

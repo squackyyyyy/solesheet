@@ -52,6 +52,7 @@ export function WaitlistJourneyProvider({ children }: { children: ReactNode }) {
 
 	function completeSignup() {
 		setJourneyState("survey-incomplete");
+		setSurveyOpen(true);
 		setAnnouncement(
 			"You’re on the waitlist. You can answer the optional quick survey.",
 		);
