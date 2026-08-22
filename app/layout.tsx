@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 		type: "website",
 		images: [
 			{
-				url: "/opengraph-image",
+				url: "/opengraph-image.png",
 				width: 1200,
 				height: 630,
 				alt: "SoleSheet mobile inventory dashboard concept",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
 		title: "SoleSheet — built for Filipino shoe resellers",
 		description:
 			"A faster way to track pairs, profit, and installment payments from your phone.",
-		images: ["/opengraph-image"],
+		images: ["/opengraph-image.png"],
 	},
 	robots: {
 		index: true,
