@@ -1,0 +1,3 @@
+# Server-only Worker secret. This is Cloudflare's official always-pass test
+# secret and must only be used on localhost or in automated tests.
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA

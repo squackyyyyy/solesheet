@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getCloudflareContextMock = vi.hoisted(() => vi.fn());
+const verifyTurnstileTokenMock = vi.hoisted(() => vi.fn());
 
 vi.mock("server-only", () => ({}));
 vi.mock("@opennextjs/cloudflare", () => ({
 	getCloudflareContext: getCloudflareContextMock,
+}));
+vi.mock("@/app/lib/server/turnstile", () => ({
+	verifyTurnstileToken: verifyTurnstileTokenMock,
 }));
 
 import { POST } from "@/app/api/waitlist/route";
@@ -49,11 +53,31 @@ function createDatabase(run: () => Promise<D1Result> = async () => ({
 	return { bindings, db, queries, statement };
 }
 
-function jsonRequest(value: unknown, headers?: HeadersInit) {
+function jsonRequest(
+	value: unknown,
+	headers?: HeadersInit,
+	includeToken = true,
+) {
+	const body =
+		includeToken &&
+		typeof value === "object" &&
+		value !== null &&
+		!Array.isArray(value)
+			? { turnstileToken: "private-test-token", ...value }
+			: value;
 	return new Request("http://localhost/api/waitlist", {
 		method: "POST",
 		headers: { "content-type": "application/json", ...headers },
-		body: JSON.stringify(value),
+		body: JSON.stringify(body),
+	});
+}
+
+function useDatabase(database: D1Database) {
+	getCloudflareContextMock.mockReturnValue({
+		env: {
+			DB: database,
+			TURNSTILE_SECRET_KEY: "private-server-secret",
+		},
 	});
 }
 
@@ -61,23 +85,34 @@ describe("POST /api/waitlist", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
 		getCloudflareContextMock.mockReset();
+		verifyTurnstileTokenMock.mockReset();
+		verifyTurnstileTokenMock.mockResolvedValue({ ok: true });
 	});
 
-	it("stores a valid normalized request and returns only generic success", async () => {
+	it("verifies before storing a normalized request and returns generic success", async () => {
 		const database = createDatabase();
-		getCloudflareContextMock.mockReturnValue({ env: { DB: database.db } });
+		useDatabase(database.db);
 
 		const response = await POST(
 			jsonRequest({
 				email: "  Seller@Example.COM  ",
 				name: "  Sole Supply MNL  ",
 				consent: true,
-				website: "",
 			}),
 		);
 
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({ ok: true });
+		expect(verifyTurnstileTokenMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				secretKey: "private-server-secret",
+				token: "private-test-token",
+				expectedHostname: "localhost",
+			}),
+		);
+		expect(verifyTurnstileTokenMock.mock.invocationCallOrder[0]).toBeLessThan(
+			vi.mocked(database.db.prepare).mock.invocationCallOrder[0]!,
+		);
 		expect(database.bindings[0]?.slice(1, 4)).toEqual([
 			"Seller@Example.COM",
 			"seller@example.com",
@@ -87,7 +122,7 @@ describe("POST /api/waitlist", () => {
 
 	it("binds an omitted name as null", async () => {
 		const database = createDatabase();
-		getCloudflareContextMock.mockReturnValue({ env: { DB: database.db } });
+		useDatabase(database.db);
 
 		const response = await POST(
 			jsonRequest({ email: "seller@example.com", consent: true }),
@@ -97,9 +132,9 @@ describe("POST /api/waitlist", () => {
 		expect(database.bindings[0]?.[3]).toBeNull();
 	});
 
-	it("gives equivalent submissions the same response without an update path", async () => {
+	it("gives duplicate submissions the same private response without an update path", async () => {
 		const database = createDatabase();
-		getCloudflareContextMock.mockReturnValue({ env: { DB: database.db } });
+		useDatabase(database.db);
 
 		const first = await POST(
 			jsonRequest({
@@ -118,7 +153,7 @@ describe("POST /api/waitlist", () => {
 
 		expect(await first.json()).toEqual({ ok: true });
 		expect(await duplicate.json()).toEqual({ ok: true });
-		expect(database.queries).toHaveLength(2);
+		expect(verifyTurnstileTokenMock).toHaveBeenCalledTimes(2);
 		for (const query of database.queries) {
 			expect(query).toMatch(/ON CONFLICT\(email_normalized\) DO NOTHING/);
 			expect(query).not.toMatch(/\bUPDATE\b/i);
@@ -126,21 +161,67 @@ describe("POST /api/waitlist", () => {
 		expect(database.bindings[0]?.[2]).toBe(database.bindings[1]?.[2]);
 	});
 
-	it("accepts a filled honeypot without reading the database binding", async () => {
+	it("rejects failed verification before D1 and logs no submitted content", async () => {
+		const database = createDatabase();
+		useDatabase(database.db);
+		verifyTurnstileTokenMock.mockResolvedValue({
+			ok: false,
+			kind: "rejected",
+			reason: "invalid_token",
+		});
+		const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
 		const response = await POST(
 			jsonRequest({
-				email: "bot@example.com",
+				email: "private@example.com",
+				name: "Private seller",
 				consent: true,
-				website: "https://spam.invalid",
 			}),
 		);
+		const logged = JSON.stringify(consoleWarn.mock.calls);
 
-		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ ok: true });
-		expect(getCloudflareContextMock).not.toHaveBeenCalled();
+		expect(response.status).toBe(400);
+		expect(await response.json()).toEqual({
+			ok: false,
+			error: {
+				code: "verification_failed",
+				message: "We could not verify this attempt. Please try again.",
+			},
+		});
+		expect(database.db.prepare).not.toHaveBeenCalled();
+		expect(logged).toContain("waitlist_verification_rejected");
+		expect(logged).not.toContain("private@example.com");
+		expect(logged).not.toContain("Private seller");
+		expect(logged).not.toContain("private-test-token");
+		expect(logged).not.toContain("private-server-secret");
 	});
 
-	it("rejects malformed, oversized, unsupported, and unknown requests", async () => {
+	it("fails closed when verification is unavailable without touching D1", async () => {
+		const database = createDatabase();
+		useDatabase(database.db);
+		verifyTurnstileTokenMock.mockResolvedValue({
+			ok: false,
+			kind: "unavailable",
+			reason: "provider_failure",
+		});
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+
+		const response = await POST(
+			jsonRequest({ email: "seller@example.com", consent: true }),
+		);
+
+		expect(response.status).toBe(503);
+		expect(await response.json()).toEqual({
+			ok: false,
+			error: {
+				code: "service_unavailable",
+				message: "We could not verify your signup. Please try again.",
+			},
+		});
+		expect(database.db.prepare).not.toHaveBeenCalled();
+	});
+
+	it("rejects malformed, oversized, unsupported, unknown, and missing-token requests before verification", async () => {
 		const malformed = await POST(
 			new Request("http://localhost/api/waitlist", {
 				method: "POST",
@@ -169,17 +250,26 @@ describe("POST /api/waitlist", () => {
 				isAdmin: true,
 			}),
 		);
+		const missingToken = await POST(
+			jsonRequest(
+				{ email: "seller@example.com", consent: true },
+				undefined,
+				false,
+			),
+		);
 
 		expect(malformed.status).toBe(400);
 		expect(oversized.status).toBe(413);
 		expect(unsupported.status).toBe(415);
 		expect(unknown.status).toBe(400);
+		expect(missingToken.status).toBe(400);
+		expect(verifyTurnstileTokenMock).not.toHaveBeenCalled();
 		expect(getCloudflareContextMock).not.toHaveBeenCalled();
 	});
 
 	it("binds SQL-like name input instead of interpolating it into SQL", async () => {
 		const database = createDatabase();
-		getCloudflareContextMock.mockReturnValue({ env: { DB: database.db } });
+		useDatabase(database.db);
 		const sqlLikeName = "Robert'); DROP TABLE waitlist_signups; --";
 
 		const response = await POST(
@@ -195,13 +285,13 @@ describe("POST /api/waitlist", () => {
 		expect(database.queries[0]).not.toContain(sqlLikeName);
 	});
 
-	it("turns database constraint failures into a sanitized retryable response", async () => {
+	it("turns database failures into a sanitized retryable response", async () => {
 		const database = createDatabase(async () => {
 			const error = new Error("constraint failed for seller@example.com");
 			error.name = "D1ConstraintError";
 			throw error;
 		});
-		getCloudflareContextMock.mockReturnValue({ env: { DB: database.db } });
+		useDatabase(database.db);
 		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
 		const response = await POST(

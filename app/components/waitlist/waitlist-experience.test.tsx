@@ -6,6 +6,21 @@ import {
 } from "@/app/components/waitlist/waitlist-experience";
 import { WaitlistJourneyProvider } from "@/app/components/waitlist/waitlist-journey";
 
+let turnstileOptions: Record<string, unknown> | undefined;
+const turnstileRenderMock = vi.fn(
+	(_container: HTMLElement, options: Record<string, unknown>) => {
+		turnstileOptions = options;
+		(options.callback as (token: string) => void)("test-turnstile-token");
+		return "waitlist-widget";
+	},
+);
+const turnstileResetMock = vi.fn(() => {
+	(turnstileOptions?.callback as ((token: string) => void) | undefined)?.(
+		"fresh-turnstile-token",
+	);
+});
+const turnstileRemoveMock = vi.fn();
+
 function renderExperience({ withPageCtas = false } = {}) {
 	return render(
 		<WaitlistJourneyProvider>
@@ -119,6 +134,26 @@ async function finishSurveyThroughTestDelay() {
 
 describe("WaitlistExperience", () => {
 	beforeEach(() => {
+		turnstileOptions = undefined;
+		turnstileRenderMock.mockClear();
+		turnstileResetMock.mockClear();
+		turnstileRemoveMock.mockClear();
+		turnstileRenderMock.mockImplementation(
+			(_container: HTMLElement, options: Record<string, unknown>) => {
+				turnstileOptions = options;
+				(options.callback as (token: string) => void)("test-turnstile-token");
+				return "waitlist-widget";
+			},
+		);
+		process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "test-site-key";
+		Object.defineProperty(window, "turnstile", {
+			configurable: true,
+			value: {
+				render: turnstileRenderMock,
+				reset: turnstileResetMock,
+				remove: turnstileRemoveMock,
+			},
+		});
 		vi.spyOn(Storage.prototype, "setItem");
 		Object.defineProperty(globalThis, "fetch", {
 			configurable: true,
@@ -132,6 +167,8 @@ describe("WaitlistExperience", () => {
 	afterEach(() => {
 		vi.restoreAllMocks();
 		vi.useRealTimers();
+		delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+		delete window.turnstile;
 	});
 
 	it("shows accessible contact and consent feedback", () => {
@@ -149,6 +186,66 @@ describe("WaitlistExperience", () => {
 		expect(
 			screen.getByText(/agree to the privacy policy/i),
 		).toBeInTheDocument();
+	});
+
+	it("configures interaction-only Turnstile and submits its token without a honeypot", async () => {
+		const { container } = renderExperience();
+
+		expect(container.querySelector('input[name="website"]')).toBeNull();
+		expect(container.querySelector('input[name="ss_8f3a"]')).toBeNull();
+		expect(container.querySelector('[data-turnstile-widget="true"]')).not.toBeNull();
+		expect(screen.getAllByRole("textbox")).toHaveLength(2);
+		expect(turnstileRenderMock).toHaveBeenCalledOnce();
+		expect(turnstileOptions).toMatchObject({
+			sitekey: "test-site-key",
+			action: "waitlist_signup",
+			appearance: "interaction-only",
+			size: "flexible",
+			retry: "auto",
+			"refresh-expired": "auto",
+			"refresh-timeout": "auto",
+		});
+
+		fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), {
+			target: { value: "seller@example.com" },
+		});
+		fireEvent.click(
+			screen.getByRole("checkbox", { name: /i agree to the collection/i }),
+		);
+		fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
+
+		await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledOnce());
+		const requestInit = vi.mocked(globalThis.fetch).mock.calls[0]?.[1];
+		const requestBody = JSON.parse(String(requestInit?.body)) as Record<
+			string,
+			unknown
+		>;
+		expect(requestBody.turnstileToken).toBe("test-turnstile-token");
+		expect(requestBody).not.toHaveProperty("formCheck");
+		expect(requestBody).not.toHaveProperty("website");
+	});
+
+	it("blocks submission while verification evidence is not ready", async () => {
+		turnstileRenderMock.mockImplementationOnce(
+			(_container: HTMLElement, options: Record<string, unknown>) => {
+				turnstileOptions = options;
+				return "waitlist-widget";
+			},
+		);
+		renderExperience();
+		fireEvent.change(screen.getByRole("textbox", { name: "Email address" }), {
+			target: { value: "seller@example.com" },
+		});
+		fireEvent.click(
+			screen.getByRole("checkbox", { name: /i agree to the collection/i }),
+		);
+		fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
+
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+		expect(
+			screen.getByRole("alert", { name: "" }),
+		).toHaveTextContent(/security check is still loading/i);
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 	});
 
 	it("bounds and normalizes the optional signup name", async () => {
@@ -282,6 +379,10 @@ describe("WaitlistExperience", () => {
 		);
 		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 		expect(screen.queryByText(/part of the first look/i)).not.toBeInTheDocument();
+		expect(turnstileResetMock).toHaveBeenCalledOnce();
+		expect(
+			screen.getByRole("checkbox", { name: /i agree to the collection/i }),
+		).toBeChecked();
 
 		fireEvent.click(screen.getByRole("button", { name: /join the waitlist/i }));
 		expect(await screen.findByRole("dialog")).toBeInTheDocument();

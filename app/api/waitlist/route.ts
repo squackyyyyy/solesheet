@@ -1,4 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { verifyTurnstileToken } from "@/app/lib/server/turnstile";
 import { persistWaitlistSignup } from "@/app/lib/server/waitlist-repository";
 import {
 	WAITLIST_REQUEST_MAX_BYTES,
@@ -133,14 +134,75 @@ export async function POST(request: Request) {
 		return invalidRequest(validation.message, validation.field);
 	}
 
-	if (validation.kind === "honeypot") {
-		return jsonResponse({ ok: true }, 200);
+	const requestId = crypto.randomUUID();
+	let env: CloudflareEnv;
+	try {
+		env = getCloudflareContext().env;
+	} catch {
+		console.error(
+			JSON.stringify({
+				event: "waitlist_verification_unavailable",
+				requestId,
+				outcome: "configuration",
+			}),
+		);
+		return jsonResponse(
+			{
+				ok: false,
+				error: {
+					code: "service_unavailable",
+					message: "We could not verify your signup. Please try again.",
+				},
+			},
+			503,
+		);
 	}
 
-	const requestId = crypto.randomUUID();
+	const verification = await verifyTurnstileToken({
+		secretKey: env.TURNSTILE_SECRET_KEY,
+		token: validation.value.turnstileToken,
+		expectedHostname: new URL(request.url).hostname,
+		requestId,
+		clientIp: request.headers.get("CF-Connecting-IP"),
+	});
+	if (!verification.ok) {
+		console.warn(
+			JSON.stringify({
+				event:
+					verification.kind === "rejected"
+						? "waitlist_verification_rejected"
+						: "waitlist_verification_unavailable",
+				requestId,
+				outcome: verification.kind,
+			}),
+		);
+		if (verification.kind === "rejected") {
+			return jsonResponse(
+				{
+					ok: false,
+					error: {
+						code: "verification_failed",
+						message: "We could not verify this attempt. Please try again.",
+					},
+				},
+				400,
+			);
+		}
+
+		return jsonResponse(
+			{
+				ok: false,
+				error: {
+					code: "service_unavailable",
+					message: "We could not verify your signup. Please try again.",
+				},
+			},
+			503,
+		);
+	}
+
 	try {
-		const { DB } = getCloudflareContext().env;
-		await persistWaitlistSignup(DB, validation.value);
+		await persistWaitlistSignup(env.DB, validation.value.signup);
 		return jsonResponse({ ok: true }, 200);
 	} catch (error) {
 		console.error(

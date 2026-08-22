@@ -38,9 +38,12 @@ const noticeSections = [
 				</p>
 				<p>
 					Waitlist submissions are processed by Cloudflare Workers and stored in
-					Cloudflare D1. Cloudflare may also process limited technical information
-					such as your IP address, browser type, device type, requested page,
-					referring page, and request time to host and protect the website.
+					Cloudflare D1. We also use Cloudflare Turnstile to protect the form from
+					spam and automated misuse. For that security check, Cloudflare may process
+					limited technical information such as your IP address, browser and device
+					characteristics, requested page, referring page, request time, and the
+					verification result. SoleSheet does not store the Turnstile response token
+					or Cloudflare’s verification response in D1.
 				</p>
 			</>
 		),
@@ -99,7 +102,7 @@ const noticeSections = [
 				<ul>
 					<li>
 						Cloudflare, which hosts the Worker, stores waitlist submissions in D1,
-						and helps secure and operate the website;
+						and provides Turnstile to help secure the form and operate the website;
 					</li>
 					<li>
 						professional advisers when reasonably necessary to obtain legal,

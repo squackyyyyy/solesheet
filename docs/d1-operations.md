@@ -12,6 +12,70 @@ This document explains the D1 setup used by the waitlist and the commands that a
 
 Use Node.js 24 for Wrangler commands. Run `nvm use` from the repository root, then run commands from that directory.
 
+## Turnstile verification
+
+Waitlist writes are protected by Cloudflare Turnstile. The browser receives only
+the public sitekey; `/api/waitlist` sends each token to Siteverify using the
+server-only secret and does not touch D1 unless verification succeeds.
+
+For localhost, copy the committed examples if the ignored files do not exist:
+
+```sh
+cp .env.example .env.local
+cp .dev.vars.example .dev.vars
+```
+
+These examples use Cloudflare's official always-pass dummy credentials. They
+work with `next dev`, OpenNext preview, and automated tests, but the server
+rejects the dummy secret on non-local hostnames. Never put a production secret
+in `.env.local`, `.env.example`, `.dev.vars.example`, `wrangler.jsonc`, source
+code, client-side variables, test output, or logs.
+
+Before the production release:
+
+1. In Cloudflare Turnstile, create a **Managed** widget named `SoleSheet waitlist`.
+2. Restrict its hostnames to `solesheet.solesheet.workers.dev` and each active
+   SoleSheet custom domain. Do not add `localhost`; local development uses the
+   dummy credentials.
+3. In the connected Worker's **Settings > Build > Build variables and
+   secrets**, add `NEXT_PUBLIC_TURNSTILE_SITE_KEY` with type **Text** and the
+   widget's public sitekey as its value. This is a build-time value, is expected
+   to appear in the browser bundle, and takes effect only after a new build.
+4. In the Worker's **Settings > Variables and Secrets** section, add the
+   matching server key with these settings, then select **Deploy**:
+
+   ```text
+   Variable name: TURNSTILE_SECRET_KEY
+   Type: Secret
+   Value: <the production widget secret>
+   ```
+
+   This dashboard runtime secret is the production method currently used by
+   SoleSheet. It is equivalent to setting the value with Wrangler:
+
+   ```sh
+   bunx wrangler secret put TURNSTILE_SECRET_KEY
+   ```
+
+   Do not run the Wrangler command again when the dashboard secret is already
+   configured. The runtime secret and build sitekey belong in separate
+   Cloudflare settings: build variables are unavailable at runtime, while the
+   runtime secret is not embedded into the client build. Never put the
+   production secret in a Text variable, shell command, commit, screenshot,
+   issue, shared log, or any `NEXT_PUBLIC_*` variable.
+5. Rebuild and deploy the client and Worker together. A client built with the
+   dummy sitekey cannot be paired with a production secret, and an old client
+   without a token will correctly receive a retryable validation failure.
+6. Submit one controlled production signup, confirm the generic success UI,
+   and verify only an aggregate D1 count or the controlled row from a private
+   owner session. Then remove any temporary test row only if the release plan
+   explicitly calls for it.
+
+Turnstile uses `interaction-only` appearance. Routine visitors should not see a
+persistent widget; Cloudflare may show an accessible checkbox when it needs
+additional evidence. A failed or expired token must retain the visitor's form
+values and issue a fresh token before retrying.
+
 ## Local development
 
 Apply all pending migrations to local D1:
@@ -123,10 +187,11 @@ For a persistence failure:
 Before releasing signup persistence:
 
 1. Confirm the public privacy contact works and the displayed notice version matches `app/lib/privacy.ts`.
-2. Run typecheck, lint, tests, the standard Next.js build, the OpenNext build, and `wrangler deploy --dry-run`.
-3. Review production pending migrations, obtain explicit approval, and apply migrations before deploying the Worker.
-4. Deploy the Worker, then submit one controlled signup and verify only a non-sensitive count plus the generic public success flow.
-5. Record the deployed Worker version and migration name. Do not record the controlled contact in shared release notes.
+2. Complete the production Turnstile setup above and confirm the build-time Text sitekey and runtime Secret belong to the same widget.
+3. Run typecheck, lint, tests, the standard Next.js build, the OpenNext build, and `wrangler deploy --dry-run`.
+4. Review production pending migrations, obtain explicit approval, and apply migrations before deploying the Worker.
+5. Deploy the Worker, then submit one controlled signup and verify only a non-sensitive count plus the generic public success flow.
+6. Record the deployed Worker version and migration name. Do not record the controlled contact in shared release notes.
 
 If the release must be rolled back:
 

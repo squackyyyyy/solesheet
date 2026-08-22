@@ -14,6 +14,10 @@ import {
 import { BrandLoader } from "@/app/components/brand/brand-loader";
 import { useWaitlistJourney } from "@/app/components/waitlist/waitlist-journey";
 import { ActivePairsLink } from "@/app/components/active-pairs-link";
+import {
+	TurnstileWidget,
+	type TurnstileWidgetHandle,
+} from "@/app/components/waitlist/turnstile-widget";
 import { foundingOffer, surveyQuestions } from "@/app/lib/site-content";
 import {
 	boundTextValue,
@@ -425,6 +429,7 @@ export function WaitlistExperience() {
 	const [contactError, setContactError] = useState("");
 	const [consentError, setConsentError] = useState("");
 	const [signupError, setSignupError] = useState("");
+	const [turnstileToken, setTurnstileToken] = useState("");
 	const [signupState, setSignupState] = useState<SignupState>("form");
 	const [answers, setAnswers] = useState<SurveyAnswers>({});
 	const [surveyPosition, setSurveyPosition] = useState<SurveyPosition>({
@@ -436,6 +441,7 @@ export function WaitlistExperience() {
 	const [surveySubmissionState, setSurveySubmissionState] =
 		useState<SurveySubmissionState>("idle");
 	const signupRequestRef = useRef<AbortController | null>(null);
+	const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 	const surveyAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
@@ -604,7 +610,6 @@ export function WaitlistExperience() {
 		event.preventDefault();
 		if (signupState === "pending") return;
 
-		const website = new FormData(event.currentTarget).get("website");
 		const normalizedName = normalizeOptionalText(name);
 		const normalizedContact = normalizeOptionalText(contact);
 		const nextContactError = isValidWaitlistEmail(normalizedContact)
@@ -619,6 +624,12 @@ export function WaitlistExperience() {
 		setSignupError("");
 
 		if (nextContactError || nextConsentError) return;
+		if (!turnstileToken) {
+			setSignupError(
+				"The security check is still loading. Please wait a moment and try again.",
+			);
+			return;
+		}
 
 		setName(normalizedName);
 		setContact(normalizedContact);
@@ -630,7 +641,7 @@ export function WaitlistExperience() {
 			email: normalizedContact,
 			...(normalizedName ? { name: normalizedName } : {}),
 			consent: true,
-			website: typeof website === "string" ? website : "",
+			turnstileToken,
 		};
 
 		try {
@@ -648,15 +659,28 @@ export function WaitlistExperience() {
 				result.ok === true;
 
 			if (!response.ok || !isConfirmed) {
-				throw new Error("Waitlist signup was not confirmed.");
+				const errorCode =
+					typeof result === "object" &&
+					result !== null &&
+					"error" in result &&
+					typeof result.error === "object" &&
+					result.error !== null &&
+					"code" in result.error &&
+					typeof result.error.code === "string"
+						? result.error.code
+						: "unknown";
+				throw new Error(errorCode);
 			}
 
 			setSignupState("form");
 			completeSignup();
-		} catch {
+		} catch (error) {
 			if (controller.signal.aborted) return;
+			turnstileRef.current?.reset();
 			setSignupError(
-				"We couldn’t save your signup right now. Please try again.",
+				error instanceof Error && error.message === "verification_failed"
+					? "We couldn’t verify this attempt. Please try the security check again."
+					: "We couldn’t save your signup right now. Please try again.",
 			);
 			setSignupState("form");
 		} finally {
@@ -821,13 +845,19 @@ export function WaitlistExperience() {
 								I agree to the collection and use of my information, including
 								contact about early access.
 							</CheckField>
-							<input
-								type="text"
-								name="website"
-								tabIndex={-1}
-								autoComplete="off"
-								aria-hidden="true"
-								className="absolute left-[-10000px] size-px overflow-hidden"
+							<TurnstileWidget
+								ref={turnstileRef}
+								siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ""}
+								onTokenChange={(token) => {
+									setTurnstileToken(token);
+									if (token && signupError) setSignupError("");
+								}}
+								onUnavailable={() => {
+									setTurnstileToken("");
+									setSignupError(
+										"The security check could not load. Check your connection and try again.",
+									);
+								}}
 							/>
 							{signupError ? (
 								<p role="alert" className="text-sm font-medium text-red-700">

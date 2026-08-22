@@ -3,6 +3,7 @@ import {
 	normalizeOptionalText,
 	waitlistTextLimits,
 } from "@/app/lib/validation";
+import { TURNSTILE_TOKEN_MAX_LENGTH } from "@/app/lib/turnstile";
 
 export const WAITLIST_REQUEST_MAX_BYTES = 4_096;
 
@@ -10,14 +11,14 @@ export const waitlistRequestFields = [
 	"email",
 	"name",
 	"consent",
-	"website",
+	"turnstileToken",
 ] as const;
 
 export type WaitlistSignupRequest = {
 	email: string;
 	name?: string;
 	consent: true;
-	website?: string;
+	turnstileToken: string;
 };
 
 export type ValidWaitlistSignup = {
@@ -28,9 +29,13 @@ export type ValidWaitlistSignup = {
 
 export type WaitlistField = "email" | "name" | "consent";
 
+export type ValidWaitlistRequest = {
+	signup: ValidWaitlistSignup;
+	turnstileToken: string;
+};
+
 export type WaitlistValidationResult =
-	| { ok: true; kind: "signup"; value: ValidWaitlistSignup }
-	| { ok: true; kind: "honeypot" }
+	| { ok: true; value: ValidWaitlistRequest }
 	| {
 			ok: false;
 			field?: WaitlistField;
@@ -61,13 +66,20 @@ export function validateWaitlistSignup(
 		typeof value.email !== "string" ||
 		(value.name !== undefined && typeof value.name !== "string") ||
 		typeof value.consent !== "boolean" ||
-		(value.website !== undefined && typeof value.website !== "string")
+		typeof value.turnstileToken !== "string"
 	) {
 		return { ok: false, message: "The waitlist request was not recognized." };
 	}
 
-	if (normalizeOptionalText(value.website ?? "")) {
-		return { ok: true, kind: "honeypot" };
+	const turnstileToken = value.turnstileToken.trim();
+	if (
+		turnstileToken.length === 0 ||
+		turnstileToken.length > TURNSTILE_TOKEN_MAX_LENGTH
+	) {
+		return {
+			ok: false,
+			message: "Complete the security check and try again.",
+		};
 	}
 
 	const email = normalizeOptionalText(value.email);
@@ -98,11 +110,13 @@ export function validateWaitlistSignup(
 
 	return {
 		ok: true,
-		kind: "signup",
 		value: {
-			email,
-			emailNormalized: normalizeWaitlistEmail(email),
-			name: name || null,
+			signup: {
+				email,
+				emailNormalized: normalizeWaitlistEmail(email),
+				name: name || null,
+			},
+			turnstileToken,
 		},
 	};
 }
