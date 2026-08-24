@@ -32,5 +32,5 @@
 - [x] 5.2 Apply the migration locally, regenerate Cloudflare binding types, and verify the migration ledger plus both survey table schemas against the committed SQL.
 - [x] 5.3 Run focused contract, token, repository, route, and component tests followed by the full unit suite, type checking, linting, strict OpenSpec validation, and an OpenNext Worker build.
 - [x] 5.4 Run a local Worker preview through signup and survey completion, confirm one linked response and its expected channels in local D1, then verify a repeated completion creates no duplicate or overwrite.
-- [ ] 5.5 Configure the production signing secret, apply the committed migration remotely, deploy the Worker and client together, complete one controlled production survey, and verify its response, channel rows, and signup completion timestamp before sync and archive.
-- [ ] 5.6 Mark Phase 2 complete and Phase 3 next in the backend roadmap after production verification succeeds.
+- [x] 5.5 Configure the production signing secret, apply the committed migration remotely, deploy the Worker and client together, complete one controlled production survey, and verify its response, channel rows, and signup completion timestamp before sync and archive.
+- [x] 5.6 Mark Phase 2 complete and Phase 3 next in the backend roadmap after production verification succeeds.

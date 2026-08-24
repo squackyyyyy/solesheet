@@ -57,13 +57,6 @@ Before production signup persistence is enabled, the public privacy notice SHALL
 - **WHEN** the production waitlist form can write to D1
 - **THEN** its linked privacy notice describes the active data practice and exposes an effective version that can be associated with the signup
 
-### Requirement: Survey data remains outside this persistence phase
-The signup persistence capability SHALL NOT store survey answers, survey navigation state, website traffic events, or interview responses in this phase.
-
-#### Scenario: Persisted signup enters the survey
-- **WHEN** a stored signup proceeds into, answers, or closes the existing survey
-- **THEN** only the waitlist signup remains durable and the survey state continues to follow the temporary-storage requirements of the survey capability
-
 ### Requirement: Signup persistence requires server-verified anti-automation evidence
 Every waitlist request SHALL include bounded anti-automation evidence that the server independently validates with the configured verification provider before reading or writing D1. Validation SHALL use a server-only secret and SHALL confirm a successful, unexpired, single-use result; production validation SHALL additionally confirm the expected action and request hostname. Missing, malformed, invalid, expired, replayed, or mismatched evidence SHALL produce a safe retryable response and no signup record. Verification-provider or configuration failure SHALL fail closed with a generic service-unavailable response and no signup record.
 
@@ -86,3 +79,18 @@ Every waitlist request SHALL include bounded anti-automation evidence that the s
 #### Scenario: Local and automated verification uses provider test credentials
 - **WHEN** the signup flow runs on localhost or in automated tests
 - **THEN** official provider test credentials produce deterministic verification without being accepted as production credentials
+
+### Requirement: Confirmed signup supplies protected survey continuation
+Every generic successful new-or-duplicate signup outcome SHALL include an opaque, integrity-protected continuation token that identifies the associated signup only to the server, is limited to survey submission, and expires after a documented short lifetime. The browser SHALL hold the token only in current-page memory and SHALL NOT receive the underlying signup record, contact data, database credentials, or token-signing secret.
+
+#### Scenario: New signup is confirmed
+- **WHEN** a newly accepted signup is stored successfully
+- **THEN** the generic successful response includes a continuation token that can authorize that signup's optional survey
+
+#### Scenario: Duplicate signup receives the generic outcome
+- **WHEN** an already registered normalized email completes a valid signup request
+- **THEN** the same response shape supplies a fresh continuation token without revealing that the signup already existed or changing its stored contact and consent evidence
+
+#### Scenario: Continuation token leaves page memory
+- **WHEN** the visitor reloads or leaves the current page before submitting the survey
+- **THEN** the browser does not restore the continuation token from durable client storage

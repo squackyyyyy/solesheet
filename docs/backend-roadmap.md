@@ -50,8 +50,8 @@ If the visitor closes the survey or browser after the first database confirmatio
 |---|---|---|---|
 | 0 | `migrate-landing-site-to-zero-cost-hosting` | Establish the Cloudflare Worker deployment foundation | Complete |
 | 1 | `persist-waitlist-signups-with-d1` | Store validated waitlist signups and consent records | Complete |
-| 2 | `persist-validation-survey-with-d1` | Store completed surveys linked to their waitlist signup | Planned |
-| 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Planned |
+| 2 | `persist-validation-survey-with-d1` | Store completed surveys linked to their waitlist signup | Complete |
+| 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Next |
 | 4 | `add-cloudflare-traffic-analytics` | Measure visits and page views without writing each visit to D1 | Planned |
 | 5 | To be proposed only if needed | Add protected reporting or lightweight administration | Optional |
 
@@ -136,9 +136,9 @@ Completion criteria:
 - Closing the survey after signup does not remove the saved signup.
 - Local and production migrations are reproducible from the repository.
 
-## Phase 2: Persist completed survey responses with D1
+## Phase 2: Persist completed survey responses with D1 (complete)
 
-Proposed change: `persist-validation-survey-with-d1`
+Completed change: `persist-validation-survey-with-d1`
 
 Goal: save the survey answers the visitor chooses to submit and relate them to the correct waitlist signup.
 
@@ -165,7 +165,7 @@ Completion criteria:
 - Failed requests retain the answers for retry while the page remains open.
 - The database does not contain survey records without a valid signup relationship.
 
-## Phase 3: Harden and operate collected data
+## Phase 3: Harden and operate collected data (next)
 
 Proposed change: `harden-and-operate-waitlist-data`
 
