@@ -1,12 +1,10 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { verifyTurnstileToken } from "@/app/lib/server/turnstile";
-import { createSurveyToken } from "@/app/lib/server/survey-token";
-import { persistWaitlistSignup } from "@/app/lib/server/waitlist-repository";
+import { persistSurveyResponse } from "@/app/lib/server/survey-repository";
+import { verifySurveyToken } from "@/app/lib/server/survey-token";
 import {
-	WAITLIST_REQUEST_MAX_BYTES,
-	validateWaitlistSignup,
-	type WaitlistField,
-} from "@/app/lib/waitlist";
+	SURVEY_REQUEST_MAX_BYTES,
+	validateSurveySubmission,
+} from "@/app/lib/survey";
 
 const responseHeaders = {
 	"Cache-Control": "no-store",
@@ -25,20 +23,6 @@ function jsonResponse(body: unknown, status: number) {
 	return Response.json(body, { status, headers: responseHeaders });
 }
 
-function invalidRequest(message: string, field?: WaitlistField) {
-	return jsonResponse(
-		{
-			ok: false,
-			error: {
-				code: "invalid_request",
-				message,
-				...(field ? { field } : {}),
-			},
-		},
-		400,
-	);
-}
-
 async function readBoundedBody(request: Request) {
 	if (!request.body) return "";
 
@@ -49,9 +33,8 @@ async function readBoundedBody(request: Request) {
 	while (true) {
 		const { done, value } = await reader.read();
 		if (done) break;
-
 		totalBytes += value.byteLength;
-		if (totalBytes > WAITLIST_REQUEST_MAX_BYTES) {
+		if (totalBytes > SURVEY_REQUEST_MAX_BYTES) {
 			await reader.cancel();
 			throw new RequestBodyTooLargeError();
 		}
@@ -64,7 +47,6 @@ async function readBoundedBody(request: Request) {
 		body.set(chunk, offset);
 		offset += chunk.byteLength;
 	}
-
 	return new TextDecoder().decode(body);
 }
 
@@ -74,14 +56,13 @@ export async function POST(request: Request) {
 		?.split(";", 1)[0]
 		.trim()
 		.toLowerCase();
-
 	if (contentType !== "application/json") {
 		return jsonResponse(
 			{
 				ok: false,
 				error: {
 					code: "unsupported_media_type",
-					message: "Send the waitlist request as JSON.",
+					message: "Send the survey submission as JSON.",
 				},
 			},
 			415,
@@ -94,14 +75,14 @@ export async function POST(request: Request) {
 		if (
 			!Number.isSafeInteger(declaredBytes) ||
 			declaredBytes < 0 ||
-			declaredBytes > WAITLIST_REQUEST_MAX_BYTES
+			declaredBytes > SURVEY_REQUEST_MAX_BYTES
 		) {
 			return jsonResponse(
 				{
 					ok: false,
 					error: {
 						code: "request_too_large",
-						message: "The waitlist request is too large.",
+						message: "The survey submission is too large.",
 					},
 				},
 				413,
@@ -111,8 +92,7 @@ export async function POST(request: Request) {
 
 	let body: unknown;
 	try {
-		const encodedBody = await readBoundedBody(request);
-		body = JSON.parse(encodedBody) as unknown;
+		body = JSON.parse(await readBoundedBody(request)) as unknown;
 	} catch (error) {
 		if (error instanceof RequestBodyTooLargeError) {
 			return jsonResponse(
@@ -120,19 +100,33 @@ export async function POST(request: Request) {
 					ok: false,
 					error: {
 						code: "request_too_large",
-						message: "The waitlist request is too large.",
+						message: "The survey submission is too large.",
 					},
 				},
 				413,
 			);
 		}
-
-		return invalidRequest("The waitlist request could not be read.");
+		return jsonResponse(
+			{
+				ok: false,
+				error: {
+					code: "invalid_request",
+					message: "The survey submission could not be read.",
+				},
+			},
+			400,
+		);
 	}
 
-	const validation = validateWaitlistSignup(body);
+	const validation = validateSurveySubmission(body);
 	if (!validation.ok) {
-		return invalidRequest(validation.message, validation.field);
+		return jsonResponse(
+			{
+				ok: false,
+				error: { code: "invalid_request", message: validation.message },
+			},
+			400,
+		);
 	}
 
 	const requestId = crypto.randomUUID();
@@ -142,7 +136,7 @@ export async function POST(request: Request) {
 	} catch {
 		console.error(
 			JSON.stringify({
-				event: "waitlist_verification_unavailable",
+				event: "survey_submission_unavailable",
 				requestId,
 				outcome: "configuration",
 			}),
@@ -152,101 +146,59 @@ export async function POST(request: Request) {
 				ok: false,
 				error: {
 					code: "service_unavailable",
-					message: "We could not verify your signup. Please try again.",
+					message: "We could not submit your survey. Please try again.",
 				},
 			},
 			503,
 		);
 	}
 
-	const verification = await verifyTurnstileToken({
-		secretKey: env.TURNSTILE_SECRET_KEY,
-		token: validation.value.turnstileToken,
-		expectedHostname: new URL(request.url).hostname,
-		requestId,
-		clientIp: request.headers.get("CF-Connecting-IP"),
+	const token = await verifySurveyToken({
+		token: validation.value.surveyToken,
+		secret: env.SURVEY_SUBMISSION_SECRET,
 	});
-	if (!verification.ok) {
+	if (!token.ok) {
+		const unavailable = token.reason === "invalid_secret";
 		console.warn(
 			JSON.stringify({
-				event:
-					verification.kind === "rejected"
-						? "waitlist_verification_rejected"
-						: "waitlist_verification_unavailable",
+				event: unavailable
+					? "survey_submission_unavailable"
+					: "survey_submission_rejected",
 				requestId,
-				outcome: verification.kind,
+				outcome: unavailable ? "configuration" : "invalid_session",
 			}),
 		);
-		if (verification.kind === "rejected") {
-			return jsonResponse(
-				{
-					ok: false,
-					error: {
-						code: "verification_failed",
-						message: "We could not verify this attempt. Please try again.",
-					},
-				},
-				400,
-			);
-		}
-
 		return jsonResponse(
 			{
 				ok: false,
 				error: {
-					code: "service_unavailable",
-					message: "We could not verify your signup. Please try again.",
+					code: unavailable ? "service_unavailable" : "invalid_session",
+					message: unavailable
+						? "We could not submit your survey. Please try again."
+						: "Your survey session is no longer valid. Please rejoin the waitlist and try again.",
 				},
 			},
-			503,
-		);
-	}
-
-	let signupId: string;
-	try {
-		signupId = await persistWaitlistSignup(env.DB, validation.value.signup);
-	} catch (error) {
-		console.error(
-			JSON.stringify({
-				event: "waitlist_persistence_failed",
-				requestId,
-				errorName: error instanceof Error ? error.name : "UnknownError",
-			}),
-		);
-
-		return jsonResponse(
-			{
-				ok: false,
-				error: {
-					code: "service_unavailable",
-					message: "We could not save your signup. Please try again.",
-				},
-			},
-			503,
+			unavailable ? 503 : 400,
 		);
 	}
 
 	try {
-		const surveyToken = await createSurveyToken({
-			signupId,
-			secret: env.SURVEY_SUBMISSION_SECRET,
-		});
-		return jsonResponse({ ok: true, surveyToken }, 200);
+		await persistSurveyResponse(env.DB, token.signupId, validation.value.answers);
+		return jsonResponse({ ok: true }, 200);
 	} catch (error) {
 		console.error(
 			JSON.stringify({
-				event: "waitlist_survey_token_unavailable",
+				event: "survey_persistence_failed",
 				requestId,
 				errorName: error instanceof Error ? error.name : "UnknownError",
 			}),
 		);
-
 		return jsonResponse(
 			{
 				ok: false,
 				error: {
 					code: "service_unavailable",
-					message: "We could not continue your signup. Please try again.",
+					message: "We could not submit your survey. Please try again.",
 				},
 			},
 			503,

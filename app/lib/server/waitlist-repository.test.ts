@@ -20,19 +20,21 @@ function createDatabase(run: () => Promise<D1Result> = async () => ({
 })) {
 	const queries: string[] = [];
 	const bindings: unknown[][] = [];
-	const statement = {
-		bind: vi.fn((...values: unknown[]) => {
-			bindings.push(values);
-			return statement;
-		}),
-		run: vi.fn(run),
-		first: vi.fn(),
-		all: vi.fn(),
-		raw: vi.fn(),
-	} as D1PreparedStatement;
 	const db = {
 		prepare: vi.fn((query: string) => {
 			queries.push(query);
+			const statement = {
+				bind: vi.fn((...values: unknown[]) => {
+					bindings.push(values);
+					return statement;
+				}),
+				run: vi.fn(run),
+				first: vi.fn(async () => ({
+					id: "00000000-0000-4000-8000-000000000001",
+				})),
+				all: vi.fn(),
+				raw: vi.fn(),
+			} as D1PreparedStatement;
 			return statement;
 		}),
 		batch: vi.fn(),
@@ -41,7 +43,7 @@ function createDatabase(run: () => Promise<D1Result> = async () => ({
 		dump: vi.fn(),
 	} as D1Database;
 
-	return { bindings, db, queries, statement };
+	return { bindings, db, queries };
 }
 
 describe("persistWaitlistSignup", () => {
@@ -49,7 +51,7 @@ describe("persistWaitlistSignup", () => {
 
 	it("binds generated identity, timestamps, policy version, and normalized fields", async () => {
 		const database = createDatabase();
-		await persistWaitlistSignup(
+		await expect(persistWaitlistSignup(
 			database.db,
 			{
 				email: "Seller@Example.com",
@@ -60,7 +62,7 @@ describe("persistWaitlistSignup", () => {
 				createId: () => "00000000-0000-4000-8000-000000000001",
 				now: () => new Date("2026-08-23T00:00:00.000Z"),
 			},
-		);
+		)).resolves.toBe("00000000-0000-4000-8000-000000000001");
 
 		expect(database.bindings).toEqual([
 			[
@@ -73,11 +75,35 @@ describe("persistWaitlistSignup", () => {
 				"2026-08-23T00:00:00.000Z",
 				"2026-08-23T00:00:00.000Z",
 			],
+			["seller@example.com"],
 		]);
 		expect(database.queries[0]).toMatch(
 			/ON CONFLICT\(email_normalized\) DO NOTHING/,
 		);
 		expect(database.queries[0]).not.toMatch(/\bUPDATE\b/i);
+		expect(database.queries[1]).toMatch(/SELECT id/i);
+	});
+
+	it("fails when the inserted or duplicate signup cannot be resolved", async () => {
+		const database = createDatabase();
+		vi.mocked(database.db.prepare).mockImplementation(() => {
+			const statement = {
+				bind: vi.fn(() => statement),
+				run: vi.fn(async () => ({ success: true } as D1Result)),
+				first: vi.fn(async () => null),
+				all: vi.fn(),
+				raw: vi.fn(),
+			} as D1PreparedStatement;
+			return statement;
+		});
+
+		await expect(
+			persistWaitlistSignup(database.db, {
+				email: "seller@example.com",
+				emailNormalized: "seller@example.com",
+				name: null,
+			}),
+		).rejects.toThrow(/could not be resolved/i);
 	});
 
 	it("propagates a database constraint failure to the Route Handler", async () => {

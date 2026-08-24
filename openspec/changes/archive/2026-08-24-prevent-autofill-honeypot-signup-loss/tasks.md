@@ -26,5 +26,5 @@
 
 ## 5. Prepare Production Verification
 
-- [ ] 5.1 Document and complete creation of a Managed production widget, restricted production hostnames, the public build-time sitekey, and the encrypted Worker secret.
-- [ ] 5.2 Deploy the client and Worker together, submit one controlled signup, and confirm the production D1 row before archiving.
+- [x] 5.1 Document and complete creation of a Managed production widget, restricted production hostnames, the public build-time sitekey, and the encrypted Worker secret.
+- [x] 5.2 Deploy the client and Worker together, submit one controlled signup, and confirm the production D1 row before archiving.

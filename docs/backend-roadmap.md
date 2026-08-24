@@ -49,7 +49,7 @@ If the visitor closes the survey or browser after the first database confirmatio
 | Phase | OpenSpec change | Outcome | Status |
 |---|---|---|---|
 | 0 | `migrate-landing-site-to-zero-cost-hosting` | Establish the Cloudflare Worker deployment foundation | Complete |
-| 1 | `persist-waitlist-signups-with-d1` | Store validated waitlist signups and consent records | Proposed |
+| 1 | `persist-waitlist-signups-with-d1` | Store validated waitlist signups and consent records | Complete |
 | 2 | `persist-validation-survey-with-d1` | Store completed surveys linked to their waitlist signup | Planned |
 | 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Planned |
 | 4 | `add-cloudflare-traffic-analytics` | Measure visits and page views without writing each visit to D1 | Planned |
@@ -70,7 +70,7 @@ This phase does not create or bind a database. Custom-domain purchase and attach
 
 ## Phase 1: Persist waitlist signups with D1
 
-Proposed change: `persist-waitlist-signups-with-d1`
+Completed change: `persist-waitlist-signups-with-d1`
 
 Goal: reliably save a visitor's waitlist details before inviting them into the survey.
 
@@ -126,7 +126,7 @@ The exact schema will be finalized in the phase's OpenSpec design before impleme
 - Update the privacy policy before production data collection begins.
 - Clearly describe the fields collected, purposes, retention approach, processors, and contact/deletion method.
 - Avoid logging submitted names, emails, or survey answers.
-- Add a low-friction honeypot and basic request controls. Evaluate Turnstile if real traffic shows automated abuse.
+- Protect signup persistence with low-friction Cloudflare Turnstile verification before D1 access.
 
 Completion criteria:
 
@@ -179,7 +179,7 @@ Planned scope:
 - Finalize a retention period and document how expired records will be removed.
 - Document D1 Time Travel and export-based recovery procedures.
 - Add monitoring for failed API requests and database errors without logging form contents.
-- Review rate limits and add Cloudflare Turnstile or stronger abuse controls only if warranted.
+- Review rate limits and Turnstile effectiveness, adding stronger abuse controls only if warranted.
 - Review database indexes using the actual reporting queries and `EXPLAIN QUERY PLAN`.
 - Record a production migration checklist and rollback procedure.
 
@@ -274,8 +274,7 @@ This is deliberately deferred. A public waitlist does not initially need a custo
 - The exact retention period for waitlist and survey data.
 - Whether sales channels should use a normalized join table or JSON text after reviewing expected reporting needs.
 - Which production domain will be used in privacy disclosures and Cloudflare analytics configuration.
-- What amount of real abuse would justify adding Turnstile.
 
 ## Recommended next action
 
-Review and apply `persist-waitlist-signups-with-d1`. After signup persistence is verified and archived, proceed to `persist-validation-survey-with-d1`.
+Propose and implement `persist-validation-survey-with-d1` so completed survey responses are stored and linked to their durable waitlist signups.

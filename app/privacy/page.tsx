@@ -29,16 +29,23 @@ const noticeSections = [
 					<li>your email address;</li>
 					<li>an optional name, reseller name, or alias;</li>
 					<li>the time you consented and the privacy-notice version you accepted;</li>
+					<li>
+						optional survey answers about your phone platform, active inventory,
+						current tracking method, preferred features and plans, installment
+						sales, cloud backup, sales channels, and follow-up availability;
+					</li>
+					<li>optional Other details you enter for supported survey questions;</li>
 					<li>messages or requests you send to our privacy contact.</li>
 				</ul>
 				<p>
-					Optional survey answers about your reseller workflow currently remain
-					in the open page only. They are not sent to or stored in our database in
-					this version of the website.
+					Survey answers remain only in the open page until you select Finish this
+					survey. Finished surveys are linked to your waitlist signup and stored in
+					Cloudflare D1. Closing the survey without finishing does not submit its
+					answers.
 				</p>
 				<p>
-					Waitlist submissions are processed by Cloudflare Workers and stored in
-					Cloudflare D1. We also use Cloudflare Turnstile to protect the form from
+					Waitlist and finished survey submissions are processed by Cloudflare
+					Workers and stored in Cloudflare D1. We also use Cloudflare Turnstile to protect the form from
 					spam and automated misuse. For that security check, Cloudflare may process
 					limited technical information such as your IP address, browser and device
 					characteristics, requested page, referring page, request time, and the
@@ -61,7 +68,8 @@ const noticeSections = [
 					</li>
 					<li>
 						to understand waitlist demand and prioritize product, platform, and
-						pricing decisions using individual signups or aggregated counts;
+						pricing decisions using survey responses, individual signups, or
+						aggregated counts;
 					</li>
 					<li>to arrange an optional follow-up interview;</li>
 					<li>to prevent duplicate submissions, spam, fraud, and misuse; and</li>
@@ -83,8 +91,8 @@ const noticeSections = [
 					We ask for your consent before registering your waitlist interest and
 					contacting you about early access or product research. Your survey
 					answers are optional, and you may join the waitlist without answering
-					the survey. Survey answers are not submitted or stored in D1 in this
-					version of the website.
+					the survey. Survey answers are submitted only when you select Finish this
+					survey; closing an unfinished survey does not submit its answers.
 				</p>
 				<p>
 					You may withdraw consent or ask us to stop contacting you at any time by
@@ -101,7 +109,7 @@ const noticeSections = [
 				<p>We may share information only with:</p>
 				<ul>
 					<li>
-						Cloudflare, which hosts the Worker, stores waitlist submissions in D1,
+						Cloudflare, which hosts the Worker, stores waitlist and finished survey submissions in D1,
 						and provides Turnstile to help secure the form and operate the website;
 					</li>
 					<li>
@@ -126,7 +134,7 @@ const noticeSections = [
 		body: (
 			<>
 				<p>
-					We retain stored waitlist information only while it is needed for
+					We retain stored waitlist and finished survey information only while it is needed for
 					early-access planning and product research. Unless a longer period is
 					required by law or you ask to remain informed, we delete or anonymize
 					inactive waitlist information within 12 months after your last
@@ -264,8 +272,8 @@ export default function PrivacyPage() {
 						Your information is for early access and product research.
 					</h2>
 					<p className="mt-3 max-w-3xl text-sm leading-7 text-white/72">
-						Waitlist details are stored with Cloudflare D1. Survey questions are
-						optional and are not submitted yet. We do not sell personal information,
+						Waitlist details and deliberately finished surveys are stored with
+						Cloudflare D1. Survey questions remain optional. We do not sell personal information,
 						and you may withdraw consent or ask us to delete your information.
 					</p>
 				</section>

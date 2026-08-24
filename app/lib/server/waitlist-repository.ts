@@ -24,6 +24,12 @@ const insertWaitlistSignupSql = `
 	ON CONFLICT(email_normalized) DO NOTHING
 `;
 
+const selectWaitlistSignupIdSql = `
+	SELECT id
+	FROM waitlist_signups
+	WHERE email_normalized = ?
+`;
+
 export async function persistWaitlistSignup(
 	db: D1Database,
 	signup: ValidWaitlistSignup,
@@ -45,4 +51,14 @@ export async function persistWaitlistSignup(
 			timestamp,
 		)
 		.run();
+
+	const storedSignup = await db
+		.prepare(selectWaitlistSignupIdSql)
+		.bind(signup.emailNormalized)
+		.first<{ id: string }>();
+	if (!storedSignup?.id) {
+		throw new Error("Waitlist signup could not be resolved after persistence.");
+	}
+
+	return storedSignup.id;
 }

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getCloudflareContextMock = vi.hoisted(() => vi.fn());
 const verifyTurnstileTokenMock = vi.hoisted(() => vi.fn());
+const createSurveyTokenMock = vi.hoisted(() => vi.fn());
 
 vi.mock("server-only", () => ({}));
 vi.mock("@opennextjs/cloudflare", () => ({
@@ -9,6 +10,9 @@ vi.mock("@opennextjs/cloudflare", () => ({
 }));
 vi.mock("@/app/lib/server/turnstile", () => ({
 	verifyTurnstileToken: verifyTurnstileTokenMock,
+}));
+vi.mock("@/app/lib/server/survey-token", () => ({
+	createSurveyToken: createSurveyTokenMock,
 }));
 
 import { POST } from "@/app/api/waitlist/route";
@@ -35,7 +39,9 @@ function createDatabase(run: () => Promise<D1Result> = async () => ({
 			return statement;
 		}),
 		run: vi.fn(run),
-		first: vi.fn(),
+		first: vi.fn(async () => ({
+			id: "00000000-0000-4000-8000-000000000001",
+		})),
 		all: vi.fn(),
 		raw: vi.fn(),
 	} as D1PreparedStatement;
@@ -74,9 +80,10 @@ function jsonRequest(
 
 function useDatabase(database: D1Database) {
 	getCloudflareContextMock.mockReturnValue({
-		env: {
+			env: {
 			DB: database,
 			TURNSTILE_SECRET_KEY: "private-server-secret",
+			SURVEY_SUBMISSION_SECRET: "private-survey-signing-secret-value",
 		},
 	});
 }
@@ -87,6 +94,8 @@ describe("POST /api/waitlist", () => {
 		getCloudflareContextMock.mockReset();
 		verifyTurnstileTokenMock.mockReset();
 		verifyTurnstileTokenMock.mockResolvedValue({ ok: true });
+		createSurveyTokenMock.mockReset();
+		createSurveyTokenMock.mockResolvedValue("signed-survey-token");
 	});
 
 	it("verifies before storing a normalized request and returns generic success", async () => {
@@ -102,7 +111,10 @@ describe("POST /api/waitlist", () => {
 		);
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual({ ok: true });
+		expect(await response.json()).toEqual({
+			ok: true,
+			surveyToken: "signed-survey-token",
+		});
 		expect(verifyTurnstileTokenMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				secretKey: "private-server-secret",
@@ -118,6 +130,10 @@ describe("POST /api/waitlist", () => {
 			"seller@example.com",
 			"Sole Supply MNL",
 		]);
+		expect(createSurveyTokenMock).toHaveBeenCalledWith({
+			signupId: "00000000-0000-4000-8000-000000000001",
+			secret: "private-survey-signing-secret-value",
+		});
 	});
 
 	it("binds an omitted name as null", async () => {
@@ -151,14 +167,21 @@ describe("POST /api/waitlist", () => {
 			}),
 		);
 
-		expect(await first.json()).toEqual({ ok: true });
-		expect(await duplicate.json()).toEqual({ ok: true });
+		expect(await first.json()).toEqual({
+			ok: true,
+			surveyToken: "signed-survey-token",
+		});
+		expect(await duplicate.json()).toEqual({
+			ok: true,
+			surveyToken: "signed-survey-token",
+		});
 		expect(verifyTurnstileTokenMock).toHaveBeenCalledTimes(2);
-		for (const query of database.queries) {
+		for (const query of database.queries.filter((query) => /INSERT/i.test(query))) {
 			expect(query).toMatch(/ON CONFLICT\(email_normalized\) DO NOTHING/);
 			expect(query).not.toMatch(/\bUPDATE\b/i);
 		}
-		expect(database.bindings[0]?.[2]).toBe(database.bindings[1]?.[2]);
+		expect(database.bindings[0]?.[2]).toBe(database.bindings[2]?.[2]);
+		expect(createSurveyTokenMock).toHaveBeenCalledTimes(2);
 	});
 
 	it("rejects failed verification before D1 and logs no submitted content", async () => {
@@ -315,5 +338,30 @@ describe("POST /api/waitlist", () => {
 		expect(logged).not.toContain("seller@example.com");
 		expect(logged).not.toContain("Private seller name");
 		expect(logged).not.toContain("constraint failed");
+	});
+
+	it("fails closed when the survey token cannot be issued", async () => {
+		const database = createDatabase();
+		useDatabase(database.db);
+		createSurveyTokenMock.mockRejectedValue(
+			new Error("secret missing private-survey-signing-secret-value"),
+		);
+		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		const response = await POST(
+			jsonRequest({ email: "seller@example.com", consent: true }),
+		);
+		const logged = JSON.stringify(consoleError.mock.calls);
+
+		expect(response.status).toBe(503);
+		expect(await response.json()).toEqual({
+			ok: false,
+			error: {
+				code: "service_unavailable",
+				message: "We could not continue your signup. Please try again.",
+			},
+		});
+		expect(logged).toContain("waitlist_survey_token_unavailable");
+		expect(logged).not.toContain("private-survey-signing-secret-value");
 	});
 });

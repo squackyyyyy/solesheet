@@ -1,6 +1,57 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+	await page.addInitScript(() => {
+		const callbacks = new Map<string, (token: string) => void>();
+		let sequence = 0;
+		window.turnstile = {
+			render(_container, options) {
+				sequence += 1;
+				const widgetId = `browser-turnstile-${sequence}`;
+				callbacks.set(widgetId, options.callback);
+				queueMicrotask(() => options.callback("browser-test-turnstile-token"));
+				return widgetId;
+			},
+			reset(widgetId) {
+				queueMicrotask(() =>
+					callbacks.get(widgetId)?.("browser-test-turnstile-token"),
+				);
+			},
+			remove(widgetId) {
+				callbacks.delete(widgetId);
+			},
+		};
+	});
+	await page.route(
+		"https://challenges.cloudflare.com/turnstile/v0/api.js**",
+		async (route) => {
+			await route.fulfill({
+				contentType: "application/javascript",
+				status: 200,
+				body: "/* Turnstile is stubbed by the browser test fixture. */",
+			});
+		},
+	);
+	await page.route("**/api/waitlist", async (route) => {
+		await route.fulfill({
+			contentType: "application/json",
+			status: 200,
+			body: JSON.stringify({
+				ok: true,
+				surveyToken: "browser-test-survey-token",
+			}),
+		});
+	});
+	await page.route("**/api/survey", async (route) => {
+		await route.fulfill({
+			contentType: "application/json",
+			status: 200,
+			body: JSON.stringify({ ok: true }),
+		});
+	});
+});
+
 test("page remains responsive and exposes the complete product story", async ({ page }) => {
   await page.goto("/");
 
@@ -125,7 +176,7 @@ test("privacy links open the complete waitlist privacy notice", async ({ page })
   await expect(page).toHaveTitle(/Privacy Notice/);
   await expect(page.getByRole("heading", { level: 1, name: "Privacy Notice" })).toBeVisible();
   await expect(page.getByRole("heading", { name: /information is for early access and product research/i })).toBeVisible();
-  await expect(page.getByText("privacy@solesheet.ph", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("solesheetph@gmail.com", { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/delete or anonymize.*within 12 months/i)).toBeVisible();
   await expect(page.getByRole("link", { name: /National Privacy Commission’s guide/i })).toHaveAttribute(
     "href",
@@ -347,9 +398,9 @@ test("survey active-pair help opens separately and preserves its answers", async
 	const consent = page.getByRole("checkbox", { name: /i agree to the collection/i });
 	await page.locator("label", { has: consent }).click();
 	await page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }).click();
-	await page.getByRole("button", { name: /answer the quick survey/i }).first().click();
 
 	const dialog = page.getByRole("dialog");
+	await expect(dialog).toBeVisible();
 	const phoneHeading = dialog.getByRole("heading", { name: /what phone do you mainly use/i });
 	await expect(phoneHeading).toBeFocused();
 	const android = dialog.getByRole("radio", { name: "Android" });
@@ -406,7 +457,6 @@ test("long founding offer selection does not create mobile page overflow", async
   await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
   await page.getByText(/i agree to the collection and use/i).tap();
   await page.getByRole("button", { name: /join the waitlist/i }).last().tap();
-  await page.getByRole("button", { name: /answer the quick survey/i }).first().tap();
 	for (let index = 0; index < 3; index += 1) {
 		await page.getByRole("button", { name: /skip question/i }).tap();
 	}
@@ -420,7 +470,7 @@ test("long founding offer selection does not create mobile page overflow", async
   expect(overflow).toBeLessThanOrEqual(1);
 });
 
-test("progress-aware CTAs synchronize through the non-saving survey flow", async ({ page }) => {
+test("progress-aware CTAs synchronize through the persisted survey flow", async ({ page }) => {
   test.setTimeout(60_000);
   const dataRequests: string[] = [];
   page.on("request", (request) => {
@@ -444,13 +494,16 @@ test("progress-aware CTAs synchronize through the non-saving survey flow", async
   await page.keyboard.press("Space");
   await expect(consent).toBeChecked();
   await joinCtas.last().click();
-  await expect(page.getByText(/part of the first look/i)).toBeVisible();
+	const surveyDialog = page.getByRole("dialog");
+	await expect(surveyDialog).toBeVisible();
+	await surveyDialog.getByRole("button", { name: /close survey/i }).click();
+	await expect(surveyDialog).toBeHidden();
+	await expect(page.getByText(/part of the first look/i)).toBeVisible();
 
   const surveyCtas = page.getByRole("button", { name: /answer the quick survey/i });
 	await expect(surveyCtas).toHaveCount(5);
   await expect(page.getByText(/you’re on the waitlist\. help shape what we build first/i)).toBeVisible();
 	await surveyCtas.last().click();
-	const surveyDialog = page.getByRole("dialog");
 	await expect(surveyDialog).toBeVisible();
 	const progressFill = surveyDialog.locator('[data-survey-progress-fill="true"]');
 	const initialProgressWidth = (await progressFill.boundingBox())?.width ?? 0;
@@ -490,6 +543,9 @@ test("progress-aware CTAs synchronize through the non-saving survey flow", async
 	await expect(page.getByText("Question 4 of 4")).toBeVisible();
 	await page.getByRole("button", { name: /finish this survey/i }).click();
   await expect(page.getByText(/that’s the full flow/i)).toBeVisible({ timeout: 7_000 });
+	await expect(
+		page.getByRole("link", { name: "solesheetph@gmail.com" }),
+	).toHaveAttribute("href", "mailto:solesheetph@gmail.com");
   await page.getByRole("button", { name: /close survey/i }).first().click();
   await expect(page.getByText(/thanks for helping shape solesheet/i)).toBeVisible();
   const completedCtas = page.getByRole("button", { name: /you’re all set — thank you/i });
@@ -499,7 +555,8 @@ test("progress-aware CTAs synchronize through the non-saving survey flow", async
     await expect(completedCtas.nth(index)).toContainText("✓");
   }
 
-  expect(dataRequests).toEqual([]);
+	expect(dataRequests.filter((url) => url.endsWith("/api/waitlist"))).toHaveLength(1);
+	expect(dataRequests.filter((url) => url.endsWith("/api/survey"))).toHaveLength(1);
   const stored = await page.evaluate(() => ({
     local: window.localStorage.length,
     session: window.sessionStorage.length,
@@ -512,6 +569,52 @@ test("progress-aware CTAs synchronize through the non-saving survey flow", async
 	await expect(page.getByRole("button", { name: /answer the quick survey/i })).toHaveCount(0);
 });
 
+test("failed survey submission keeps answers and can be retried", async ({ page }) => {
+	let surveyAttempts = 0;
+	await page.route("**/api/survey", async (route) => {
+		surveyAttempts += 1;
+		await route.fulfill({
+			contentType: "application/json",
+			status: surveyAttempts === 1 ? 503 : 200,
+			body: JSON.stringify(
+				surveyAttempts === 1
+					? { ok: false, error: { code: "temporarily_unavailable" } }
+					: { ok: true },
+			),
+		});
+	});
+
+	await page.goto("/");
+	await page.getByRole("button", { name: /join the waitlist/i }).first().click();
+	await page.getByRole("textbox", { name: "Email address" }).fill("retry@example.com");
+	const consent = page.getByRole("checkbox", { name: /i agree to the collection/i });
+	await page.locator("label", { has: consent }).click();
+	await page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }).click();
+
+	const dialog = page.getByRole("dialog");
+	await expect(dialog).toBeVisible();
+	await dialog.getByRole("button", { name: /skip question/i }).click();
+	await dialog.getByRole("button", { name: /skip question/i }).click();
+	await dialog.getByRole("button", { name: /skip question/i }).click();
+	await dialog
+		.getByRole("radio", { name: "Other" })
+		.locator("xpath=ancestor::label")
+		.click();
+	const otherFeature = dialog.getByRole("textbox", { name: "Other feature" });
+	await otherFeature.fill("Supplier purchase tracking");
+	await dialog.getByRole("button", { name: /finish this survey/i }).click();
+
+	await expect(
+		dialog.getByRole("alert").filter({ hasText: /answers are still here/i }),
+	).toBeVisible();
+	await expect(dialog.getByRole("radio", { name: "Other" })).toBeChecked();
+	await expect(otherFeature).toHaveValue("Supplier purchase tracking");
+
+	await dialog.getByRole("button", { name: /finish this survey/i }).click();
+	await expect(page.getByText(/that’s the full flow/i)).toBeVisible();
+	expect(surveyAttempts).toBe(2);
+});
+
 test("compact mobile survey keeps its footer attached with only its body scrolling", async ({ page }) => {
 	await page.setViewportSize({ width: 360, height: 800 });
 	await page.goto("/");
@@ -519,9 +622,9 @@ test("compact mobile survey keeps its footer attached with only its body scrolli
 	await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
 	await page.getByText(/i agree to the collection and use/i).click();
 	await page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }).click();
-	await page.getByRole("button", { name: /answer the quick survey/i }).first().click();
 
 	const dialog = page.getByRole("dialog");
+	await expect(dialog).toBeVisible();
 	const assertSheetGeometry = async (expectCompact: boolean) => {
 		await page.waitForTimeout(350);
 		const geometry = await dialog.evaluate((element) => {
@@ -582,9 +685,9 @@ test("survey reduced motion keeps focus, progress, and Back behavior", async ({ 
 	await consent.focus();
 	await page.keyboard.press("Space");
 	await page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }).click();
-	await page.getByRole("button", { name: /answer the quick survey/i }).first().click();
 
 	const dialog = page.getByRole("dialog");
+	await expect(dialog).toBeVisible();
 	const compactGeometry = await dialog.evaluate((element) => ({
 		height: element.getBoundingClientRect().height,
 		viewportHeight: window.innerHeight,
@@ -608,7 +711,7 @@ test("survey reduced motion keeps focus, progress, and Back behavior", async ({ 
 	await expect(dialog.getByRole("radio", { name: "Android" })).toBeChecked();
 });
 
-test("survey wizard supports keyboard and touch Other details without persistence or overflow", async ({ page }, testInfo) => {
+test("survey wizard persists keyboard and touch Other details without overflow", async ({ page }, testInfo) => {
 	test.setTimeout(60_000);
 	const dataRequests: string[] = [];
 	page.on("request", (request) => {
@@ -653,8 +756,6 @@ test("survey wizard supports keyboard and touch Other details without persistenc
 	await activate(isMobile ? page.locator("label", { has: consent }) : consent);
 	await expect(consent).toBeChecked();
 	await activate(page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }));
-	await expect(page.getByText(/part of the first look/i)).toBeVisible();
-	await activate(page.getByRole("button", { name: /answer the quick survey/i }).first());
 
 	const dialog = page.getByRole("dialog");
 	await expect(dialog).toBeVisible();
@@ -727,6 +828,7 @@ test("survey wizard supports keyboard and touch Other details without persistenc
 	await salesChannelOther.fill("Weekend pop-ups");
 
 	await activate(dialog.getByRole("button", { name: /close survey/i }));
+	await expect(dialog).toBeHidden();
 	await activate(page.getByRole("button", { name: /answer the quick survey/i }).first());
 	await expect(dialog.getByText("Optional question 4 of 5")).toBeVisible();
 	await expect(salesChannelOther).toHaveValue("Weekend pop-ups");
@@ -773,7 +875,8 @@ test("survey wizard supports keyboard and touch Other details without persistenc
 	);
 	await activate(dialog.getByRole("button", { name: /finish this survey/i }));
 	await expect(page.getByText(/that’s the full flow/i)).toBeVisible({ timeout: 7_000 });
-	expect(dataRequests).toEqual([]);
+	expect(dataRequests.filter((url) => url.endsWith("/api/waitlist"))).toHaveLength(1);
+	expect(dataRequests.filter((url) => url.endsWith("/api/survey"))).toHaveLength(1);
 	expect(await page.evaluate(() => ({
 		local: { ...localStorage },
 		session: { ...sessionStorage },
@@ -799,9 +902,7 @@ test("physical-touch controls activate through the LAN page", async ({ page }, t
   await page.getByText(/i agree to the collection and use/i).tap();
   await expect(page.getByRole("checkbox", { name: /i agree to the collection/i })).toBeChecked();
   await page.getByRole("button", { name: /join the waitlist/i }).last().tap();
-  await expect(page.getByText(/part of the first look/i)).toBeVisible();
-
-  await page.getByRole("button", { name: /answer the quick survey/i }).first().tap();
+  await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByText("Android", { exact: true }).tap();
 	await expect(page.getByRole("heading", { name: /how many active pairs/i })).toBeFocused();
 	await expect(page.getByText("Question 2 of 4")).toBeVisible();
@@ -826,6 +927,10 @@ test("keyboard focus returns after dismissing the survey", async ({ page }) => {
   await page.keyboard.press("Space");
   await expect(consent).toBeChecked();
   await page.getByRole("button", { name: /join the waitlist/i }).last().click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
   const surveyTrigger = page.getByRole("button", { name: /answer the quick survey/i }).first();
   await surveyTrigger.click();
   await page.keyboard.press("Escape");

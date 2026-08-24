@@ -64,8 +64,14 @@ async function expectQuestion(name: RegExp, progress: string) {
 	return heading;
 }
 
-async function finishSurveyThroughTestDelay() {
-	vi.useFakeTimers();
+async function finishSurveySuccessfully() {
+	let resolveSurvey: ((response: Response) => void) | undefined;
+	vi.mocked(globalThis.fetch).mockImplementationOnce(
+		() =>
+			new Promise<Response>((resolve) => {
+				resolveSurvey = resolve;
+			}),
+	);
 	const finishButton = screen.getByRole("button", {
 		name: /finish this survey/i,
 	});
@@ -94,15 +100,11 @@ async function finishSurveyThroughTestDelay() {
 	).not.toBeInTheDocument();
 
 	await act(async () => {
-		await vi.advanceTimersByTimeAsync(4_999);
+		resolveSurvey?.(Response.json({ ok: true }));
 	});
-	expect(screen.getByRole("status")).toHaveAttribute("data-state", "loading");
-	expect(screen.queryByText(/that’s the full flow/i)).not.toBeInTheDocument();
-
-	await act(async () => {
-		await vi.advanceTimersByTimeAsync(1);
-	});
-	vi.useRealTimers();
+	await waitFor(() =>
+		expect(screen.getByRole("status")).toHaveAttribute("data-state", "success"),
+	);
 
 	const successStatus = screen.getByRole("status");
 	expect(successStatus).toBe(loadingStatus);
@@ -130,6 +132,13 @@ async function finishSurveyThroughTestDelay() {
 	expect(
 		document.querySelector('[data-survey-completion-content="true"]'),
 	).toHaveClass("survey-completion-content");
+	const responseChangeLink = screen.getByRole("link", {
+		name: "solesheetph@gmail.com",
+	});
+	expect(responseChangeLink).toHaveAttribute(
+		"href",
+		"mailto:solesheetph@gmail.com",
+	);
 }
 
 describe("WaitlistExperience", () => {
@@ -158,9 +167,15 @@ describe("WaitlistExperience", () => {
 		Object.defineProperty(globalThis, "fetch", {
 			configurable: true,
 			writable: true,
-			value: vi
-				.fn()
-				.mockImplementation(() => Promise.resolve(Response.json({ ok: true }))),
+			value: vi.fn().mockImplementation((input: RequestInfo | URL) =>
+				Promise.resolve(
+					Response.json(
+						String(input) === "/api/waitlist"
+							? { ok: true, surveyToken: "signed-survey-token" }
+							: { ok: true },
+					),
+				),
+			),
 		});
 	});
 
@@ -331,7 +346,9 @@ describe("WaitlistExperience", () => {
 		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
 		await act(async () => {
-			resolveRequest?.(Response.json({ ok: true }));
+			resolveRequest?.(
+				Response.json({ ok: true, surveyToken: "signed-survey-token" }),
+			);
 		});
 
 		expect(screen.getByText(/part of the first look/i)).toBeInTheDocument();
@@ -356,7 +373,9 @@ describe("WaitlistExperience", () => {
 					{ status: 503 },
 				),
 			)
-			.mockResolvedValueOnce(Response.json({ ok: true }));
+			.mockResolvedValueOnce(
+				Response.json({ ok: true, surveyToken: "signed-survey-token" }),
+			);
 		renderExperience();
 		fireEvent.change(screen.getByRole("textbox", { name: "Name" }), {
 			target: { value: "  Sole Supply MNL  " },
@@ -433,7 +452,7 @@ describe("WaitlistExperience", () => {
 		);
 		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
 		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
-		await finishSurveyThroughTestDelay();
+		await finishSurveySuccessfully();
 
 		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
 		fireEvent.click(screen.getAllByRole("button", { name: /close survey/i })[0]);
@@ -444,8 +463,68 @@ describe("WaitlistExperience", () => {
 			expect(cta).toBeDisabled();
 			expect(cta).toHaveTextContent("✓");
 		}
-		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+		const surveyRequest = vi.mocked(globalThis.fetch).mock.calls[1];
+		expect(surveyRequest?.[0]).toBe("/api/survey");
+		expect(JSON.parse(String(surveyRequest?.[1]?.body))).toEqual({
+			surveyToken: "signed-survey-token",
+			phoneType: "android",
+			inventoryMethod: "other",
+			inventoryMethodOther: "Airtable",
+		});
 		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
+	});
+
+	it("submits a valid zero-answer survey only when Finish is selected", async () => {
+		renderExperience();
+		await joinAndOpenSurvey();
+		skipQuestion();
+		skipQuestion();
+		skipQuestion();
+		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
+
+		await finishSurveySuccessfully();
+
+		const surveyRequest = vi.mocked(globalThis.fetch).mock.calls[1];
+		expect(JSON.parse(String(surveyRequest?.[1]?.body))).toEqual({
+			surveyToken: "signed-survey-token",
+		});
+	});
+
+	it("retains answers and position after failure, then succeeds on retry", async () => {
+		renderExperience();
+		await joinAndOpenSurvey();
+		fireEvent.click(screen.getByRole("radio", { name: "Android" }));
+		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
+		skipQuestion();
+		skipQuestion();
+		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
+
+		vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+			Response.json(
+				{ ok: false, error: { code: "service_unavailable" } },
+				{ status: 503 },
+			),
+		);
+		fireEvent.click(screen.getByRole("button", { name: /finish this survey/i }));
+
+		const retryMessage = await screen.findByRole("alert");
+		expect(retryMessage).toHaveTextContent(/answers are still here/i);
+		expect(
+			screen.getByRole("heading", { name: /which feature matters most/i }),
+		).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		expect(screen.getByRole("radio", { name: "Android" })).toBeChecked();
+		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
+		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
+		skipQuestion();
+		skipQuestion();
+
+		await finishSurveySuccessfully();
+		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
+		expect(globalThis.fetch).toHaveBeenCalledTimes(3);
 	});
 
 	it("cancels pending auto-advance on close and advances only once", async () => {
@@ -555,9 +634,9 @@ describe("WaitlistExperience", () => {
 		expect(
 			screen.getByRole("radio", { name: "Yes — within the next 2 weeks" }),
 		).toBeChecked();
-		await finishSurveyThroughTestDelay();
+		await finishSurveySuccessfully();
 		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
-		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
 	});
 
@@ -640,7 +719,7 @@ describe("WaitlistExperience", () => {
 		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
 	});
 
-	it("clears the test submission timer when the survey unmounts", async () => {
+	it("aborts a pending survey request when the experience unmounts", async () => {
 		const view = renderExperience();
 		await joinAndOpenSurvey();
 		skipQuestion();
@@ -648,17 +727,19 @@ describe("WaitlistExperience", () => {
 		skipQuestion();
 		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
 
-		vi.useFakeTimers();
-		const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
-		const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
+		let requestSignal: AbortSignal | undefined;
+		vi.mocked(globalThis.fetch).mockImplementationOnce((_input, init) => {
+			requestSignal = init?.signal ?? undefined;
+			return new Promise<Response>(() => {});
+		});
 		fireEvent.click(screen.getByRole("button", { name: /finish this survey/i }));
 		expect(screen.getByRole("status")).toHaveAttribute("data-state", "loading");
-		const submissionTimer = setTimeoutSpy.mock.results.at(-1)?.value;
-		expect(submissionTimer).toBeDefined();
+		expect(requestSignal).toBeDefined();
+		expect(requestSignal?.aborted).toBe(false);
 
 		view.unmount();
 
-		expect(clearTimeoutSpy).toHaveBeenCalledWith(submissionTimer);
+		expect(requestSignal?.aborted).toBe(true);
 	});
 
 	it("starts the survey and its answers clean when remounted", async () => {

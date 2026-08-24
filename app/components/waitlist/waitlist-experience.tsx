@@ -19,6 +19,8 @@ import {
 	type TurnstileWidgetHandle,
 } from "@/app/components/waitlist/turnstile-widget";
 import { foundingOffer, surveyQuestions } from "@/app/lib/site-content";
+import { privacyContactEmail } from "@/app/lib/privacy";
+import { createSurveySubmissionRequest } from "@/app/lib/survey";
 import {
 	boundTextValue,
 	isValidWaitlistEmail,
@@ -42,7 +44,6 @@ type OtherDetailKey =
 
 const OTHER_OPTION = "Other";
 const AUTO_ADVANCE_DELAY = 230;
-const SURVEY_SUBMISSION_TEST_DELAY = 5_000;
 
 const surveyQuestionGroups = {
 	core: [
@@ -430,6 +431,7 @@ export function WaitlistExperience() {
 	const [consentError, setConsentError] = useState("");
 	const [signupError, setSignupError] = useState("");
 	const [turnstileToken, setTurnstileToken] = useState("");
+	const [surveyToken, setSurveyToken] = useState("");
 	const [signupState, setSignupState] = useState<SignupState>("form");
 	const [answers, setAnswers] = useState<SurveyAnswers>({});
 	const [surveyPosition, setSurveyPosition] = useState<SurveyPosition>({
@@ -440,12 +442,11 @@ export function WaitlistExperience() {
 		useState<SurveyDirection>("forward");
 	const [surveySubmissionState, setSurveySubmissionState] =
 		useState<SurveySubmissionState>("idle");
+	const [surveyError, setSurveyError] = useState("");
 	const signupRequestRef = useRef<AbortController | null>(null);
+	const surveyRequestRef = useRef<AbortController | null>(null);
 	const turnstileRef = useRef<TurnstileWidgetHandle | null>(null);
 	const surveyAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-		null,
-	);
-	const surveySubmissionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
 	const {
@@ -464,11 +465,9 @@ export function WaitlistExperience() {
 	useEffect(() => {
 		return () => {
 			signupRequestRef.current?.abort();
+			surveyRequestRef.current?.abort();
 			if (surveyAdvanceTimerRef.current) {
 				clearTimeout(surveyAdvanceTimerRef.current);
-			}
-			if (surveySubmissionTimerRef.current) {
-				clearTimeout(surveySubmissionTimerRef.current);
 			}
 		};
 	}, []);
@@ -551,16 +550,73 @@ export function WaitlistExperience() {
 		);
 	}
 
-	function finishSurvey() {
+	async function finishSurvey() {
 		cancelSurveyAdvance();
-		if (surveySubmissionTimerRef.current) return;
+		if (surveySubmissionState === "pending") return;
+		setSurveyError("");
+		if (!surveyToken) {
+			setSurveyError(
+				"Your survey session is no longer available. Reload the page and rejoin the waitlist to try again.",
+			);
+			return;
+		}
+
+		let requestBody;
+		try {
+			requestBody = createSurveySubmissionRequest(surveyToken, answers);
+		} catch {
+			setSurveyError(
+				"We couldn’t prepare your survey answers. Review them and try again.",
+			);
+			return;
+		}
 
 		setSurveySubmissionState("pending");
-		surveySubmissionTimerRef.current = setTimeout(() => {
-			surveySubmissionTimerRef.current = null;
+		const controller = new AbortController();
+		surveyRequestRef.current = controller;
+
+		try {
+			const response = await fetch("/api/survey", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify(requestBody),
+				signal: controller.signal,
+			});
+			const result = (await response.json()) as unknown;
+			const isConfirmed =
+				typeof result === "object" &&
+				result !== null &&
+				"ok" in result &&
+				result.ok === true;
+			if (!response.ok || !isConfirmed) {
+				const errorCode =
+					typeof result === "object" &&
+					result !== null &&
+					"error" in result &&
+					typeof result.error === "object" &&
+					result.error !== null &&
+					"code" in result.error &&
+					typeof result.error.code === "string"
+						? result.error.code
+						: "unknown";
+				throw new Error(errorCode);
+			}
+
 			setSurveySubmissionState("idle");
 			completeSurvey();
-		}, SURVEY_SUBMISSION_TEST_DELAY);
+		} catch (error) {
+			if (controller.signal.aborted) return;
+			setSurveySubmissionState("idle");
+			setSurveyError(
+				error instanceof Error && error.message === "invalid_session"
+					? "Your survey session expired. Reload the page and rejoin the waitlist to submit again."
+					: "We couldn’t submit your survey right now. Your answers are still here—please try again.",
+			);
+		} finally {
+			if (surveyRequestRef.current === controller) {
+				surveyRequestRef.current = null;
+			}
+		}
 	}
 
 	function selectSingleAnswer(key: SingleAnswerKey, value: string) {
@@ -652,11 +708,20 @@ export function WaitlistExperience() {
 				signal: controller.signal,
 			});
 			const result = (await response.json()) as unknown;
+			const returnedSurveyToken =
+				typeof result === "object" &&
+				result !== null &&
+				"surveyToken" in result &&
+				typeof result.surveyToken === "string" &&
+				result.surveyToken.length > 0
+					? result.surveyToken
+					: null;
 			const isConfirmed =
 				typeof result === "object" &&
 				result !== null &&
 				"ok" in result &&
-				result.ok === true;
+				result.ok === true &&
+				returnedSurveyToken !== null;
 
 			if (!response.ok || !isConfirmed) {
 				const errorCode =
@@ -672,6 +737,7 @@ export function WaitlistExperience() {
 				throw new Error(errorCode);
 			}
 
+			setSurveyToken(returnedSurveyToken);
 			setSignupState("form");
 			completeSignup();
 		} catch (error) {
@@ -972,6 +1038,16 @@ export function WaitlistExperience() {
 										Thanks for helping us prioritize speed, clarity, and the
 										features that matter in a real reseller workflow.
 									</p>
+									<p className="mx-auto mt-3 max-w-sm text-xs leading-5 text-black/60">
+										Need to change your responses? Email us at{" "}
+										<a
+											href={`mailto:${privacyContactEmail}`}
+											className="standard-link rounded-sm"
+										>
+											{privacyContactEmail}
+										</a>
+										.
+									</p>
 									<Button
 										variant="secondary"
 										onPress={() => setSurveyDialogOpen(false)}
@@ -984,14 +1060,21 @@ export function WaitlistExperience() {
 						</div>
 					</div>
 				) : (
-					<SurveyQuestion
-						answers={answers}
-						position={surveyPosition}
-						direction={surveyDirection}
-						onSelectSingle={selectSingleAnswer}
-						onSetAnswer={setAnswer}
-						onToggleChannel={toggleChannel}
-					/>
+					<div className="grid gap-4">
+						{surveyError ? (
+							<p role="alert" className="text-sm font-medium text-red-700">
+								{surveyError}
+							</p>
+						) : null}
+						<SurveyQuestion
+							answers={answers}
+							position={surveyPosition}
+							direction={surveyDirection}
+							onSelectSingle={selectSingleAnswer}
+							onSetAnswer={setAnswer}
+							onToggleChannel={toggleChannel}
+						/>
+					</div>
 				)}
 			</DialogSheet>
 		</section>

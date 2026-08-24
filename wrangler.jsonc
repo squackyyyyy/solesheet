@@ -5,7 +5,7 @@
 	"compatibility_date": "2026-08-22",
 	"compatibility_flags": ["nodejs_compat"],
 	"secrets": {
-		"required": ["TURNSTILE_SECRET_KEY"]
+		"required": ["TURNSTILE_SECRET_KEY", "SURVEY_SUBMISSION_SECRET"]
 	},
 	"assets": {
 		"binding": "ASSETS",

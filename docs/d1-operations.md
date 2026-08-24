@@ -8,7 +8,10 @@ This document explains the D1 setup used by the waitlist and the commands that a
 - `wrangler.jsonc` binds the Cloudflare database named `solesheet-waitlist` to server code as `DB`.
 - `.wrangler/state/` contains the local D1 database used by `next dev` and local Worker previews. It is generated, ignored by Git, and separate from production.
 - The remote D1 database is persistent Cloudflare infrastructure. A command affects it only when `--remote` is present.
-- Browser code calls `/api/waitlist`; it never receives the `DB` binding, Cloudflare credentials, or raw SQL results.
+- Browser code calls `/api/waitlist`, then sends a short-lived continuation
+  token to `/api/survey` only when the visitor finishes the survey. It never
+  receives the `DB` binding, Cloudflare credentials, raw SQL results, or a
+  database row ID.
 
 Use Node.js 24 for Wrangler commands. Run `nvm use` from the repository root, then run commands from that directory.
 
@@ -76,6 +79,35 @@ persistent widget; Cloudflare may show an accessible checkbox when it needs
 additional evidence. A failed or expired token must retain the visitor's form
 values and issue a fresh token before retrying.
 
+## Survey submission signing
+
+After a confirmed new or duplicate signup, `/api/waitlist` returns a two-hour
+HMAC-signed survey token. The token lets `/api/survey` link a finished survey to
+that signup without trusting a browser-supplied email or exposing a database
+identifier. The first finished response is immutable: retries and later
+submissions for the same signup return generic success without replacing it.
+
+For local development, `.dev.vars.example` provides a non-production signing
+value. Copy the example as described above, or add a unique value of at least 32
+characters to the ignored `.dev.vars` file:
+
+```text
+SURVEY_SUBMISSION_SECRET=<local-only value with at least 32 characters>
+```
+
+Before production deployment, generate a strong independent secret and add it
+in the connected Worker's **Settings > Variables and Secrets** as a runtime
+**Secret** named `SURVEY_SUBMISSION_SECRET`. Do not reuse the Turnstile secret.
+The Wrangler equivalent is:
+
+```sh
+bunx wrangler secret put SURVEY_SUBMISSION_SECRET
+```
+
+Keep this value out of build variables, `NEXT_PUBLIC_*` variables, source
+files, commits, screenshots, and logs. Rotating it invalidates unsubmitted
+tokens issued with the old value, but does not change saved survey records.
+
 ## Local development
 
 Apply all pending migrations to local D1:
@@ -95,12 +127,24 @@ Inspect the local schema without reading signup data:
 ```sh
 bunx wrangler d1 execute solesheet-waitlist --local --command "PRAGMA table_info(waitlist_signups);"
 bunx wrangler d1 execute solesheet-waitlist --local --command "PRAGMA index_list(waitlist_signups);"
+bunx wrangler d1 execute solesheet-waitlist --local --command "PRAGMA table_info(survey_responses);"
+bunx wrangler d1 execute solesheet-waitlist --local --command "PRAGMA table_info(survey_sales_channels);"
 ```
 
 Count local records without printing personal information:
 
 ```sh
 bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS signup_count FROM waitlist_signups;"
+bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS response_count FROM survey_responses;"
+bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS channel_count FROM survey_sales_channels;"
+```
+
+Verify relationship integrity and one-response idempotency without printing
+contacts or answers:
+
+```sh
+bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS orphaned_responses FROM survey_responses AS r LEFT JOIN waitlist_signups AS w ON w.id = r.signup_id WHERE w.id IS NULL;"
+bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS duplicate_response_groups FROM (SELECT signup_id FROM survey_responses GROUP BY signup_id HAVING COUNT(*) > 1);"
 ```
 
 Regenerate binding and runtime types after changing `wrangler.jsonc`:
@@ -129,6 +173,8 @@ Perform a non-sensitive production health check:
 
 ```sh
 bunx wrangler d1 execute solesheet-waitlist --remote --command "SELECT COUNT(*) AS signup_count FROM waitlist_signups;"
+bunx wrangler d1 execute solesheet-waitlist --remote --command "SELECT COUNT(*) AS response_count FROM survey_responses;"
+bunx wrangler d1 execute solesheet-waitlist --remote --command "SELECT COUNT(*) AS channel_count FROM survey_sales_channels;"
 ```
 
 Do not run ad-hoc schema changes in production. Create a new committed migration, test it locally, and then apply it remotely.
@@ -159,7 +205,9 @@ Handle access and deletion requests only from a private, owner-controlled Cloudf
 
    Do not copy the query, result, email, name, or row identifier into shared chat, tickets, screenshots, or logs. If no row matches, report that the request was completed without confirming whether the address had ever been registered.
 
-3. After identity and scope are confirmed, delete the matching signup in the same private console:
+3. After identity and scope are confirmed, delete the matching signup in the
+   same private console. The foreign-key cascade also removes its survey
+   response and sales-channel rows:
 
    ```sql
    DELETE FROM waitlist_signups
@@ -178,25 +226,31 @@ For a persistence failure:
 
 1. Confirm the Worker has a `DB` binding in its active deployment.
 2. Check that production has no pending migrations with `wrangler d1 migrations list solesheet-waitlist --remote`.
-3. Confirm the table exists using `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'waitlist_signups';`.
+3. Confirm all required tables exist using `SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('waitlist_signups', 'survey_responses', 'survey_sales_channels');`.
 4. Use the correlation value and error category in Workers Logs to narrow the time and failure class. Do not add form contents or raw request bodies to logs while debugging.
 5. If the database is unavailable, keep returning the generic failure and restore service before asking the visitor to retry. Never claim success without a completed D1 outcome.
 
 ## Release and rollback
 
-Before releasing signup persistence:
+Before releasing survey persistence:
 
 1. Confirm the public privacy contact works and the displayed notice version matches `app/lib/privacy.ts`.
-2. Complete the production Turnstile setup above and confirm the build-time Text sitekey and runtime Secret belong to the same widget.
+2. Complete the production Turnstile setup above, add the independent
+   `SURVEY_SUBMISSION_SECRET`, and confirm the build-time Text sitekey and
+   Turnstile runtime Secret belong to the same widget.
 3. Run typecheck, lint, tests, the standard Next.js build, the OpenNext build, and `wrangler deploy --dry-run`.
 4. Review production pending migrations, obtain explicit approval, and apply migrations before deploying the Worker.
-5. Deploy the Worker, then submit one controlled signup and verify only a non-sensitive count plus the generic public success flow.
+5. Deploy the Worker, then submit one controlled signup and survey. Verify only
+   aggregate counts and the generic public success flow from shared tooling;
+   inspect the controlled row only in a private owner session.
 6. Record the deployed Worker version and migration name. Do not record the controlled contact in shared release notes.
 
 If the release must be rolled back:
 
 - Retain `solesheet-waitlist`, `d1_migrations`, and all collected rows. Never use database deletion as application rollback.
-- Prefer a forward fix or a D1-capable Worker version. Do not roll back to the old simulated-success implementation, because it can claim a signup succeeded without durable storage.
+- Prefer a forward fix or a D1-capable Worker version. Do not roll back to the
+  old simulated-success implementation, because it can claim a signup or survey
+  succeeded without durable storage.
 - For a frontend-only regression, revert or redeploy the frontend behavior while preserving `/api/waitlist`, the `DB` binding, and the current privacy notice.
 - For a persistence incident, keep the current generic 503 behavior until D1 is healthy; do not bypass the database and do not expose raw errors.
 - Schema corrections use a new forward migration. Do not edit an already-applied migration or drop columns/tables as an emergency response.
