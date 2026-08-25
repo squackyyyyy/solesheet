@@ -1,4 +1,8 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import {
+	logOperationalOutcome,
+	type OperationalOutcome,
+} from "@/app/lib/server/operational-events";
 import { persistSurveyResponse } from "@/app/lib/server/survey-repository";
 import { verifySurveyToken } from "@/app/lib/server/survey-token";
 import {
@@ -19,8 +23,17 @@ class RequestBodyTooLargeError extends Error {
 	}
 }
 
-function jsonResponse(body: unknown, status: number) {
-	return Response.json(body, { status, headers: responseHeaders });
+function jsonResponse(
+	body: unknown,
+	status: number,
+	requestId: string,
+	outcome: OperationalOutcome,
+) {
+	logOperationalOutcome({ route: "survey", outcome, status, requestId });
+	return Response.json(body, {
+		status,
+		headers: { ...responseHeaders, "X-Request-ID": requestId },
+	});
 }
 
 async function readBoundedBody(request: Request) {
@@ -51,6 +64,7 @@ async function readBoundedBody(request: Request) {
 }
 
 export async function POST(request: Request) {
+	const requestId = crypto.randomUUID();
 	const contentType = request.headers
 		.get("content-type")
 		?.split(";", 1)[0]
@@ -66,6 +80,8 @@ export async function POST(request: Request) {
 				},
 			},
 			415,
+			requestId,
+			"invalid_request",
 		);
 	}
 
@@ -86,6 +102,8 @@ export async function POST(request: Request) {
 					},
 				},
 				413,
+				requestId,
+				"invalid_request",
 			);
 		}
 	}
@@ -104,6 +122,8 @@ export async function POST(request: Request) {
 					},
 				},
 				413,
+				requestId,
+				"invalid_request",
 			);
 		}
 		return jsonResponse(
@@ -115,6 +135,8 @@ export async function POST(request: Request) {
 				},
 			},
 			400,
+			requestId,
+			"invalid_request",
 		);
 	}
 
@@ -126,21 +148,15 @@ export async function POST(request: Request) {
 				error: { code: "invalid_request", message: validation.message },
 			},
 			400,
+			requestId,
+			"invalid_request",
 		);
 	}
 
-	const requestId = crypto.randomUUID();
 	let env: CloudflareEnv;
 	try {
 		env = getCloudflareContext().env;
 	} catch {
-		console.error(
-			JSON.stringify({
-				event: "survey_submission_unavailable",
-				requestId,
-				outcome: "configuration",
-			}),
-		);
 		return jsonResponse(
 			{
 				ok: false,
@@ -150,6 +166,8 @@ export async function POST(request: Request) {
 				},
 			},
 			503,
+			requestId,
+			"configuration_unavailable",
 		);
 	}
 
@@ -159,15 +177,6 @@ export async function POST(request: Request) {
 	});
 	if (!token.ok) {
 		const unavailable = token.reason === "invalid_secret";
-		console.warn(
-			JSON.stringify({
-				event: unavailable
-					? "survey_submission_unavailable"
-					: "survey_submission_rejected",
-				requestId,
-				outcome: unavailable ? "configuration" : "invalid_session",
-			}),
-		);
 		return jsonResponse(
 			{
 				ok: false,
@@ -179,20 +188,15 @@ export async function POST(request: Request) {
 				},
 			},
 			unavailable ? 503 : 400,
+			requestId,
+			unavailable ? "configuration_unavailable" : "invalid_session",
 		);
 	}
 
 	try {
 		await persistSurveyResponse(env.DB, token.signupId, validation.value.answers);
-		return jsonResponse({ ok: true }, 200);
-	} catch (error) {
-		console.error(
-			JSON.stringify({
-				event: "survey_persistence_failed",
-				requestId,
-				errorName: error instanceof Error ? error.name : "UnknownError",
-			}),
-		);
+		return jsonResponse({ ok: true }, 200, requestId, "success");
+	} catch {
 		return jsonResponse(
 			{
 				ok: false,
@@ -202,6 +206,8 @@ export async function POST(request: Request) {
 				},
 			},
 			503,
+			requestId,
+			"persistence_failed",
 		);
 	}
 }

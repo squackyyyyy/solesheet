@@ -91,6 +91,9 @@ function useDatabase(database: D1Database) {
 describe("POST /api/waitlist", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		vi.spyOn(console, "log").mockImplementation(() => {});
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+		vi.spyOn(console, "error").mockImplementation(() => {});
 		getCloudflareContextMock.mockReset();
 		verifyTurnstileTokenMock.mockReset();
 		verifyTurnstileTokenMock.mockResolvedValue({ ok: true });
@@ -111,6 +114,7 @@ describe("POST /api/waitlist", () => {
 		);
 
 		expect(response.status).toBe(200);
+		expect(response.headers.get("X-Request-ID")).toMatch(/^[0-9a-f-]{36}$/u);
 		expect(await response.json()).toEqual({
 			ok: true,
 			surveyToken: "signed-survey-token",
@@ -134,6 +138,15 @@ describe("POST /api/waitlist", () => {
 			signupId: "00000000-0000-4000-8000-000000000001",
 			secret: "private-survey-signing-secret-value",
 		});
+		expect(console.log).toHaveBeenCalledWith({
+			event: "form_request_outcome",
+			route: "waitlist",
+			outcome: "success",
+			status: 200,
+			requestId: response.headers.get("X-Request-ID"),
+		});
+		expect(console.warn).not.toHaveBeenCalled();
+		expect(console.error).not.toHaveBeenCalled();
 	});
 
 	it("binds an omitted name as null", async () => {
@@ -192,7 +205,7 @@ describe("POST /api/waitlist", () => {
 			kind: "rejected",
 			reason: "invalid_token",
 		});
-		const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const consoleWarn = vi.mocked(console.warn);
 
 		const response = await POST(
 			jsonRequest({
@@ -212,11 +225,15 @@ describe("POST /api/waitlist", () => {
 			},
 		});
 		expect(database.db.prepare).not.toHaveBeenCalled();
-		expect(logged).toContain("waitlist_verification_rejected");
+		expect(logged).toContain("verification_rejected");
 		expect(logged).not.toContain("private@example.com");
 		expect(logged).not.toContain("Private seller");
 		expect(logged).not.toContain("private-test-token");
 		expect(logged).not.toContain("private-server-secret");
+		expect(consoleWarn).toHaveBeenCalledTimes(1);
+		expect(response.headers.get("X-Request-ID")).toBe(
+			vi.mocked(consoleWarn).mock.calls[0]?.[0].requestId,
+		);
 	});
 
 	it("fails closed when verification is unavailable without touching D1", async () => {
@@ -227,8 +244,6 @@ describe("POST /api/waitlist", () => {
 			kind: "unavailable",
 			reason: "provider_failure",
 		});
-		vi.spyOn(console, "warn").mockImplementation(() => {});
-
 		const response = await POST(
 			jsonRequest({ email: "seller@example.com", consent: true }),
 		);
@@ -242,6 +257,35 @@ describe("POST /api/waitlist", () => {
 			},
 		});
 		expect(database.db.prepare).not.toHaveBeenCalled();
+		expect(console.error).toHaveBeenCalledWith(
+			expect.objectContaining({
+				route: "waitlist",
+				outcome: "verification_unavailable",
+				status: 503,
+			}),
+		);
+	});
+
+	it("fails safely when the Worker environment is unavailable", async () => {
+		getCloudflareContextMock.mockImplementation(() => {
+			throw new Error("DB binding missing for private@example.com");
+		});
+
+		const response = await POST(
+			jsonRequest({ email: "private@example.com", consent: true }),
+		);
+		const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
+
+		expect(response.status).toBe(503);
+		expect(console.error).toHaveBeenCalledWith(
+			expect.objectContaining({
+				route: "waitlist",
+				outcome: "configuration_unavailable",
+				status: 503,
+			}),
+		);
+		expect(logged).not.toContain("private@example.com");
+		expect(logged).not.toContain("DB binding missing");
 	});
 
 	it("rejects malformed, oversized, unsupported, unknown, and missing-token requests before verification", async () => {
@@ -288,6 +332,9 @@ describe("POST /api/waitlist", () => {
 		expect(missingToken.status).toBe(400);
 		expect(verifyTurnstileTokenMock).not.toHaveBeenCalled();
 		expect(getCloudflareContextMock).not.toHaveBeenCalled();
+		expect(console.warn).toHaveBeenCalledTimes(5);
+		expect(console.log).not.toHaveBeenCalled();
+		expect(console.error).not.toHaveBeenCalled();
 	});
 
 	it("binds SQL-like name input instead of interpolating it into SQL", async () => {
@@ -315,7 +362,7 @@ describe("POST /api/waitlist", () => {
 			throw error;
 		});
 		useDatabase(database.db);
-		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		const consoleError = vi.mocked(console.error);
 
 		const response = await POST(
 			jsonRequest({
@@ -334,7 +381,8 @@ describe("POST /api/waitlist", () => {
 				message: "We could not save your signup. Please try again.",
 			},
 		});
-		expect(logged).toContain("D1ConstraintError");
+		expect(logged).toContain("persistence_failed");
+		expect(logged).not.toContain("D1ConstraintError");
 		expect(logged).not.toContain("seller@example.com");
 		expect(logged).not.toContain("Private seller name");
 		expect(logged).not.toContain("constraint failed");
@@ -346,7 +394,7 @@ describe("POST /api/waitlist", () => {
 		createSurveyTokenMock.mockRejectedValue(
 			new Error("secret missing private-survey-signing-secret-value"),
 		);
-		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		const consoleError = vi.mocked(console.error);
 
 		const response = await POST(
 			jsonRequest({ email: "seller@example.com", consent: true }),
@@ -361,7 +409,7 @@ describe("POST /api/waitlist", () => {
 				message: "We could not continue your signup. Please try again.",
 			},
 		});
-		expect(logged).toContain("waitlist_survey_token_unavailable");
+		expect(logged).toContain("continuation_unavailable");
 		expect(logged).not.toContain("private-survey-signing-secret-value");
 	});
 });

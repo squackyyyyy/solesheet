@@ -108,44 +108,60 @@ Keep this value out of build variables, `NEXT_PUBLIC_*` variables, source
 files, commits, screenshots, and logs. Rotating it invalidates unsubmitted
 tokens issued with the old value, but does not change saved survey records.
 
+## Operations safety rules
+
+- Run commands from the repository root after `nvm use`; Wrangler requires the
+  Node.js 24 version declared by this project.
+- Commands in this guide use `--local` by default. `--remote` is the visible
+  production switch and requires an authenticated, owner-controlled Cloudflare
+  session.
+- Read-only aggregate checks may run when needed. A production migration,
+  `DELETE`, restore, or other mutation requires a preview, a recovery bookmark,
+  exact-target review, and explicit approval.
+- Never paste production contacts, answers, tokens, row IDs, raw SQL errors, or
+  exports into chat, tickets, screenshots, test output, or shared logs.
+- Record only the operation date, cutoff, aggregate before/after counts,
+  bookmark, deployed version, migration name, and completion status.
+
 ## Local development
 
-Apply all pending migrations to local D1:
+Apply and review local migrations:
 
 ```sh
 bunx wrangler d1 migrations apply solesheet-waitlist --local
-```
-
-Check whether the local database has pending migrations:
-
-```sh
 bunx wrangler d1 migrations list solesheet-waitlist --local
 ```
 
-Inspect the local schema without reading signup data:
+Run the reusable privacy-safe health and query-plan checks:
 
 ```sh
-bunx wrangler d1 execute solesheet-waitlist --local --command "PRAGMA table_info(waitlist_signups);"
-bunx wrangler d1 execute solesheet-waitlist --local --command "PRAGMA index_list(waitlist_signups);"
-bunx wrangler d1 execute solesheet-waitlist --local --command "PRAGMA table_info(survey_responses);"
-bunx wrangler d1 execute solesheet-waitlist --local --command "PRAGMA table_info(survey_sales_channels);"
+bunx wrangler d1 execute solesheet-waitlist --local --file ops/d1/health.sql
+bunx wrangler d1 execute solesheet-waitlist --local --file ops/d1/query-plans.sql
 ```
 
-Count local records without printing personal information:
+The health output contains only required-table, signup, response, channel,
+orphan, and completion-marker counts. The query-plan output contains only
+schema/index names and planner strategy.
+
+To exercise retention without touching the normal local database, create an
+isolated directory and copy the exact path printed by `mktemp` into each
+`<isolated-directory>` placeholder:
 
 ```sh
-bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS signup_count FROM waitlist_signups;"
-bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS response_count FROM survey_responses;"
-bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS channel_count FROM survey_sales_channels;"
+mktemp -d /private/tmp/solesheet-d1-ops.XXXXXX
+bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file migrations/0001_create_waitlist_signups.sql
+bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file migrations/0002_create_survey_responses.sql
+bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file ops/d1/retention-fixture.sql
+bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file ops/d1/retention-preview.sql
+bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file ops/d1/retention-delete.sql
+bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file ops/d1/health.sql
 ```
 
-Verify relationship integrity and one-response idempotency without printing
-contacts or answers:
-
-```sh
-bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS orphaned_responses FROM survey_responses AS r LEFT JOIN waitlist_signups AS w ON w.id = r.signup_id WHERE w.id IS NULL;"
-bunx wrangler d1 execute solesheet-waitlist --local --command "SELECT COUNT(*) AS duplicate_response_groups FROM (SELECT signup_id FROM survey_responses GROUP BY signup_id HAVING COUNT(*) > 1);"
-```
+The expected fixture result is two candidate signups, one linked response, and
+one linked channel before deletion; afterward two newer/boundary signups, one
+response, and one channel remain with zero integrity mismatches. Remove only
+the exact temporary directory after reviewing its path. Never run the fixture
+against the normal local database or production.
 
 Regenerate binding and runtime types after changing `wrangler.jsonc`:
 
@@ -155,47 +171,34 @@ bun run types:worker
 
 ## Remote production database
 
-Remote commands require an authenticated, owner-controlled Cloudflare session. Treat `--remote` as a production switch and obtain explicit approval before applying migrations or changing data.
-
-Review pending production migrations:
+Reviewing production requires an authenticated, owner-controlled Cloudflare
+session. These two commands are read-only:
 
 ```sh
 bunx wrangler d1 migrations list solesheet-waitlist --remote
+bunx wrangler d1 execute solesheet-waitlist --remote --file ops/d1/health.sql
 ```
 
-Apply committed migrations before deploying Worker code that depends on them:
+Apply a committed migration only after completing the production checklist:
 
 ```sh
 bunx wrangler d1 migrations apply solesheet-waitlist --remote
 ```
 
-Perform a non-sensitive production health check:
+Do not run ad-hoc schema changes in production. Never edit an already-applied
+migration. Create and test a new numbered forward migration instead.
 
-```sh
-bunx wrangler d1 execute solesheet-waitlist --remote --command "SELECT COUNT(*) AS signup_count FROM waitlist_signups;"
-bunx wrangler d1 execute solesheet-waitlist --remote --command "SELECT COUNT(*) AS response_count FROM survey_responses;"
-bunx wrangler d1 execute solesheet-waitlist --remote --command "SELECT COUNT(*) AS channel_count FROM survey_sales_channels;"
-```
+## Production privacy deletion requests
 
-Do not run ad-hoc schema changes in production. Create a new committed migration, test it locally, and then apply it remotely.
+Handle each request in the privacy mailbox and a private D1 owner session.
+Verify that the requester controls the email address before querying D1. Apply
+the same normalization as signup persistence: trim surrounding whitespace and
+convert letters to lowercase; do not remove dots, plus tags, or other
+provider-specific characters.
 
-## Destructive operations
-
-Deleting local state is recoverable because Wrangler can recreate it from committed migrations, but it also removes all local test rows. Confirm the exact `.wrangler/state/` target before clearing it.
-
-Deleting the remote D1 database is not part of normal rollback. A Worker rollback must retain the database, migration history, and collected records. Use `wrangler d1 delete solesheet-waitlist` only after a separate destructive-action review, a verified export or retention decision, and explicit owner approval.
-
-## Production privacy requests
-
-Handle access and deletion requests only from a private, owner-controlled Cloudflare session. Verify the requester's identity before looking up or changing a row. Normalize the verified address by trimming surrounding whitespace and converting it to lowercase; do not remove dots, plus tags, or other provider-specific characters.
-
-1. Record the aggregate count before the operation without printing contact fields:
-
-   ```sh
-   bunx wrangler d1 execute solesheet-waitlist --remote --command "SELECT COUNT(*) AS signup_count FROM waitlist_signups;"
-   ```
-
-2. In the private D1 console, locate only the minimum metadata needed to confirm a match:
+1. Run the aggregate health check and obtain the current Time Travel bookmark.
+2. In the private D1 console, locate only the minimum metadata required to
+   scope the request:
 
    ```sql
    SELECT id, created_at, privacy_policy_version
@@ -203,55 +206,260 @@ Handle access and deletion requests only from a private, owner-controlled Cloudf
    WHERE email_normalized = lower(trim('<verified-request-email>'));
    ```
 
-   Do not copy the query, result, email, name, or row identifier into shared chat, tickets, screenshots, or logs. If no row matches, report that the request was completed without confirming whether the address had ever been registered.
-
-3. After identity and scope are confirmed, delete the matching signup in the
-   same private console. The foreign-key cascade also removes its survey
-   response and sales-channel rows:
+   Do not copy the query, result, email, or identifier outside that private
+   session.
+3. After identity, target, and approval are confirmed, delete the signup in the
+   same private console. Foreign-key cascades remove its submitted survey and
+   sales-channel rows:
 
    ```sql
    DELETE FROM waitlist_signups
    WHERE email_normalized = lower(trim('<verified-request-email>'));
 
-   SELECT changes() AS deleted_rows;
+   SELECT changes() AS deleted_signup_count;
    ```
 
-4. Verify `deleted_rows` is `1`, or `0` when no matching row existed. Record only the completion date and request status in any operational note; do not retain the submitted contact there.
+4. Run `ops/d1/health.sql` remotely and confirm every orphan/mismatch count is
+   zero. A direct deletion count of `1` means a match was removed; `0` means no
+   match existed. Do not expose which result occurred.
+5. Reply with generic wording: “Your request has been completed. For privacy,
+   we do not confirm whether an address was previously registered.”
+6. Keep the original verified request in the private mailbox for at least the
+   active Time Travel or export recovery window so it can be replayed after a
+   restore. Do not create a second shared contact list. After that window,
+   retain only what is necessary to honor an unsubscribe or legal obligation.
 
-## Failure diagnosis without personal data
+After any recovery to an earlier time, replay all verified deletion requests
+received after the restore target before declaring recovery complete.
 
-The public endpoint returns a generic retryable error and logs a random request correlation value plus an error category. It intentionally does not log the submitted email or name.
+## Monthly retention cleanup
+
+Schedule a recurring owner reminder during the first five days of every month.
+The preview calculates the latest stored interaction across signup creation,
+signup update, survey completion, survey submission, and survey update. Its
+cutoff looks ahead to the next monthly run: an August 2026 run includes records
+last active before September 1, 2025. This removes records after roughly 11–12
+months instead of letting them cross the published 12-month limit.
+
+1. Run the aggregate preview; it never returns contacts or row IDs:
+
+   ```sh
+   bunx wrangler d1 execute solesheet-waitlist --remote --file ops/d1/retention-preview.sql
+   ```
+
+2. Record the cutoff and aggregate candidate counts privately. Confirm the
+   output is plausible before continuing.
+3. Obtain and record the current Time Travel bookmark. Routine cleanup does not
+   create an SQL export because doing so would make another copy of data due for
+   deletion.
+4. Review the exact database, cutoff, counts, and bookmark, then obtain explicit
+   approval. Only then run:
+
+   ```sh
+   bunx wrangler d1 execute solesheet-waitlist --remote --file ops/d1/retention-delete.sql
+   ```
+
+5. Run both `ops/d1/health.sql` and `ops/d1/retention-preview.sql` remotely.
+   Confirm zero integrity failures and zero remaining candidates for the cutoff.
+6. Record only the operation date, cutoff, deleted signup count, post-operation
+   aggregate counts, bookmark, and completion status.
+
+If a reminder is missed, run the procedure immediately and record a
+non-personal operational exception. If a reliable monthly schedule cannot be
+maintained, pause production collection or implement a separately reviewed
+automated retention job before any record can exceed the published limit.
+
+## Protected operation-scoped SQL exports
+
+D1 Time Travel is the primary recovery mechanism. Create a portable SQL export
+only when a risky or long-running operation specifically warrants one.
+Cloudflare's current export documentation is at
+<https://developers.cloudflare.com/d1/best-practices/import-export-data/>.
+
+1. Create a temporary owner-only directory outside the repository and copy its
+   exact path into the later placeholders:
+
+   ```sh
+   mktemp -d /private/tmp/solesheet-d1-export.XXXXXX
+   chmod 700 <temporary-export-directory>
+   ```
+
+2. Export the complete production database and restrict the file:
+
+   ```sh
+   bunx wrangler d1 export solesheet-waitlist --remote --output <temporary-export-directory>/solesheet-waitlist.sql
+   chmod 600 <temporary-export-directory>/solesheet-waitlist.sql
+   shasum -a 256 <temporary-export-directory>/solesheet-waitlist.sql
+   ```
+
+3. Restore-test the export against a disposable local D1 directory, then run
+   the aggregate health check. Do not print or open the SQL contents:
+
+   ```sh
+   bunx wrangler d1 execute solesheet-waitlist --local --persist-to <temporary-restore-directory> --file <temporary-export-directory>/solesheet-waitlist.sql
+   bunx wrangler d1 execute solesheet-waitlist --local --persist-to <temporary-restore-directory> --file ops/d1/health.sql
+   ```
+
+4. Record only the checksum, aggregate counts, creation date, and planned
+   deletion date. Never commit, upload to shared tooling, screenshot, or use the
+   export for reporting.
+5. Delete the exact export and disposable restore directory after the operation
+   is verified. The default maximum recovery window is seven days; use a shorter
+   window when practical. Confirm the paths before deleting them.
+
+## D1 Time Travel recovery
+
+Cloudflare automatically maintains D1 Time Travel. The current documentation is
+<https://developers.cloudflare.com/d1/reference/time-travel/>. At the time of
+writing, Workers Free retains seven days and Workers Paid retains 30 days, but
+confirm the active plan and current documentation before relying on either.
+
+Check the database backend and current bookmark before a production mutation:
+
+```sh
+bunx wrangler d1 info solesheet-waitlist
+bunx wrangler d1 time-travel info solesheet-waitlist --json
+```
+
+The Time Travel commands act on remote D1 without a separate `--remote` flag.
+A restore overwrites production in place, cancels in-flight queries, and is
+therefore destructive.
+
+If recovery is required:
+
+1. Record the incident time, current bookmark, current aggregate health output,
+   deployed Worker version, and migration state.
+2. Resolve and review the target bookmark using an RFC3339 timestamp with an
+   explicit timezone:
+
+   ```sh
+   bunx wrangler d1 time-travel info solesheet-waitlist --timestamp="<RFC3339-target>" --json
+   ```
+
+3. Obtain explicit approval for the database, target, and data-loss interval.
+4. Restore using the reviewed bookmark:
+
+   ```sh
+   bunx wrangler d1 time-travel restore solesheet-waitlist --bookmark="<reviewed-bookmark>" --json
+   ```
+
+5. Preserve the returned `previous_bookmark`; it is the immediate undo path.
+6. Review pending migrations and run `ops/d1/health.sql`. Deploy code compatible
+   with the restored schema or apply a reviewed forward migration.
+7. Rerun the current retention cleanup and replay verified deletion requests
+   received after the restore target.
+8. Repeat a controlled signup, duplicate-signup, survey, generic-error, and
+   aggregate-integrity check before declaring service healthy.
+
+## Workers Logs and failure diagnosis
+
+`wrangler.jsonc` enables persisted Workers Logs with full initial log sampling
+and no traces or external destination. Each form request emits one structured
+`form_request_outcome` event containing only `route`, `outcome`, `status`, and a
+random `requestId`. Responses expose the same value as `X-Request-ID`.
+
+View stored logs in **Workers & Pages > solesheet > Observability**, or inspect a
+short real-time window from an owner terminal:
+
+```sh
+bunx wrangler tail solesheet --format json --search form_request_outcome
+```
+
+Filter by route, outcome, status, time, or a privately reported request ID.
+Never add emails, names, survey answers, Other text, Turnstile responses,
+continuation tokens, request bodies, bound SQL values, or raw errors while
+debugging.
 
 For a persistence failure:
 
-1. Confirm the Worker has a `DB` binding in its active deployment.
-2. Check that production has no pending migrations with `wrangler d1 migrations list solesheet-waitlist --remote`.
-3. Confirm all required tables exist using `SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('waitlist_signups', 'survey_responses', 'survey_sales_channels');`.
-4. Use the correlation value and error category in Workers Logs to narrow the time and failure class. Do not add form contents or raw request bodies to logs while debugging.
-5. If the database is unavailable, keep returning the generic failure and restore service before asking the visitor to retry. Never claim success without a completed D1 outcome.
+1. Confirm the active deployment has `DB`, `TURNSTILE_SECRET_KEY`, and
+   `SURVEY_SUBMISSION_SECRET` configured in their correct runtime/build scopes.
+2. Check pending remote migrations and run `ops/d1/health.sql` remotely.
+3. Use the request ID and outcome to distinguish invalid input, verification,
+   session, configuration, continuation, and persistence failures.
+4. Keep returning the generic failure until storage is healthy. Never bypass D1
+   or claim success without a completed write.
 
-## Release and rollback
+Review log volume and sampling monthly. Lower sampling in a separately reviewed
+configuration change if volume approaches the active plan allowance; do not add
+an external logging service by default.
 
-Before releasing survey persistence:
+## Turnstile and abuse review
 
-1. Confirm the public privacy contact works and the displayed notice version matches `app/lib/privacy.ts`.
-2. Complete the production Turnstile setup above, add the independent
-   `SURVEY_SUBMISSION_SECRET`, and confirm the build-time Text sitekey and
-   Turnstile runtime Secret belong to the same widget.
-3. Run typecheck, lint, tests, the standard Next.js build, the OpenNext build, and `wrangler deploy --dry-run`.
-4. Review production pending migrations, obtain explicit approval, and apply migrations before deploying the Worker.
-5. Deploy the Worker, then submit one controlled signup and survey. Verify only
-   aggregate counts and the generic public success flow from shared tooling;
-   inspect the controlled row only in a private owner session.
-6. Record the deployed Worker version and migration name. Do not record the controlled contact in shared release notes.
+Review **Turnstile > SoleSheet waitlist > Analytics** monthly and after an
+incident. Compare issued, solved, unsolved, interactive, non-interactive, and
+likely-bot activity with the endpoint outcome counts. Current guidance is at
+<https://developers.cloudflare.com/turnstile/turnstile-analytics/>.
 
-If the release must be rolled back:
+Open a separate abuse-control proposal rather than automatically blocking users
+when any of these investigation thresholds is reached:
 
-- Retain `solesheet-waitlist`, `d1_migrations`, and all collected rows. Never use database deletion as application rollback.
-- Prefer a forward fix or a D1-capable Worker version. Do not roll back to the
-  old simulated-success implementation, because it can claim a signup or survey
-  succeeded without durable storage.
-- For a frontend-only regression, revert or redeploy the frontend behavior while preserving `/api/waitlist`, the `DB` binding, and the current privacy notice.
-- For a persistence incident, keep the current generic 503 behavior until D1 is healthy; do not bypass the database and do not expose raw errors.
-- Schema corrections use a new forward migration. Do not edit an already-applied migration or drop columns/tables as an emergency response.
-- After recovery, repeat the controlled signup, duplicate, count, privacy, success, and automatic-survey checks before declaring the incident closed.
+- form traffic or accepted writes create material availability or cost pressure;
+- accepted submissions exceed five times the previous seven-day daily median
+  for two consecutive days without a known campaign;
+- likely-bot or unsolved activity rises with sustained verification rejections; or
+- two credible legitimate-user reports within seven days describe Turnstile
+  friction or false rejection.
+
+These thresholds start an investigation only. A legitimate marketing spike
+must not be silently rate-limited, and IP-only blocking is not assumed safe for
+mobile or shared networks.
+
+## Query-plan and index review
+
+Run the committed plan checks against representative local data:
+
+```sh
+bunx wrangler d1 execute solesheet-waitlist --local --file ops/d1/query-plans.sql
+```
+
+The August 2026 review found that normalized-email lookup uses its unique index,
+survey relationships use the existing primary-key indexes, aggregate counts use
+a covering index where available, and monthly retention scans the small signup
+table while using the survey primary-key index. That plan is appropriate for the
+current volume, so this change adds no migration or speculative timestamp index.
+Repeat the review when row volume or reporting queries materially change.
+
+## Reusable production release checklist
+
+1. Confirm the public privacy contact works and the displayed notice version
+   matches `app/lib/privacy.ts`.
+2. Confirm production build variables, runtime secrets, the D1 binding, and
+   Turnstile hostnames are configured without exposing their values.
+3. Run typecheck, lint, tests, the Next.js build, the OpenNext build, binding-type
+   generation, and Wrangler dry-run validation under Node.js 24.
+4. Run local migrations, health checks, and query plans. Review remote pending
+   migrations and production aggregate health.
+5. Record the current Time Travel bookmark and active recovery window. Create a
+   protected SQL export only when the release risk warrants it.
+6. If a migration exists, obtain approval and apply it before deploying code
+   that depends on it. This operational-hardening release is expected to need no
+   migration.
+7. Deploy the Worker. Verify structured form outcomes and submit one controlled
+   signup and survey. Check only aggregate counts in shared tooling.
+8. Record the deployed Worker version, migration name or “none,” bookmark,
+   aggregate verification, and completion status without recording the test
+   contact.
+9. Before activating this retention practice, create recurring private calendar
+   reminders for the first five days of each month covering retention, Workers
+   Logs, and Turnstile review.
+
+## Rollback and forward recovery
+
+- Retain `solesheet-waitlist`, `d1_migrations`, and every collected row during an
+  application rollback. Database deletion is never application rollback.
+- Prefer a compatible prior Worker for application-only regressions and a new
+  forward migration for schema corrections. Never edit an applied migration.
+- Do not roll back to simulated success or bypass D1; keep the generic 503
+  behavior until persistence is healthy.
+- Use Time Travel or a verified export only after explicit destructive-action
+  approval and review of the data-loss interval.
+- After recovery, rerun retention, replay deletion requests after the target,
+  verify health and migrations, and repeat the controlled end-to-end flow.
+- If a rollback would remove the promised retention procedure or privacy-safe
+  diagnostics, pause collection until a forward fix is deployed.
+
+Deleting local state removes local test rows but can be recovered from committed
+migrations. Deleting the remote D1 database is outside normal operations and
+requires a separate destructive-action review, verified recovery decision, and
+explicit owner approval.

@@ -1,4 +1,8 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import {
+	logOperationalOutcome,
+	type OperationalOutcome,
+} from "@/app/lib/server/operational-events";
 import { verifyTurnstileToken } from "@/app/lib/server/turnstile";
 import { createSurveyToken } from "@/app/lib/server/survey-token";
 import { persistWaitlistSignup } from "@/app/lib/server/waitlist-repository";
@@ -21,11 +25,24 @@ class RequestBodyTooLargeError extends Error {
 	}
 }
 
-function jsonResponse(body: unknown, status: number) {
-	return Response.json(body, { status, headers: responseHeaders });
+function jsonResponse(
+	body: unknown,
+	status: number,
+	requestId: string,
+	outcome: OperationalOutcome,
+) {
+	logOperationalOutcome({ route: "waitlist", outcome, status, requestId });
+	return Response.json(body, {
+		status,
+		headers: { ...responseHeaders, "X-Request-ID": requestId },
+	});
 }
 
-function invalidRequest(message: string, field?: WaitlistField) {
+function invalidRequest(
+	message: string,
+	requestId: string,
+	field?: WaitlistField,
+) {
 	return jsonResponse(
 		{
 			ok: false,
@@ -36,6 +53,8 @@ function invalidRequest(message: string, field?: WaitlistField) {
 			},
 		},
 		400,
+		requestId,
+		"invalid_request",
 	);
 }
 
@@ -69,6 +88,7 @@ async function readBoundedBody(request: Request) {
 }
 
 export async function POST(request: Request) {
+	const requestId = crypto.randomUUID();
 	const contentType = request.headers
 		.get("content-type")
 		?.split(";", 1)[0]
@@ -85,6 +105,8 @@ export async function POST(request: Request) {
 				},
 			},
 			415,
+			requestId,
+			"invalid_request",
 		);
 	}
 
@@ -105,6 +127,8 @@ export async function POST(request: Request) {
 					},
 				},
 				413,
+				requestId,
+				"invalid_request",
 			);
 		}
 	}
@@ -124,29 +148,23 @@ export async function POST(request: Request) {
 					},
 				},
 				413,
+				requestId,
+				"invalid_request",
 			);
 		}
 
-		return invalidRequest("The waitlist request could not be read.");
+		return invalidRequest("The waitlist request could not be read.", requestId);
 	}
 
 	const validation = validateWaitlistSignup(body);
 	if (!validation.ok) {
-		return invalidRequest(validation.message, validation.field);
+		return invalidRequest(validation.message, requestId, validation.field);
 	}
 
-	const requestId = crypto.randomUUID();
 	let env: CloudflareEnv;
 	try {
 		env = getCloudflareContext().env;
 	} catch {
-		console.error(
-			JSON.stringify({
-				event: "waitlist_verification_unavailable",
-				requestId,
-				outcome: "configuration",
-			}),
-		);
 		return jsonResponse(
 			{
 				ok: false,
@@ -156,6 +174,8 @@ export async function POST(request: Request) {
 				},
 			},
 			503,
+			requestId,
+			"configuration_unavailable",
 		);
 	}
 
@@ -167,16 +187,6 @@ export async function POST(request: Request) {
 		clientIp: request.headers.get("CF-Connecting-IP"),
 	});
 	if (!verification.ok) {
-		console.warn(
-			JSON.stringify({
-				event:
-					verification.kind === "rejected"
-						? "waitlist_verification_rejected"
-						: "waitlist_verification_unavailable",
-				requestId,
-				outcome: verification.kind,
-			}),
-		);
 		if (verification.kind === "rejected") {
 			return jsonResponse(
 				{
@@ -187,6 +197,8 @@ export async function POST(request: Request) {
 					},
 				},
 				400,
+				requestId,
+				"verification_rejected",
 			);
 		}
 
@@ -199,21 +211,15 @@ export async function POST(request: Request) {
 				},
 			},
 			503,
+			requestId,
+			"verification_unavailable",
 		);
 	}
 
 	let signupId: string;
 	try {
 		signupId = await persistWaitlistSignup(env.DB, validation.value.signup);
-	} catch (error) {
-		console.error(
-			JSON.stringify({
-				event: "waitlist_persistence_failed",
-				requestId,
-				errorName: error instanceof Error ? error.name : "UnknownError",
-			}),
-		);
-
+	} catch {
 		return jsonResponse(
 			{
 				ok: false,
@@ -223,6 +229,8 @@ export async function POST(request: Request) {
 				},
 			},
 			503,
+			requestId,
+			"persistence_failed",
 		);
 	}
 
@@ -231,16 +239,8 @@ export async function POST(request: Request) {
 			signupId,
 			secret: env.SURVEY_SUBMISSION_SECRET,
 		});
-		return jsonResponse({ ok: true, surveyToken }, 200);
-	} catch (error) {
-		console.error(
-			JSON.stringify({
-				event: "waitlist_survey_token_unavailable",
-				requestId,
-				errorName: error instanceof Error ? error.name : "UnknownError",
-			}),
-		);
-
+		return jsonResponse({ ok: true, surveyToken }, 200, requestId, "success");
+	} catch {
 		return jsonResponse(
 			{
 				ok: false,
@@ -250,6 +250,8 @@ export async function POST(request: Request) {
 				},
 			},
 			503,
+			requestId,
+			"continuation_unavailable",
 		);
 	}
 }

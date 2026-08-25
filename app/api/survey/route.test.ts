@@ -36,6 +36,9 @@ const requiredCorePayload = {
 describe("POST /api/survey", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		vi.spyOn(console, "log").mockImplementation(() => {});
+		vi.spyOn(console, "warn").mockImplementation(() => {});
+		vi.spyOn(console, "error").mockImplementation(() => {});
 		getCloudflareContextMock.mockReset();
 		getCloudflareContextMock.mockReturnValue({
 			env: {
@@ -61,6 +64,7 @@ describe("POST /api/survey", () => {
 		);
 
 		expect(response.status).toBe(200);
+		expect(response.headers.get("X-Request-ID")).toMatch(/^[0-9a-f-]{36}$/u);
 		expect(await response.json()).toEqual({ ok: true });
 		expect(verifySurveyTokenMock).toHaveBeenCalledWith({
 			token: "private-survey-token",
@@ -79,6 +83,15 @@ describe("POST /api/survey", () => {
 				salesChannels: ["instagram", "physical_store"],
 			},
 		);
+		expect(console.log).toHaveBeenCalledWith({
+			event: "form_request_outcome",
+			route: "survey",
+			outcome: "success",
+			status: 200,
+			requestId: response.headers.get("X-Request-ID"),
+		});
+		expect(console.warn).not.toHaveBeenCalled();
+		expect(console.error).not.toHaveBeenCalled();
 	});
 
 	it("returns the same success for an idempotent existing response", async () => {
@@ -121,6 +134,7 @@ describe("POST /api/survey", () => {
 		});
 		expect(verifySurveyTokenMock).not.toHaveBeenCalled();
 		expect(persistSurveyResponseMock).not.toHaveBeenCalled();
+		expect(console.warn).toHaveBeenCalledTimes(1);
 	});
 
 	it("rejects malformed, oversized, unsupported, and invalid answers before token verification", async () => {
@@ -168,6 +182,7 @@ describe("POST /api/survey", () => {
 		]);
 		expect(verifySurveyTokenMock).not.toHaveBeenCalled();
 		expect(persistSurveyResponseMock).not.toHaveBeenCalled();
+		expect(console.warn).toHaveBeenCalledTimes(6);
 	});
 
 	it("rejects an invalid session before D1 and logs no submitted content", async () => {
@@ -175,7 +190,7 @@ describe("POST /api/survey", () => {
 			ok: false,
 			reason: "invalid_signature",
 		});
-		const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const consoleWarn = vi.mocked(console.warn);
 
 		const response = await POST(
 			jsonRequest({
@@ -189,14 +204,18 @@ describe("POST /api/survey", () => {
 
 		expect(response.status).toBe(400);
 		expect(persistSurveyResponseMock).not.toHaveBeenCalled();
-		expect(logged).toContain("survey_submission_rejected");
+		expect(logged).toContain("invalid_session");
 		expect(logged).not.toContain("private-survey-token");
 		expect(logged).not.toContain("Private product request");
+		expect(consoleWarn).toHaveBeenCalledTimes(1);
+		expect(response.headers.get("X-Request-ID")).toBe(
+			vi.mocked(consoleWarn).mock.calls[0]?.[0].requestId,
+		);
 	});
 
 	it("fails safely for secret configuration and persistence errors", async () => {
-		const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
-		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		const consoleWarn = vi.mocked(console.warn);
+		const consoleError = vi.mocked(console.error);
 		verifySurveyTokenMock.mockResolvedValueOnce({
 			ok: false,
 			reason: "invalid_secret",
@@ -227,9 +246,34 @@ describe("POST /api/survey", () => {
 
 		expect(configurationResponse.status).toBe(503);
 		expect(persistenceResponse.status).toBe(503);
-		expect(logged).toContain("survey_submission_unavailable");
-		expect(logged).toContain("survey_persistence_failed");
+		expect(logged).toContain("configuration_unavailable");
+		expect(logged).toContain("persistence_failed");
 		expect(logged).not.toContain("Private answer");
 		expect(logged).not.toContain("private-survey-token");
+	});
+
+	it("fails safely when the Worker environment is unavailable", async () => {
+		getCloudflareContextMock.mockImplementation(() => {
+			throw new Error("DB binding missing with private-survey-token");
+		});
+
+		const response = await POST(
+			jsonRequest({
+				surveyToken: "private-survey-token",
+				...requiredCorePayload,
+			}),
+		);
+		const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
+
+		expect(response.status).toBe(503);
+		expect(console.error).toHaveBeenCalledWith(
+			expect.objectContaining({
+				route: "survey",
+				outcome: "configuration_unavailable",
+				status: 503,
+			}),
+		);
+		expect(logged).not.toContain("private-survey-token");
+		expect(logged).not.toContain("DB binding missing");
 	});
 });

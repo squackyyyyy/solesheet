@@ -51,8 +51,8 @@ If the visitor closes the survey or browser after the first database confirmatio
 | 0 | `migrate-landing-site-to-zero-cost-hosting` | Establish the Cloudflare Worker deployment foundation | Complete |
 | 1 | `persist-waitlist-signups-with-d1` | Store validated waitlist signups and consent records | Complete |
 | 2 | `persist-validation-survey-with-d1` | Store completed surveys linked to their waitlist signup | Complete |
-| 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Next |
-| 4 | `add-cloudflare-traffic-analytics` | Measure visits and page views without writing each visit to D1 | Planned |
+| 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Implemented; pending acceptance |
+| 4 | `add-cloudflare-traffic-analytics` | Measure visits and page views without writing each visit to D1 | Next after Phase 3 acceptance |
 | 5 | To be proposed only if needed | Add protected reporting or lightweight administration | Optional |
 
 ## Phase 0: Cloudflare hosting foundation (complete)
@@ -165,23 +165,23 @@ Completion criteria:
 - Failed requests retain the answers for retry while the page remains open.
 - The database does not contain survey records without a valid signup relationship.
 
-## Phase 3: Harden and operate collected data (next)
+## Phase 3: Harden and operate collected data (implemented; pending acceptance)
 
-Proposed change: `harden-and-operate-waitlist-data`
+Change: `harden-and-operate-waitlist-data`
 
 Goal: make the small backend maintainable and responsible once real data is accumulating.
 
-Planned scope:
+Implemented scope:
 
-- Document safe Wrangler commands for inspecting counts without printing personal data unnecessarily.
-- Define and test CSV or SQL export procedures.
-- Define the process for locating and deleting a person's signup and survey data upon request.
-- Finalize a retention period and document how expired records will be removed.
-- Document D1 Time Travel and export-based recovery procedures.
-- Add monitoring for failed API requests and database errors without logging form contents.
-- Review rate limits and Turnstile effectiveness, adding stronger abuse controls only if warranted.
-- Review database indexes using the actual reporting queries and `EXPLAIN QUERY PLAN`.
-- Record a production migration checklist and rollback procedure.
+- Added reusable aggregate D1 health, integrity, retention, deletion, and query-plan procedures that do not print submitted content.
+- Established a monthly look-ahead cleanup during the first five days of each month so inactive records are removed before exceeding 12 months.
+- Defined verified privacy-request deletion of a signup and its cascaded survey/channel rows, including replay after recovery.
+- Documented D1 Time Travel as the primary recovery path and short-lived protected SQL exports for operations that warrant a portable snapshot.
+- Added one allow-listed structured outcome per waitlist or survey request and persisted it in Workers Logs without contacts, answers, tokens, bodies, bound values, or raw errors.
+- Established monthly Workers Logs and Turnstile reviews with evidence thresholds that trigger a separate abuse-control proposal rather than automatic blocking.
+- Verified operational queries with `EXPLAIN QUERY PLAN`; existing indexes are sufficient at current volume, so no speculative migration was added.
+- Replaced phase-specific release notes with reusable production migration, verification, rollback, and forward-recovery checklists.
+- Updated the privacy notice and consent version to match the active retention, deletion, and recovery procedures.
 
 Completion criteria:
 
@@ -266,15 +266,18 @@ This is deliberately deferred. A public waitlist does not initially need a custo
 | Separate OpenSpec changes | Keeps deployment risk, review, and rollback manageable |
 | Raw prepared SQL initially | The planned schema is small and does not yet justify ORM complexity |
 | Server validation in addition to client validation | Browser-side validation can be bypassed |
+| Leave duplicate signup data unchanged | Keeps retries private and prevents an unverified repeat submission from replacing the original contact or consent evidence |
+| Short-lived signed survey continuation | Links a finished survey to a confirmed signup without exposing a privileged database identifier |
+| Normalized survey sales-channel table | Preserves relational integrity and supports multi-select reporting without JSON parsing |
+| Monthly 12-month retention look-ahead | Keeps the manual process small while removing records before they exceed the published inactivity limit |
+| Workers Logs instead of D1 telemetry rows | Supports failure diagnosis without adding database writes or another personal-data table |
 
-## Open questions to resolve in the relevant proposals
+## Open question for a future phase
 
-- Whether duplicate signups should update the optional name or leave the original record unchanged.
-- Whether the browser should receive a short-lived signed survey token or another non-guessable reference after signup.
-- The exact retention period for waitlist and survey data.
-- Whether sales channels should use a normalized join table or JSON text after reviewing expected reporting needs.
 - Which production domain will be used in privacy disclosures and Cloudflare analytics configuration.
 
 ## Recommended next action
 
-Propose and implement `persist-validation-survey-with-d1` so completed survey responses are stored and linked to their durable waitlist signups.
+Review and accept `harden-and-operate-waitlist-data`. After it is synced and
+archived, propose `add-cloudflare-traffic-analytics` as the next independent
+backend phase.

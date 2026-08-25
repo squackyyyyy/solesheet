@@ -142,17 +142,35 @@ const noticeSections = [
 		body: (
 			<>
 				<p>
-					We retain stored waitlist and finished survey information only while it is needed for
-					early-access planning and product research. Unless a longer period is
-					required by law or you ask to remain informed, we delete or anonymize
-					inactive waitlist information within 12 months after your last
-					interaction with SoleSheet.
+					We retain stored waitlist and finished survey information only while it
+					is needed for early-access planning and product research. Unless a
+					longer period is required by law or you ask to remain informed, we
+					delete inactive waitlist information before it exceeds 12 months since
+					your last recorded interaction.
 				</p>
 				<p>
-					If you unsubscribe, we may retain the minimum information necessary to
-					honor that request and avoid contacting you again. Security records may
-					be retained for a limited period appropriate to preventing abuse and
-					investigating incidents.
+					For this waitlist database, the last recorded interaction is the latest
+					of the stored signup creation or update time and any finished survey’s
+					submission, update, or completion time. We review retention during the
+					first five days of each month and include records that would reach the
+					12-month limit before the following monthly review.
+				</p>
+				<p>
+					Deleting a signup also deletes its linked finished survey and selected
+					sales-channel records. Cloudflare’s automatic recovery history, or a
+					protected SQL snapshot created for a specific recovery operation, may
+					temporarily contain an earlier copy. These copies are restricted to
+					recovery, are not used for ordinary research or contact, and any
+					deletion is applied again if an earlier state is restored. An
+					operation-specific SQL snapshot is removed within seven days, and
+					sooner when it is no longer needed.
+				</p>
+				<p>
+					If you unsubscribe or make a privacy request, we may retain the minimum
+					request information needed during the recovery window to honor it after
+					a restore, avoid contacting you again, or meet a legal obligation.
+					Security records may be retained for a limited period appropriate to
+					preventing abuse and investigating incidents.
 				</p>
 			</>
 		),
@@ -182,7 +200,10 @@ const noticeSections = [
 				<p>
 					To exercise a right, email <a href={`mailto:${privacyContactEmail}`}>{privacyContactEmail}</a>.
 					 We may ask for information needed to verify your identity before acting
-					on a request. You can learn more from the{" "}
+					on a request. A verified deletion request removes the matching waitlist
+					signup and its linked finished survey and sales-channel information. We
+					do not confirm whether an address was previously registered. You can
+					learn more from the{" "}
 					<a
 						href="https://privacy.gov.ph/data-subject-rights/"
 						target="_blank"

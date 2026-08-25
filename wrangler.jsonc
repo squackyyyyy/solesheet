@@ -7,6 +7,21 @@
 	"secrets": {
 		"required": ["TURNSTILE_SECRET_KEY", "SURVEY_SUBMISSION_SECRET"]
 	},
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"invocation_logs": true,
+			"persist": true,
+			"destinations": []
+		},
+		"traces": {
+			"enabled": false,
+			"persist": false,
+			"destinations": []
+		}
+	},
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".open-next/assets"
