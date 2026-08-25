@@ -116,14 +116,14 @@ export function TextInput({
     <TextField
       {...props}
       isInvalid={Boolean(errorMessage)}
-      className="group grid gap-2"
+      className="group grid min-w-0 max-w-full gap-2"
     >
       <Label className="text-sm font-semibold text-[var(--brand-ink)]">{label}</Label>
       <Input
         id={inputId}
         type={type}
         placeholder={placeholder}
-        className="h-13 w-full rounded-2xl border border-[#14213d]/15 bg-white px-4 text-base text-[var(--brand-ink)] outline-none transition placeholder:text-[#14213d]/55 data-[focused]:border-[var(--brand-action)] data-[focused]:ring-3 data-[focused]:ring-[#22c55e]/18 data-[invalid]:border-red-600"
+        className="h-13 min-w-0 w-full max-w-full rounded-2xl border border-[#14213d]/15 bg-white px-4 text-base text-[var(--brand-ink)] outline-none transition placeholder:text-[#14213d]/55 data-[focused]:border-[var(--brand-action)] data-[focused]:ring-3 data-[focused]:ring-[#22c55e]/18 data-[invalid]:border-red-600"
       />
       {description ? (
         <Text slot="description" className="text-xs leading-5 text-black/65">
@@ -163,7 +163,7 @@ export function TextAreaField({
 			value={value}
 			maxLength={maxLength}
 			isInvalid={Boolean(errorMessage)}
-			className="group grid gap-2"
+			className="group grid min-w-0 max-w-full gap-2"
 		>
 			<Label className="text-sm font-semibold text-[var(--brand-ink)]">
 				{label}
@@ -172,7 +172,7 @@ export function TextAreaField({
 				id={inputId}
 				rows={rows}
 				maxLength={maxLength}
-				className="h-28 min-h-28 max-h-28 w-full resize-none overflow-x-hidden overflow-y-auto rounded-2xl border border-[#14213d]/15 bg-white px-4 py-3 text-base leading-6 text-[var(--brand-ink)] outline-none transition placeholder:text-[#14213d]/55 data-[focused]:border-[var(--brand-action)] data-[focused]:ring-3 data-[focused]:ring-[#22c55e]/18 data-[invalid]:border-red-600"
+				className="h-28 min-h-28 max-h-28 min-w-0 w-full max-w-full resize-none overflow-x-hidden overflow-y-auto rounded-2xl border border-[#14213d]/15 bg-white px-4 py-3 text-base leading-6 text-[var(--brand-ink)] outline-none transition placeholder:text-[#14213d]/55 data-[focused]:border-[var(--brand-action)] data-[focused]:ring-3 data-[focused]:ring-[#22c55e]/18 data-[invalid]:border-red-600"
 			/>
 			<Text
 				slot="description"
@@ -201,11 +201,11 @@ export function CheckField({
   supportingContent?: ReactNode;
 }) {
   return (
-    <div className="grid gap-1.5">
+    <div className="grid min-w-0 max-w-full gap-1.5">
       <AriaCheckbox
         {...props}
         isInvalid={Boolean(errorMessage)}
-        className="group flex cursor-pointer items-start gap-3 text-sm leading-6 text-black/70 outline-none"
+        className="group flex min-w-0 max-w-full cursor-pointer items-start gap-3 text-sm leading-6 text-black/70 outline-none"
       >
         {({ isSelected }) => (
           <>
@@ -220,12 +220,12 @@ export function CheckField({
             >
               {isSelected ? "✓" : ""}
             </span>
-            <span>{children}</span>
+            <span className="min-w-0 break-words">{children}</span>
           </>
         )}
       </AriaCheckbox>
       {supportingContent ? (
-        <div className="pl-8 text-xs leading-5 text-black/65">
+        <div className="min-w-0 break-words pl-8 text-xs leading-5 text-black/65">
           {supportingContent}
         </div>
       ) : null}

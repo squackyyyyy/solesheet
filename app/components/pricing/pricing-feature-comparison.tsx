@@ -53,10 +53,12 @@ function ComparisonTable() {
   );
 }
 
-function ComparisonIntro() {
+function ComparisonIntro({ showHeading = true }: { showHeading?: boolean }) {
   return (
     <>
-      <h3 className="text-2xl font-semibold tracking-[-0.04em] text-[var(--brand-ink)]">Compare every feature.</h3>
+      {showHeading ? (
+        <h3 className="text-2xl font-semibold tracking-[-0.04em] text-[var(--brand-ink)]">Compare every feature.</h3>
+      ) : null}
       <p className="mt-2 max-w-2xl text-sm leading-6 text-black/65">Starter includes the Free core. Growth includes Starter and Free benefits, then adds scale benefits.</p>
     </>
   );
@@ -64,26 +66,29 @@ function ComparisonIntro() {
 
 export function PricingFeatureComparison() {
   return (
-    <section aria-label="Plan feature comparison" className="mt-8">
-      <div className="hidden rounded-[2rem] border border-[#14213d]/10 bg-white p-6 sm:block sm:p-8">
+    <section aria-label="Plan feature comparison" className="mt-8 min-w-0 w-full max-w-full overflow-hidden [contain:inline-size]">
+      <div className="hidden min-w-0 w-full max-w-full overflow-hidden rounded-[2rem] border border-[#14213d]/10 bg-white p-6 sm:block sm:p-8">
         <div>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--brand-action)]">Plan comparison</p>
             <div className="mt-2"><ComparisonIntro /></div>
           </div>
         </div>
-        <div className="mt-7 overflow-x-auto"><ComparisonTable /></div>
+        <div className="mt-7 min-w-0 max-w-full overflow-x-auto overscroll-x-contain"><ComparisonTable /></div>
       </div>
 
-      <details className="rounded-[1.5rem] border border-[#14213d]/10 bg-white p-5 sm:hidden">
+      <details className="group min-w-0 w-full max-w-full overflow-hidden rounded-[1.5rem] border border-[#14213d]/10 bg-white p-5 sm:hidden">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-4">
           Compare every feature
-          <span aria-hidden="true" className="text-xl font-normal">＋</span>
+          <span aria-hidden="true" className="text-xl font-normal">
+            <span className="group-open:hidden">＋</span>
+            <span className="hidden group-open:inline">−</span>
+          </span>
         </summary>
-        <div className="pt-5">
-          <ComparisonIntro />
+        <div className="min-w-0 w-full max-w-full overflow-hidden pt-5">
+          <ComparisonIntro showHeading={false} />
           <p className="mt-4 text-xs font-medium text-black/55">Swipe to compare plans →</p>
-          <div role="region" aria-label="Feature comparison table. Swipe horizontally to compare plans." tabIndex={0} className="mt-3 overflow-x-auto rounded-xl border border-black/10 outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2">
+          <div role="region" aria-label="Feature comparison table. Swipe horizontally to compare plans." tabIndex={0} className="mt-3 min-w-0 w-full max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-black/10 outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2">
             <ComparisonTable />
           </div>
         </div>

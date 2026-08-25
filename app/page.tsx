@@ -23,20 +23,14 @@ import {
 	siteContent,
 } from "@/app/lib/site-content";
 
-function BrandMark({
-	compactOnMobile = false,
-	priority = false,
-}: {
-	compactOnMobile?: boolean;
-	priority?: boolean;
-}) {
+function BrandMark({ priority = false }: { priority?: boolean }) {
 	return (
 		<a
 			href="#top"
 			aria-label="SoleSheet home"
 			className="inline-flex items-center"
 		>
-			<BrandLogo compactOnMobile={compactOnMobile} priority={priority} />
+			<BrandLogo priority={priority} />
 		</a>
 	);
 }
@@ -55,11 +49,11 @@ export default function Home() {
 		<WaitlistJourneyProvider>
 			<main
 				id="top"
-				className="overflow-hidden bg-[var(--brand-soft)] text-[var(--brand-ink)]"
+				className="overflow-x-clip bg-[var(--brand-soft)] text-[var(--brand-ink)]"
 			>
 				<header className="relative z-30 border-b border-[#14213d]/10 bg-[#f7faf5]/92 backdrop-blur-lg">
 					<div className="mx-auto flex h-18 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-10">
-						<BrandMark compactOnMobile priority />
+						<BrandMark priority />
 						<nav
 							aria-label="Primary navigation"
 							className="hidden items-center gap-7 text-sm font-medium text-[#14213d]/70 md:flex"
@@ -89,11 +83,13 @@ export default function Home() {
 								FAQ
 							</a>
 						</nav>
-						<WaitlistCta className="min-h-10 px-4 text-xs sm:min-h-11 sm:px-5 sm:text-sm" />
+						<div className="hidden sm:block">
+							<WaitlistCta className="min-h-10 px-4 text-xs sm:min-h-11 sm:px-5 sm:text-sm" />
+						</div>
 					</div>
 				</header>
 
-				<section className="relative border-b border-[#14213d]/10">
+				<section className="relative overflow-hidden border-b border-[#14213d]/10">
 					<div
 						aria-hidden="true"
 						className="absolute -right-52 -top-40 size-[620px] rounded-full border border-[#22c55e]/20"
@@ -260,7 +256,10 @@ export default function Home() {
 									Join the waitlist, then answer four quick questions if you’d like.
 								</p>
 							</div>
-							<WaitlistCta className="w-full sm:w-auto sm:min-w-52" />
+							<WaitlistCta
+								initialLabel="Help shape SoleSheet"
+								className="w-full sm:w-auto sm:min-w-52"
+							/>
 						</section>
 					</div>
 				</section>
@@ -389,7 +388,10 @@ export default function Home() {
 								{foundingOffer.pricingSummary}
 							</p>
 						</div>
-						<WaitlistCta variant="secondary" />
+						<WaitlistCta
+							variant="secondary"
+							initialLabel="Get founding access"
+						/>
 					</div>
 				</section>
 
@@ -418,11 +420,9 @@ export default function Home() {
 								>
 									<summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-base font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-4">
 										{faq.question}
-										<span
-											aria-hidden="true"
-											className="text-xl font-normal transition group-open:rotate-45"
-										>
-											＋
+										<span aria-hidden="true" className="text-xl font-normal">
+											<span className="group-open:hidden">＋</span>
+											<span className="hidden group-open:inline">−</span>
 										</span>
 									</summary>
 									<p className="max-w-2xl pb-2 pt-4 text-sm leading-7 text-black/65">

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { PricingFeatureComparison } from "@/app/components/pricing/pricing-feature-comparison";
 import { planComparisonRows } from "@/app/lib/site-content";
@@ -43,5 +43,13 @@ describe("PricingFeatureComparison", () => {
     expect(disclosure).not.toHaveAttribute("open");
     expect(within(disclosure!).getByText("Swipe to compare plans →")).toBeInTheDocument();
     expect(within(disclosure!).getByRole("region", { name: /feature comparison table.*swipe horizontally/i })).toHaveAttribute("tabindex", "0");
+    expect(within(disclosure!).queryByRole("heading", { name: /compare every feature/i })).not.toBeInTheDocument();
+
+    const summary = within(disclosure!).getByText("Compare every feature", { exact: true }).closest("summary");
+    expect(summary).not.toBeNull();
+    expect(within(summary!).getByText("＋")).toHaveClass("group-open:hidden");
+    expect(within(summary!).getByText("−")).toHaveClass("hidden", "group-open:inline");
+    fireEvent.click(summary!);
+    expect(disclosure).toHaveAttribute("open");
   });
 });

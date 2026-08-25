@@ -53,15 +53,25 @@ async function joinAndOpenSurvey() {
 	expect(await screen.findByRole("dialog")).toBeInTheDocument();
 }
 
-function skipQuestion() {
-	fireEvent.click(screen.getByRole("button", { name: /skip question/i }));
-}
-
 async function expectQuestion(name: RegExp, progress: string) {
 	const heading = await screen.findByRole("heading", { name });
 	expect(heading).toHaveFocus();
 	expect(screen.getByText(progress)).toBeInTheDocument();
 	return heading;
+}
+
+async function answerCoreWithDefaults() {
+	fireEvent.click(screen.getByRole("radio", { name: "Android" }));
+	await expectQuestion(/how many active pairs/i, "Question 2 of 4");
+	fireEvent.click(screen.getByRole("radio", { name: "1–20" }));
+	await expectQuestion(/what would you be willing to pay/i, "Question 3 of 4");
+	fireEvent.click(screen.getByRole("radio", { name: "Up to ₱65/month" }));
+	await expectQuestion(/which feature matters most/i, "Question 4 of 4");
+	fireEvent.click(screen.getByRole("radio", { name: "Reports" }));
+	await expectQuestion(
+		/what do you use to track inventory today/i,
+		"Optional question 1 of 5",
+	);
 }
 
 async function finishSurveySuccessfully() {
@@ -201,6 +211,20 @@ describe("WaitlistExperience", () => {
 		expect(
 			screen.getByText(/agree to the privacy policy/i),
 		).toBeInTheDocument();
+	});
+
+	it("supports a contextual initial CTA label without changing its destination", () => {
+		render(
+			<WaitlistJourneyProvider>
+				<WaitlistCta initialLabel="Help shape SoleSheet" />
+				<WaitlistExperience />
+			</WaitlistJourneyProvider>,
+		);
+
+		fireEvent.click(
+			screen.getByRole("button", { name: /help shape solesheet/i }),
+		);
+		expect(screen.getByRole("textbox", { name: "Email address" })).toHaveFocus();
 	});
 
 	it("configures interaction-only Turnstile and submits its token without a honeypot", async () => {
@@ -432,26 +456,32 @@ describe("WaitlistExperience", () => {
 				.querySelector('[data-survey-progress-fill="true"]'),
 		).toBe(progressFill);
 		expect(progressFill).toHaveStyle({ width: "50%" });
-		const help = screen.getByRole("link", {
-			name: /what pairs count as active/i,
-		});
-		expect(help).toHaveAttribute("href", "/#faq-active-pairs");
-		expect(help).toHaveAttribute("target", "_blank");
+		const help = screen
+			.getByText("What pairs count as active?", { exact: true })
+			.closest("summary");
+		expect(help).not.toBeNull();
+		expect(help).not.toHaveAttribute("href");
+		fireEvent.click(help!);
+		expect(
+			screen.getByText(/available and reserved pairs count as active/i),
+		).toBeInTheDocument();
+		expect(screen.getByText("Question 2 of 4")).toBeInTheDocument();
 
 		fireEvent.click(screen.getByRole("button", { name: /close survey/i }));
 		fireEvent.click(
 			screen.getAllByRole("button", { name: /answer the quick survey/i })[0],
 		);
 		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
-		skipQuestion();
-		await expectQuestion(/what do you use to track inventory today/i, "Question 3 of 4");
-		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
-		fireEvent.change(
-			screen.getByRole("textbox", { name: "Other inventory method" }),
-			{ target: { value: "Airtable" } },
-		);
-		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
+		fireEvent.click(screen.getByRole("radio", { name: "21–50" }));
+		await expectQuestion(/what would you be willing to pay/i, "Question 3 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "Up to ₱65/month" }));
 		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "Profit tracking" }));
+		await expectQuestion(
+			/what do you use to track inventory today/i,
+			"Optional question 1 of 5",
+		);
+		expect(screen.getByRole("button", { name: /finish this survey/i })).toBeEnabled();
 		await finishSurveySuccessfully();
 
 		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
@@ -469,25 +499,30 @@ describe("WaitlistExperience", () => {
 		expect(JSON.parse(String(surveyRequest?.[1]?.body))).toEqual({
 			surveyToken: "signed-survey-token",
 			phoneType: "android",
-			inventoryMethod: "other",
-			inventoryMethodOther: "Airtable",
+			activeInventoryRange: "21_50",
+			likelyPlan: "founding_starter_65",
+			priorityFeature: "profit_tracking",
 		});
 		expect(Storage.prototype.setItem).not.toHaveBeenCalled();
 	});
 
-	it("submits a valid zero-answer survey only when Finish is selected", async () => {
+	it("requires the four core answers and submits without optional follow-ups", async () => {
 		renderExperience();
 		await joinAndOpenSurvey();
-		skipQuestion();
-		skipQuestion();
-		skipQuestion();
-		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
+		expect(screen.queryByRole("button", { name: /skip question/i })).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /select an answer/i })).toBeDisabled();
+		await answerCoreWithDefaults();
+		expect(screen.getByRole("button", { name: /finish this survey/i })).toBeEnabled();
 
 		await finishSurveySuccessfully();
 
 		const surveyRequest = vi.mocked(globalThis.fetch).mock.calls[1];
 		expect(JSON.parse(String(surveyRequest?.[1]?.body))).toEqual({
 			surveyToken: "signed-survey-token",
+			phoneType: "android",
+			activeInventoryRange: "1_20",
+			likelyPlan: "founding_starter_65",
+			priorityFeature: "reports",
 		});
 	});
 
@@ -496,9 +531,15 @@ describe("WaitlistExperience", () => {
 		await joinAndOpenSurvey();
 		fireEvent.click(screen.getByRole("radio", { name: "Android" }));
 		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
-		skipQuestion();
-		skipQuestion();
+		fireEvent.click(screen.getByRole("radio", { name: "1–20" }));
+		await expectQuestion(/what would you be willing to pay/i, "Question 3 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "Up to ₱65/month" }));
 		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "Reports" }));
+		await expectQuestion(
+			/what do you use to track inventory today/i,
+			"Optional question 1 of 5",
+		);
 
 		vi.mocked(globalThis.fetch).mockResolvedValueOnce(
 			Response.json(
@@ -511,16 +552,20 @@ describe("WaitlistExperience", () => {
 		const retryMessage = await screen.findByRole("alert");
 		expect(retryMessage).toHaveTextContent(/answers are still here/i);
 		expect(
-			screen.getByRole("heading", { name: /which feature matters most/i }),
+			screen.getByRole("heading", { name: /what do you use to track inventory today/i }),
 		).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
 		fireEvent.click(screen.getByRole("button", { name: "Back" }));
 		fireEvent.click(screen.getByRole("button", { name: "Back" }));
 		fireEvent.click(screen.getByRole("button", { name: "Back" }));
 		expect(screen.getByRole("radio", { name: "Android" })).toBeChecked();
 		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
 		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
-		skipQuestion();
-		skipQuestion();
+		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
+		await expectQuestion(/what would you be willing to pay/i, "Question 3 of 4");
+		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
+		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
 
 		await finishSurveySuccessfully();
 		expect(screen.getByText(/that’s the full flow/i)).toBeInTheDocument();
@@ -549,29 +594,12 @@ describe("WaitlistExperience", () => {
 	it("preserves Other details and answers across optional navigation", async () => {
 		renderExperience();
 		await joinAndOpenSurvey();
-		skipQuestion();
-		skipQuestion();
-		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
-		const currentToolOther = screen.getByRole("textbox", {
-			name: "Other inventory method",
-		});
-		expect(currentToolOther).toHaveAttribute("maxlength", "100");
-		fireEvent.change(
-			currentToolOther,
-			{ target: { value: "Airtable" } },
-		);
-		fireEvent.click(screen.getByRole("radio", { name: "Excel" }));
+		fireEvent.click(screen.getByRole("radio", { name: "Android" }));
+		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "21–50" }));
+		await expectQuestion(/what would you be willing to pay/i, "Question 3 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "Up to ₱65/month" }));
 		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
-		fireEvent.click(screen.getByRole("button", { name: "Back" }));
-		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
-		expect(
-			screen.getByRole("textbox", { name: "Other inventory method" }),
-		).toHaveValue("");
-		fireEvent.change(
-			screen.getByRole("textbox", { name: "Other inventory method" }),
-			{ target: { value: "Notebook plus tags" } },
-		);
-		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
 		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
 		const priorityOther = screen.getByRole("textbox", {
 			name: "Other feature",
@@ -585,10 +613,27 @@ describe("WaitlistExperience", () => {
 			target: { value: "Supplier purchase tracking" },
 		});
 		expect(screen.getByText("26 / 300")).toBeInTheDocument();
-		fireEvent.click(screen.getByRole("button", { name: /continue survey/i }));
+		fireEvent.click(screen.getByRole("radio", { name: "Reports" }));
 
-		await expectQuestion(/which planned option feels closest/i, "Optional question 1 of 5");
-		fireEvent.click(screen.getByRole("radio", { name: "Free" }));
+		await expectQuestion(/what do you use to track inventory today/i, "Optional question 1 of 5");
+		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
+		const currentToolOther = screen.getByRole("textbox", {
+			name: "Other inventory method",
+		});
+		expect(currentToolOther).toHaveAttribute("maxlength", "100");
+		fireEvent.change(currentToolOther, { target: { value: "Airtable" } });
+		fireEvent.click(screen.getByRole("radio", { name: "Excel" }));
+		await expectQuestion(/how often do you sell through installments/i, "Optional question 2 of 5");
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
+		expect(
+			screen.getByRole("textbox", { name: "Other inventory method" }),
+		).toHaveValue("");
+		fireEvent.change(
+			screen.getByRole("textbox", { name: "Other inventory method" }),
+			{ target: { value: "Notebook plus tags" } },
+		);
+		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
 		await expectQuestion(/how often do you sell through installments/i, "Optional question 2 of 5");
 		fireEvent.click(screen.getByRole("radio", { name: "Often" }));
 		await expectQuestion(/would you want cloud backup and sync/i, "Optional question 3 of 5");
@@ -643,22 +688,12 @@ describe("WaitlistExperience", () => {
 	it("bounds and trims optional Other details without requiring them", async () => {
 		renderExperience();
 		await joinAndOpenSurvey();
-		skipQuestion();
-		skipQuestion();
-		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
-
-		const currentToolOther = screen.getByRole("textbox", {
-			name: "Other inventory method",
-		});
-		fireEvent.change(currentToolOther, {
-			target: { value: `  ${"x".repeat(110)}` },
-		});
-		expect(currentToolOther).toHaveValue(`  ${"x".repeat(98)}`);
-		fireEvent.change(currentToolOther, { target: { value: "   " } });
-		fireEvent.blur(currentToolOther);
-		expect(currentToolOther).toHaveValue("");
-		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
-
+		fireEvent.click(screen.getByRole("radio", { name: "Android" }));
+		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "21–50" }));
+		await expectQuestion(/what would you be willing to pay/i, "Question 3 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "Up to ₱65/month" }));
+		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
 		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
 		const priorityOther = screen.getByRole("textbox", {
 			name: "Other feature",
@@ -679,13 +714,29 @@ describe("WaitlistExperience", () => {
 		);
 		fireEvent.click(screen.getByRole("radio", { name: "Reports" }));
 		await expectQuestion(
-			/which planned option feels closest/i,
+			/what do you use to track inventory today/i,
 			"Optional question 1 of 5",
 		);
+		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
+		const currentToolOther = screen.getByRole("textbox", {
+			name: "Other inventory method",
+		});
+		fireEvent.change(currentToolOther, {
+			target: { value: `  ${"x".repeat(110)}` },
+		});
+		expect(currentToolOther).toHaveValue(`  ${"x".repeat(98)}`);
+		fireEvent.change(currentToolOther, { target: { value: "   " } });
+		fireEvent.blur(currentToolOther);
+		expect(currentToolOther).toHaveValue("");
+		fireEvent.click(screen.getByRole("button", { name: /next question/i }));
+		await expectQuestion(/how often do you sell through installments/i, "Optional question 2 of 5");
+		fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		fireEvent.click(screen.getByRole("radio", { name: "Excel" }));
+		await expectQuestion(/how often do you sell through installments/i, "Optional question 2 of 5");
 		fireEvent.click(screen.getByRole("button", { name: "Back" }));
 		fireEvent.click(screen.getByRole("radio", { name: "Other" }));
 		expect(
-			screen.getByRole("textbox", { name: "Other feature" }),
+			screen.getByRole("textbox", { name: "Other inventory method" }),
 		).toHaveValue("");
 	});
 
@@ -694,10 +745,12 @@ describe("WaitlistExperience", () => {
 		await joinAndOpenSurvey();
 		fireEvent.click(screen.getByRole("radio", { name: "Android" }));
 		await expectQuestion(/how many active pairs/i, "Question 2 of 4");
-		skipQuestion();
-		skipQuestion();
+		fireEvent.click(screen.getByRole("radio", { name: "1–20" }));
+		await expectQuestion(/what would you be willing to pay/i, "Question 3 of 4");
+		fireEvent.click(screen.getByRole("radio", { name: "Up to ₱65/month" }));
+		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
 		fireEvent.click(screen.getByRole("radio", { name: "Reports" }));
-		await expectQuestion(/which planned option feels closest/i, "Optional question 1 of 5");
+		await expectQuestion(/what do you use to track inventory today/i, "Optional question 1 of 5");
 		fireEvent.click(screen.getByRole("button", { name: "Back" }));
 		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
 		expect(screen.getByRole("radio", { name: "Reports" })).toBeChecked();
@@ -722,10 +775,7 @@ describe("WaitlistExperience", () => {
 	it("aborts a pending survey request when the experience unmounts", async () => {
 		const view = renderExperience();
 		await joinAndOpenSurvey();
-		skipQuestion();
-		skipQuestion();
-		skipQuestion();
-		await expectQuestion(/which feature matters most/i, "Question 4 of 4");
+		await answerCoreWithDefaults();
 
 		let requestSignal: AbortSignal | undefined;
 		vi.mocked(globalThis.fetch).mockImplementationOnce((_input, init) => {

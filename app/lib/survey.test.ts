@@ -5,6 +5,13 @@ import {
 	validateSurveySubmission,
 } from "@/app/lib/survey";
 
+const requiredCorePayload = {
+	phoneType: "android",
+	activeInventoryRange: "21_50",
+	likelyPlan: "founding_starter_65",
+	priorityFeature: "profit_tracking",
+} as const;
+
 describe("createSurveySubmissionRequest", () => {
 	it("maps displayed survey copy to stable identifiers", () => {
 		expect(
@@ -14,7 +21,7 @@ describe("createSurveySubmissionRequest", () => {
 				currentTool: "Other",
 				currentToolOther: "  POS export  ",
 				priority: "Profit tracking",
-				plan: "Founding Starter — ₱65/month",
+				plan: "Up to ₱65/month",
 				installments: "Sometimes",
 				backup: "Only if affordable",
 				channels: ["Instagram", "Physical store"],
@@ -35,19 +42,80 @@ describe("createSurveySubmissionRequest", () => {
 		});
 	});
 
+	it.each([
+		["Free only", "free"],
+		["Up to ₱65/month", "founding_starter_65"],
+		["Up to ₱99/month", "starter_99"],
+		["Up to ₱349/month", "growth_349"],
+		["Not sure yet", "not_sure"],
+	] as const)("maps %s to the existing %s identifier", (displayed, stored) => {
+		const request = createSurveySubmissionRequest("token", {
+			phone: "Android",
+			inventorySize: "21–50",
+			plan: displayed,
+			priority: "Profit tracking",
+		});
+		expect(request.likelyPlan).toBe(stored);
+	});
+
 	it("rejects unmapped display values instead of sending arbitrary text", () => {
 		expect(() =>
 			createSurveySubmissionRequest("token", { phone: "Windows Phone" }),
 		).toThrow(/stable value/i);
 	});
+
+	it("rejects a submission request without all four displayed core answers", () => {
+		expect(() =>
+			createSurveySubmissionRequest("token", {
+				phone: "Android",
+				inventorySize: "21–50",
+				priority: "Profit tracking",
+			}),
+		).toThrow(/four required/i);
+	});
 });
 
 describe("validateSurveySubmission", () => {
-	it("accepts a token with no answers because every question is optional", () => {
+	it("rejects a submission when any required core answer is missing", () => {
 		expect(validateSurveySubmission({ surveyToken: "signed-token" })).toEqual({
-			ok: true,
-			value: { surveyToken: "signed-token", answers: {} },
+			ok: false,
+			message: "Complete the four required survey questions.",
 		});
+		expect(
+			validateSurveySubmission({
+				surveyToken: "signed-token",
+				...requiredCorePayload,
+				priorityFeature: undefined,
+			}),
+		).toEqual({
+			ok: false,
+			message: "Complete the four required survey questions.",
+		});
+	});
+
+	it("accepts the required core without optional follow-ups", () => {
+		expect(
+			validateSurveySubmission({
+				surveyToken: "signed-token",
+				...requiredCorePayload,
+			}),
+		).toEqual({
+			ok: true,
+			value: {
+				surveyToken: "signed-token",
+				answers: requiredCorePayload,
+			},
+		});
+	});
+
+	it("accepts an omitted optional inventory method", () => {
+		const result = validateSurveySubmission({
+			surveyToken: "signed-token",
+			...requiredCorePayload,
+		});
+		expect(result.ok).toBe(true);
+		if (!result.ok) throw new Error(result.message);
+		expect(result.value.answers.inventoryMethod).toBeUndefined();
 	});
 
 	it("accepts and normalizes a complete supported answer set", () => {
@@ -106,6 +174,7 @@ describe("validateSurveySubmission", () => {
 		expect(
 			validateSurveySubmission({
 				surveyToken: "token",
+				...requiredCorePayload,
 				inventoryMethod: "other",
 				inventoryMethodOther: "x".repeat(101),
 			}).ok,
@@ -113,6 +182,7 @@ describe("validateSurveySubmission", () => {
 		expect(
 			validateSurveySubmission({
 				surveyToken: "token",
+				...requiredCorePayload,
 				priorityFeature: "reports",
 				priorityOther: "Different feature",
 			}).ok,
@@ -120,6 +190,7 @@ describe("validateSurveySubmission", () => {
 		expect(
 			validateSurveySubmission({
 				surveyToken: "token",
+				...requiredCorePayload,
 				salesChannels: ["instagram"],
 				salesChannelOther: "Pop-up",
 			}).ok,
@@ -129,6 +200,7 @@ describe("validateSurveySubmission", () => {
 	it("normalizes whitespace-only Other details to absence", () => {
 		const result = validateSurveySubmission({
 			surveyToken: "token",
+			...requiredCorePayload,
 			inventoryMethod: "other",
 			inventoryMethodOther: "   ",
 		});
@@ -136,7 +208,10 @@ describe("validateSurveySubmission", () => {
 		if (!result.ok) throw new Error(result.message);
 		expect(result.value).toEqual({
 			surveyToken: "token",
-			answers: { inventoryMethod: "other" },
+			answers: {
+				...requiredCorePayload,
+				inventoryMethod: "other",
+			},
 		});
 	});
 });

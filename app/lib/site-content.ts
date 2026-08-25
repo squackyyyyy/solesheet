@@ -18,7 +18,6 @@ export const foundingOffer = {
     "Planned for the first 50 eligible survey respondents. Eligibility and redemption details will be confirmed before launch; standard Starter pricing applies after the first year.",
   finalSummary:
     "Join early access and help shape the first release. The planned ₱65/month founding Starter offer is for the first 50 eligible survey respondents during their first 12 paid months. Eligibility and redemption details will be confirmed before launch.",
-  surveyOption: "Founding Starter — ₱65/month",
   mockupEligibility: "Planned for first 50 eligible survey respondents.",
   mockupScope: "Starter only · first 12 paid months.",
 } as const;
@@ -245,8 +244,8 @@ export const surveyQuestions = {
     options: ["Android", "iPhone", "Both", "Not sure"],
   },
   plan: {
-    label: "Which planned option feels closest to what you would consider?",
-    options: ["Free", "Starter — ₱99/month", "Growth — ₱349/month", foundingOffer.surveyOption, "Not sure yet"],
+    label: "Based on what you’ve seen, what would you be willing to pay for SoleSheet?",
+    options: ["Free only", "Up to ₱65/month", "Up to ₱99/month", "Up to ₱349/month", "Not sure yet"],
   },
   inventorySize: {
     label: "How many active pairs do you usually manage?",

@@ -30,9 +30,14 @@ const noticeSections = [
 					<li>an optional name, reseller name, or alias;</li>
 					<li>the time you consented and the privacy-notice version you accepted;</li>
 					<li>
-						optional survey answers about your phone platform, active inventory,
-						current tracking method, preferred features and plans, installment
-						sales, cloud backup, sales channels, and follow-up availability;
+						four core survey answers about your phone platform, active inventory,
+						what you would be willing to pay based on the demo, and preferred
+						feature when you choose to finish the survey;
+					</li>
+					<li>
+						optional follow-up answers about your current tracking method,
+						installment sales, cloud backup, sales channels, and interview
+						availability;
 					</li>
 					<li>optional Other details you enter for supported survey questions;</li>
 					<li>messages or requests you send to our privacy contact.</li>
@@ -89,10 +94,13 @@ const noticeSections = [
 			<>
 				<p>
 					We ask for your consent before registering your waitlist interest and
-					contacting you about early access or product research. Your survey
-					answers are optional, and you may join the waitlist without answering
-					the survey. Survey answers are submitted only when you select Finish this
-					survey; closing an unfinished survey does not submit its answers.
+					contacting you about early access or product research. Survey
+					participation is optional, and you may join the waitlist without answering
+					the survey. If you choose to finish it, the four core questions are
+					required—including what you would be willing to pay based on the demo—while
+					your current tracking method, the other follow-up questions, and Other-detail
+					fields remain optional. Answers are submitted only when you select Finish this survey;
+					closing an unfinished survey does not submit them.
 				</p>
 				<p>
 					You may withdraw consent or ask us to stop contacting you at any time by
@@ -273,7 +281,8 @@ export default function PrivacyPage() {
 					</h2>
 					<p className="mt-3 max-w-3xl text-sm leading-7 text-white/72">
 						Waitlist details and deliberately finished surveys are stored with
-						Cloudflare D1. Survey questions remain optional. We do not sell personal information,
+						Cloudflare D1. Survey participation is optional; finishing requires four core
+						answers, while follow-ups remain optional. We do not sell personal information,
 						and you may withdraw consent or ask us to delete your information.
 					</p>
 				</section>
@@ -291,7 +300,7 @@ export default function PrivacyPage() {
 						</a>
 						<ul className="mt-5 grid gap-3 border-t border-black/10 pt-5 text-sm leading-6 text-black/68">
 							<li>✓ Waitlist and research use only</li>
-							<li>✓ Optional survey answers</li>
+							<li>✓ Optional survey participation</li>
 							<li>✓ No sale of personal information</li>
 							<li>✓ Withdrawal and deletion requests supported</li>
 						</ul>

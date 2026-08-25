@@ -1,21 +1,4 @@
-# survey-persistence Specification
-
-## Purpose
-
-Persist deliberately submitted SoleSheet validation surveys in D1 while securely linking each response to its confirmed waitlist signup and protecting optional answers from invalid or duplicate writes.
-
-## Requirements
-
-### Requirement: Survey submission is authorized by a confirmed signup
-The survey endpoint SHALL accept a response only when it includes an opaque, time-limited continuation token issued after a confirmed new-or-duplicate waitlist signup. The server SHALL validate the token's integrity, purpose, and expiry before database access and SHALL derive the linked signup from that token rather than trusting a browser-supplied signup identifier. Missing, malformed, tampered, expired, or wrong-purpose tokens SHALL produce a safe failure and no database write.
-
-#### Scenario: Confirmed signup submits its survey
-- **WHEN** a visitor finishes the survey with a valid continuation token from the confirmed signup flow
-- **THEN** the server resolves the intended signup and proceeds to validate and persist that survey
-
-#### Scenario: Arbitrary signup identifier is supplied
-- **WHEN** a visitor submits a guessed, altered, expired, or independently supplied signup reference without a valid continuation token
-- **THEN** the server rejects the request without reading or writing survey records and does not reveal whether that signup exists
+## MODIFIED Requirements
 
 ### Requirement: Survey endpoint validates the complete request independently
 The survey endpoint SHALL accept only its supported method and JSON content type, SHALL bound the request body and token, and SHALL reject malformed JSON, unknown fields, duplicate list values, unsupported answer values, missing core answers, over-limit text, and inconsistent Other details without writing any response. Primary phone platform, active inventory size, willingness-to-pay plan interest, and highest-value feature SHALL each contain one supported answer. Current inventory method, its applicable Other detail, and the remaining four follow-up questions SHALL remain optional. Other-detail text SHALL be trimmed, whitespace-only text SHALL become absent, and detail text SHALL be accepted only while its corresponding Other choice is selected.
@@ -39,36 +22,6 @@ The survey endpoint SHALL accept only its supported method and JSON content type
 #### Scenario: Unsupported request shape is submitted
 - **WHEN** the endpoint receives an unsupported content type, oversized body, malformed JSON, unknown property, or invalid field type
 - **THEN** it rejects the request without persisting submitted survey data
-
-### Requirement: Finished survey is stored atomically once
-The system SHALL store at most one survey response per waitlist signup. The response SHALL contain the submitted optional answer values, trimmed applicable Other details, submission and update timestamps, and a foreign-key relationship to the signup. Selected sales channels SHALL be stored as zero or more normalized child rows linked to that response. Creating the response, its channel rows, and the signup's survey-completion timestamp SHALL succeed or fail as one logical operation.
-
-#### Scenario: Survey contains multiple sales channels
-- **WHEN** a valid survey selects more than one offered sales channel
-- **THEN** one response is stored for the signup and one linked child row is stored for each distinct selected channel
-
-#### Scenario: Survey contains no sales channels
-- **WHEN** a valid finished survey omits the sales-channel question
-- **THEN** the response is stored successfully with no linked sales-channel rows
-
-#### Scenario: A related write fails
-- **WHEN** the response, any selected channel, or completion-marker write fails
-- **THEN** the logical submission is not reported as successful and no partial survey result remains committed
-
-#### Scenario: Signup relationship is invalid
-- **WHEN** a request cannot resolve an existing signup from its validated continuation token
-- **THEN** no orphan survey response or channel row is created
-
-### Requirement: Repeated completion is idempotent
-After a survey has been stored for a signup, another valid completion request for that signup SHALL return the same generic successful outcome, SHALL NOT create duplicate response or channel rows, and SHALL NOT overwrite the originally submitted answers or completion timestamp.
-
-#### Scenario: Successful request is retried
-- **WHEN** the browser repeats a valid completion request after the first response was committed but its response was lost
-- **THEN** the endpoint confirms the generic successful outcome and the database still contains the original single response and channel set
-
-#### Scenario: Concurrent completion requests arrive
-- **WHEN** two valid completion requests for the same signup overlap
-- **THEN** at most one submitted answer set becomes durable and neither request exposes whether it won the race
 
 ### Requirement: Survey storage remains private and operationally safe
 Survey database access SHALL remain server-only, submitted values SHALL be bound separately from SQL text, and client failures SHALL expose neither stored answers, signup existence, SQL details, tokens, nor stack traces. Application diagnostics SHALL identify only coarse outcomes and non-personal request identifiers and SHALL NOT intentionally log survey answers, Other text, contact details, continuation tokens, or raw bodies. The published privacy notice SHALL explain that survey participation is optional, identify primary phone, active inventory size, willingness to pay, and highest-value feature as the four core answers required to submit a survey, identify current inventory method and the remaining follow-up and Other-detail fields as optional, and describe their product-research purpose, Cloudflare processing, retention approach, and access or deletion contact before the changed collection is enabled.

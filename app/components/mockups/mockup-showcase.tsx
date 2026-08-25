@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/app/components/ui/aria";
+import { useFlowMockupPreload } from "@/app/components/mockups/use-flow-mockup-preload";
 import {
   flowMockupAssets,
   publicFlowMockupPath,
@@ -10,7 +11,17 @@ import {
 
 export function MockupShowcase() {
   const [selectedId, setSelectedId] = useState<FlowMockupId>("quick-sale");
+  const [initialPreviewReady, setInitialPreviewReady] = useState(false);
+  const initialImageRef = useRef<HTMLImageElement>(null);
   const selected = flowMockupAssets.find((asset) => asset.id === selectedId) ?? flowMockupAssets[0];
+  useFlowMockupPreload(initialPreviewReady);
+
+  useEffect(() => {
+    const initialImage = initialImageRef.current;
+    if (initialImage?.complete && initialImage.naturalWidth > 0) {
+      setInitialPreviewReady(true);
+    }
+  }, []);
 
   return (
     <section aria-labelledby="planned-flow-title">
@@ -74,12 +85,14 @@ export function MockupShowcase() {
           <img
             key={selected.id}
             src={publicFlowMockupPath(selected.desktop.publicFilename)}
+            ref={selected.fastestPath ? initialImageRef : undefined}
             width={selected.desktop.width}
             height={selected.desktop.height}
             alt={selected.description}
             className="block h-full w-full object-cover"
             loading={selected.fastestPath ? "eager" : "lazy"}
             fetchPriority={selected.fastestPath ? "high" : "auto"}
+            onLoad={selected.fastestPath ? () => setInitialPreviewReady(true) : undefined}
           />
         </picture>
       </figure>

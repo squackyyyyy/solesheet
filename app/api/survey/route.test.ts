@@ -26,6 +26,13 @@ function jsonRequest(value: unknown, headers?: HeadersInit) {
 	});
 }
 
+const requiredCorePayload = {
+	phoneType: "android",
+	activeInventoryRange: "21_50",
+	likelyPlan: "founding_starter_65",
+	priorityFeature: "profit_tracking",
+} as const;
+
 describe("POST /api/survey", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
@@ -42,11 +49,11 @@ describe("POST /api/survey", () => {
 		persistSurveyResponseMock.mockResolvedValue("created");
 	});
 
-	it("verifies the token before storing normalized partial answers", async () => {
+	it("verifies the token before storing normalized core and optional answers", async () => {
 		const response = await POST(
 			jsonRequest({
 				surveyToken: "private-survey-token",
-				phoneType: "android",
+				...requiredCorePayload,
 				inventoryMethod: "other",
 				inventoryMethodOther: "  POS export  ",
 				salesChannels: ["instagram", "physical_store"],
@@ -66,7 +73,7 @@ describe("POST /api/survey", () => {
 			expect.anything(),
 			"signup-1",
 			{
-				phoneType: "android",
+				...requiredCorePayload,
 				inventoryMethod: "other",
 				inventoryMethodOther: "POS export",
 				salesChannels: ["instagram", "physical_store"],
@@ -76,9 +83,44 @@ describe("POST /api/survey", () => {
 
 	it("returns the same success for an idempotent existing response", async () => {
 		persistSurveyResponseMock.mockResolvedValue("existing");
-		const response = await POST(jsonRequest({ surveyToken: "token" }));
+		const response = await POST(
+			jsonRequest({ surveyToken: "token", ...requiredCorePayload }),
+		);
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({ ok: true });
+	});
+
+	it("accepts the required core when optional inventory method is omitted", async () => {
+		const response = await POST(
+			jsonRequest({ surveyToken: "token", ...requiredCorePayload }),
+		);
+		expect(response.status).toBe(200);
+		expect(persistSurveyResponseMock).toHaveBeenCalledWith(
+			expect.anything(),
+			"signup-1",
+			requiredCorePayload,
+		);
+	});
+
+	it("rejects a missing core answer before token verification or D1", async () => {
+		const response = await POST(
+			jsonRequest({
+				surveyToken: "token",
+				...requiredCorePayload,
+				likelyPlan: undefined,
+			}),
+		);
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toEqual({
+			ok: false,
+			error: {
+				code: "invalid_request",
+				message: "Complete the four required survey questions.",
+			},
+		});
+		expect(verifySurveyTokenMock).not.toHaveBeenCalled();
+		expect(persistSurveyResponseMock).not.toHaveBeenCalled();
 	});
 
 	it("rejects malformed, oversized, unsupported, and invalid answers before token verification", async () => {
@@ -108,13 +150,21 @@ describe("POST /api/survey", () => {
 			POST(
 				jsonRequest({
 					surveyToken: "token",
+					...requiredCorePayload,
 					salesChannels: ["instagram", "instagram"],
+				}),
+			),
+			POST(
+				jsonRequest({
+					surveyToken: "token",
+					...requiredCorePayload,
+					inventoryMethodOther: "Spreadsheet with custom columns",
 				}),
 			),
 		]);
 
 		expect(responses.map((response) => response.status)).toEqual([
-			400, 413, 415, 400, 400,
+			400, 413, 415, 400, 400, 400,
 		]);
 		expect(verifySurveyTokenMock).not.toHaveBeenCalled();
 		expect(persistSurveyResponseMock).not.toHaveBeenCalled();
@@ -130,6 +180,7 @@ describe("POST /api/survey", () => {
 		const response = await POST(
 			jsonRequest({
 				surveyToken: "private-survey-token",
+				...requiredCorePayload,
 				priorityFeature: "other",
 				priorityOther: "Private product request",
 			}),
@@ -151,7 +202,10 @@ describe("POST /api/survey", () => {
 			reason: "invalid_secret",
 		});
 		const configurationResponse = await POST(
-			jsonRequest({ surveyToken: "private-survey-token" }),
+			jsonRequest({
+				surveyToken: "private-survey-token",
+				...requiredCorePayload,
+			}),
 		);
 
 		verifySurveyTokenMock.mockResolvedValueOnce({ ok: true, signupId: "signup-1" });
@@ -161,6 +215,7 @@ describe("POST /api/survey", () => {
 		const persistenceResponse = await POST(
 			jsonRequest({
 				surveyToken: "private-survey-token",
+				...requiredCorePayload,
 				priorityFeature: "other",
 				priorityOther: "Private answer",
 			}),

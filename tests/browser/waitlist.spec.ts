@@ -1,5 +1,30 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+
+async function selectSurveyRadio(dialog: Locator, name: string | RegExp) {
+	const radio = dialog.getByRole("radio", { name });
+	await radio.focus();
+	await radio.press("Space");
+}
+
+async function answerFirstThreeCoreQuestions(dialog: Locator) {
+	await selectSurveyRadio(dialog, "Android");
+	await expect(dialog.getByRole("heading", { name: /how many active pairs/i })).toBeFocused();
+	await selectSurveyRadio(dialog, "1–20");
+	await expect(dialog.getByRole("heading", { name: /what would you be willing to pay/i })).toBeFocused();
+	await selectSurveyRadio(dialog, "Up to ₱65/month");
+	await expect(dialog.getByRole("heading", { name: /which feature matters most/i })).toBeFocused();
+}
+
+async function documentHorizontalScrollAfterAttempt(page: Page) {
+	return page.evaluate(() => {
+		const currentY = window.scrollY;
+		window.scrollTo(document.documentElement.scrollWidth, currentY);
+		const horizontalScroll = window.scrollX;
+		window.scrollTo(0, currentY);
+		return horizontalScroll;
+	});
+}
 
 test.beforeEach(async ({ page }) => {
 	await page.addInitScript(() => {
@@ -52,7 +77,7 @@ test.beforeEach(async ({ page }) => {
 	});
 });
 
-test("page remains responsive and exposes the complete product story", async ({ page }) => {
+test("page remains responsive and exposes the complete product story", async ({ page }, testInfo) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
@@ -69,7 +94,7 @@ test("page remains responsive and exposes the complete product story", async ({ 
 	const productCta = page.locator('[data-product-waitlist-cta="true"]');
 	await expect(productCta.getByRole("heading", { name: /help shape what we build first/i })).toBeVisible();
 	await expect(productCta.getByText(/join the waitlist, then answer four quick questions/i)).toBeVisible();
-	const productCtaButton = productCta.getByRole("button", { name: /join the waitlist/i });
+	const productCtaButton = productCta.getByRole("button", { name: /help shape solesheet/i });
 	await expect(productCtaButton).toBeVisible();
 	const [productCtaBox, productCtaButtonBox, productCtaPosition] = await Promise.all([
 		productCta.boundingBox(),
@@ -79,6 +104,20 @@ test("page remains responsive and exposes the complete product story", async ({ 
 	expect(productCtaBox?.height).toBeLessThan(400);
 	expect(productCtaButtonBox?.height).toBeGreaterThanOrEqual(44);
 	expect(productCtaPosition).toBe("static");
+	const headerCta = page.locator("header").getByRole("button", {
+		name: /join the waitlist/i,
+	});
+	const headerLogo = page.locator('header img[alt="SoleSheet"]');
+	await expect(headerLogo).toBeVisible();
+	await expect(headerLogo).toHaveAttribute(
+		"src",
+		/solesheet-horizontal-on-light\.svg/,
+	);
+	if (testInfo.project.name.startsWith("mobile")) {
+		await expect(headerCta).toBeHidden();
+	} else {
+		await expect(headerCta).toBeVisible();
+	}
 	await expect(page.getByText(/sale recorded, stock updated, profit calculated/i)).toHaveCount(0);
 	const conversionOrder = await page.evaluate(() => {
 		const gallery = document.querySelector("#product [data-testid='planned-flow-figure']");
@@ -266,14 +305,26 @@ test("pricing comparison preserves the cumulative plan ladder on desktop and mob
   if (testInfo.project.name.startsWith("mobile")) {
     const disclosure = comparison.locator("details");
     await expect(disclosure).not.toHaveAttribute("open", "");
+		await expect(disclosure.locator("summary").getByText("＋")).toBeVisible();
+		await expect(disclosure.locator("summary").getByText("−")).toBeHidden();
     await disclosure.locator("summary").click();
     await expect(disclosure).toHaveAttribute("open", "");
+		await expect(disclosure.locator("summary").getByText("＋")).toBeHidden();
+		await expect(disclosure.locator("summary").getByText("−")).toBeVisible();
+		await expect(disclosure.locator("summary")).toContainText("Compare every feature");
+		await expect(
+			disclosure.getByRole("heading", { name: /compare every feature/i }),
+		).toHaveCount(0);
     await expect(comparison.getByText("Swipe to compare plans →")).toBeVisible();
 
     const scrollRegion = comparison.getByRole("region", { name: /feature comparison table.*swipe horizontally/i });
     await expect(scrollRegion).toBeVisible();
     expect(await scrollRegion.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
     await expect(scrollRegion.locator('th[scope="row"]').first()).toHaveClass(/\bsticky\b.*\bleft-0\b/);
+		await scrollRegion.evaluate((element) => {
+			element.scrollLeft = element.scrollWidth;
+		});
+		expect(await documentHorizontalScrollAfterAttempt(page)).toBe(0);
   } else {
     const table = comparison.locator('[data-pricing-comparison-table="true"]:visible');
     await expect(table).toHaveCount(1);
@@ -292,6 +343,43 @@ test("pricing comparison preserves the cumulative plan ladder on desktop and mob
   expect(writes).toEqual([]);
   expect(await context.cookies()).toEqual(cookiesBefore);
   expect(await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage } }))).toEqual(before);
+});
+
+test("narrow viewports contain the comparison and waitlist card", async ({ page }) => {
+	await page.goto("/");
+
+	for (const width of [320, 360, 393, 430]) {
+		await page.setViewportSize({ width, height: 844 });
+		const comparison = page.getByRole("region", { name: "Plan feature comparison" });
+		const disclosure = comparison.locator("details");
+		if (!(await disclosure.evaluate((element) => (element as HTMLDetailsElement).open))) {
+			await disclosure.locator("summary").click();
+		}
+
+		const geometry = await page.evaluate(() => {
+			const card = document.querySelector<HTMLElement>('[data-waitlist-card="true"]');
+			const comparisonRegion = document.querySelector<HTMLElement>(
+				'[aria-label="Plan feature comparison"]',
+			);
+			const cardBox = card?.getBoundingClientRect();
+			const comparisonBox = comparisonRegion?.getBoundingClientRect();
+			return {
+				cardLeft: cardBox?.left ?? -1,
+				cardRight: cardBox?.right ?? window.innerWidth + 1,
+				comparisonLeft: comparisonBox?.left ?? -1,
+				comparisonRight: comparisonBox?.right ?? window.innerWidth + 1,
+				viewportWidth: window.innerWidth,
+			};
+		});
+
+		expect(await documentHorizontalScrollAfterAttempt(page)).toBe(0);
+		expect(geometry.cardLeft).toBeGreaterThanOrEqual(0);
+		expect(geometry.cardRight).toBeLessThanOrEqual(geometry.viewportWidth);
+		expect(geometry.comparisonLeft).toBeGreaterThanOrEqual(0);
+		expect(geometry.comparisonRight).toBeLessThanOrEqual(
+			geometry.viewportWidth,
+		);
+	}
 });
 
 test("Growth Web Inventory is a responsive static proof with no product side effects", async ({ page, context }, testInfo) => {
@@ -378,6 +466,14 @@ test("active-pair references lead to one visible expanded definition", async ({ 
 
 	const faq = page.locator("#faq-active-pairs");
 	await expect(faq).toHaveAttribute("open", "");
+	const faqSummary = faq.locator("summary");
+	await expect(faqSummary.getByText("＋")).toBeHidden();
+	await expect(faqSummary.getByText("−")).toBeVisible();
+	await faqSummary.click();
+	await expect(faq).not.toHaveAttribute("open", "");
+	await expect(faqSummary.getByText("＋")).toBeVisible();
+	await expect(faqSummary.getByText("−")).toBeHidden();
+	await faqSummary.click();
 	await expect(faq.getByText(/available or reserved/i)).toBeVisible();
 	await expect(faq.getByText(/sold pairs do not count.*stay in sold history/i)).toBeVisible();
 	await expect(faq.getByText(/installment balance.*without making the pair active again/i)).toBeVisible();
@@ -391,7 +487,7 @@ test("active-pair references lead to one visible expanded definition", async ({ 
 	await expect(faq).toBeInViewport();
 });
 
-test("survey active-pair help opens separately and preserves its answers", async ({ page, context }) => {
+test("survey active-pair help expands inline and preserves its answers", async ({ page }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: /join the waitlist/i }).first().click();
 	await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
@@ -407,20 +503,18 @@ test("survey active-pair help opens separately and preserves its answers", async
 	await dialog.getByText("Android", { exact: true }).click();
 	const inventoryHeading = dialog.getByRole("heading", { name: /how many active pairs/i });
 	await expect(inventoryHeading).toBeFocused();
-	const help = dialog.getByRole("link", { name: /what pairs count as active/i });
+	const help = dialog.locator("summary", { hasText: "What pairs count as active?" });
 	await help.focus();
 	await expect(help).toBeFocused();
 	const helpBox = await help.boundingBox();
 	expect(helpBox?.height).toBeGreaterThanOrEqual(44);
 
-	const popupPromise = context.waitForEvent("page");
 	await help.click();
-	const popup = await popupPromise;
-	await popup.waitForLoadState();
-	await expect(popup).toHaveURL(/\/#faq-active-pairs$/);
-	await expect(popup.locator("#faq-active-pairs").getByText(/available or reserved/i)).toBeVisible();
+	await expect(
+		dialog.getByText(/available and reserved pairs count as active/i),
+	).toBeVisible();
+	await expect(page).toHaveURL(/\/$/);
 	await expect(dialog.getByText("Question 2 of 4")).toBeVisible();
-	await popup.close();
 
 	await dialog.getByRole("button", { name: "Back" }).click();
 	await expect(phoneHeading).toBeFocused();
@@ -449,20 +543,20 @@ test("waitlist signup accepts email only and identifies phone values as invalid"
   await expect(page.getByText(/part of the first look/i)).toHaveCount(0);
 });
 
-test("long founding offer selection does not create mobile page overflow", async ({ page }, testInfo) => {
+test("willingness-to-pay selection does not create mobile page overflow", async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.startsWith("mobile"));
 
   await page.goto("/");
   await page.getByRole("button", { name: /join the waitlist/i }).first().tap();
-  await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
-  await page.getByText(/i agree to the collection and use/i).tap();
-  await page.getByRole("button", { name: /join the waitlist/i }).last().tap();
-	for (let index = 0; index < 3; index += 1) {
-		await page.getByRole("button", { name: /skip question/i }).tap();
-	}
-	await page.getByRole("button", { name: /continue survey/i }).tap();
-	await page.getByRole("radio", { name: /founding starter/i }).locator("xpath=ancestor::label").tap();
-	await expect(page.getByRole("heading", { name: /how often do you sell through installments/i })).toBeFocused();
+	await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
+	await page.getByText(/i agree to the collection and use/i).tap();
+	await page.getByRole("button", { name: /join the waitlist/i }).last().tap();
+	const dialog = page.getByRole("dialog");
+	await selectSurveyRadio(dialog, "Android");
+	await selectSurveyRadio(dialog, "1–20");
+	await expect(dialog.getByRole("heading", { name: /what would you be willing to pay/i })).toBeFocused();
+	await dialog.getByRole("radio", { name: "Up to ₱349/month" }).locator("xpath=ancestor::label").tap();
+	await expect(dialog.getByRole("heading", { name: /which feature matters most/i })).toBeFocused();
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -470,7 +564,7 @@ test("long founding offer selection does not create mobile page overflow", async
   expect(overflow).toBeLessThanOrEqual(1);
 });
 
-test("progress-aware CTAs synchronize through the persisted survey flow", async ({ page }) => {
+test("progress-aware CTAs synchronize through the persisted survey flow", async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   const dataRequests: string[] = [];
   page.on("request", (request) => {
@@ -484,7 +578,10 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
     cookie: document.cookie,
   }));
   const joinCtas = page.getByRole("button", { name: /join the waitlist/i });
-	await expect(joinCtas).toHaveCount(5);
+	const expectedCtaCount = testInfo.project.name.startsWith("mobile") ? 4 : 5;
+	await expect(joinCtas).toHaveCount(expectedCtaCount - 2);
+	await expect(page.getByRole("button", { name: /help shape solesheet/i })).toBeVisible();
+	await expect(page.getByRole("button", { name: /get founding access/i })).toBeVisible();
   await joinCtas.first().click();
   await expect(page.getByRole("textbox", { name: "Email address" })).toBeFocused();
 
@@ -501,7 +598,7 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
 	await expect(page.getByText(/part of the first look/i)).toBeVisible();
 
   const surveyCtas = page.getByRole("button", { name: /answer the quick survey/i });
-	await expect(surveyCtas).toHaveCount(5);
+	await expect(surveyCtas).toHaveCount(expectedCtaCount);
   await expect(page.getByText(/you’re on the waitlist\. help shape what we build first/i)).toBeVisible();
 	await surveyCtas.last().click();
 	await expect(surveyDialog).toBeVisible();
@@ -536,11 +633,18 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
 	expect(questionFrames.every((frame) => frame.opacity === null)).toBe(true);
 	expect(questionFrames[0]?.transform).not.toBe("none");
   await page.getByRole("button", { name: /close survey/i }).click();
-  await surveyCtas.first().click();
+	await expect(surveyDialog).toBeHidden();
+	await surveyCtas.first().click();
+	await expect(surveyDialog).toBeVisible();
 	await expect(page.getByText("Question 2 of 4")).toBeVisible();
-	await page.getByRole("button", { name: /skip question/i }).click();
-	await page.getByRole("button", { name: /skip question/i }).click();
+	await selectSurveyRadio(surveyDialog, "1–20");
+	await selectSurveyRadio(surveyDialog, "Up to ₱65/month");
 	await expect(page.getByText("Question 4 of 4")).toBeVisible();
+	await selectSurveyRadio(surveyDialog, "Reports");
+	await expect(page.getByText("Optional question 1 of 5")).toBeVisible();
+	await expect(
+		surveyDialog.getByRole("button", { name: /finish this survey/i }),
+	).toBeVisible();
 	await page.getByRole("button", { name: /finish this survey/i }).click();
   await expect(page.getByText(/that’s the full flow/i)).toBeVisible({ timeout: 7_000 });
 	await expect(
@@ -549,8 +653,8 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
   await page.getByRole("button", { name: /close survey/i }).first().click();
   await expect(page.getByText(/thanks for helping shape solesheet/i)).toBeVisible();
   const completedCtas = page.getByRole("button", { name: /you’re all set — thank you/i });
-	await expect(completedCtas).toHaveCount(5);
-	for (let index = 0; index < 5; index += 1) {
+	await expect(completedCtas).toHaveCount(expectedCtaCount);
+	for (let index = 0; index < expectedCtaCount; index += 1) {
     await expect(completedCtas.nth(index)).toBeDisabled();
     await expect(completedCtas.nth(index)).toContainText("✓");
   }
@@ -565,7 +669,9 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
   expect(stored).toEqual(initialStored);
 
   await page.reload();
-	await expect(page.getByRole("button", { name: /join the waitlist/i })).toHaveCount(5);
+	await expect(page.getByRole("button", { name: /join the waitlist/i })).toHaveCount(expectedCtaCount - 2);
+	await expect(page.getByRole("button", { name: /help shape solesheet/i })).toBeVisible();
+	await expect(page.getByRole("button", { name: /get founding access/i })).toBeVisible();
 	await expect(page.getByRole("button", { name: /answer the quick survey/i })).toHaveCount(0);
 });
 
@@ -593,9 +699,7 @@ test("failed survey submission keeps answers and can be retried", async ({ page 
 
 	const dialog = page.getByRole("dialog");
 	await expect(dialog).toBeVisible();
-	await dialog.getByRole("button", { name: /skip question/i }).click();
-	await dialog.getByRole("button", { name: /skip question/i }).click();
-	await dialog.getByRole("button", { name: /skip question/i }).click();
+	await answerFirstThreeCoreQuestions(dialog);
 	await dialog
 		.getByRole("radio", { name: "Other" })
 		.locator("xpath=ancestor::label")
@@ -620,7 +724,9 @@ test("compact mobile survey keeps its footer attached with only its body scrolli
 	await page.goto("/");
 	await page.getByRole("button", { name: /join the waitlist/i }).first().click();
 	await page.getByRole("textbox", { name: "Email address" }).fill("seller@example.com");
-	await page.getByText(/i agree to the collection and use/i).click();
+	const consent = page.getByRole("checkbox", { name: /i agree to the collection/i });
+	await page.locator("label", { has: consent }).click();
+	await expect(consent).toBeChecked();
 	await page.locator("#waitlist").getByRole("button", { name: /join the waitlist/i }).click();
 
 	const dialog = page.getByRole("dialog");
@@ -664,8 +770,13 @@ test("compact mobile survey keeps its footer attached with only its body scrolli
 	};
 
 	await assertSheetGeometry(true);
-	await dialog.getByRole("button", { name: /skip question/i }).click();
-	await dialog.getByRole("button", { name: /skip question/i }).click();
+	await selectSurveyRadio(dialog, "Android");
+	await selectSurveyRadio(dialog, "1–20");
+	await selectSurveyRadio(dialog, "Up to ₱65/month");
+	await selectSurveyRadio(dialog, "Reports");
+	await expect(
+		dialog.getByRole("heading", { name: /what do you use to track inventory today/i }),
+	).toBeFocused();
 	await page.setViewportSize({ width: 360, height: 568 });
 	await dialog.getByRole("radio", { name: "Other" }).locator("xpath=ancestor::label").click();
 	const otherField = dialog.getByRole("textbox", { name: "Other inventory method" });
@@ -759,15 +870,12 @@ test("survey wizard persists keyboard and touch Other details without overflow",
 
 	const dialog = page.getByRole("dialog");
 	await expect(dialog).toBeVisible();
-	await activate(dialog.getByRole("button", { name: /skip question/i }));
-	await activate(dialog.getByRole("button", { name: /skip question/i }));
-	await expect(dialog.getByText("Question 3 of 4")).toBeVisible();
-
-	await activate(dialog.getByRole("radio", { name: "Other" }));
-	const inventoryOther = dialog.getByRole("textbox", { name: "Other inventory method" });
-	await expect(inventoryOther).toHaveAttribute("maxlength", "100");
-	await inventoryOther.fill("Airtable");
-	await activate(dialog.getByRole("button", { name: /next question/i }));
+	await activate(dialog.getByRole("radio", { name: "Android" }));
+	await expect(dialog.getByRole("heading", { name: /how many active pairs/i })).toBeFocused();
+	await activate(dialog.getByRole("radio", { name: "1–20" }));
+	await expect(dialog.getByRole("heading", { name: /what would you be willing to pay/i })).toBeFocused();
+	await activate(dialog.getByRole("radio", { name: "Up to ₱65/month" }));
+	await expect(dialog.getByText("Question 4 of 4")).toBeVisible();
 	await activate(dialog.getByRole("radio", { name: "Other" }));
 	const featureOther = dialog.getByRole("textbox", { name: "Other feature" });
 	await expect(featureOther).toHaveAttribute("maxlength", "300");
@@ -808,9 +916,16 @@ test("survey wizard persists keyboard and touch Other details without overflow",
 	expect(featureGeometry.textareaHeight).toBeGreaterThanOrEqual(110);
 	expect(featureGeometry.textareaHeight).toBeLessThanOrEqual(114);
 	await featureOther.fill("Supplier purchase tracking");
-	await activate(dialog.getByRole("button", { name: /continue survey/i }));
+	await activate(
+		dialog.getByRole("button", { name: /continue to optional questions/i }),
+	);
 
-	await activate(dialog.getByRole("radio", { name: "Free" }));
+	await expect(dialog.getByRole("heading", { name: /what do you use to track inventory today/i })).toBeFocused();
+	await activate(dialog.getByRole("radio", { name: "Other" }));
+	const inventoryOther = dialog.getByRole("textbox", { name: "Other inventory method" });
+	await expect(inventoryOther).toHaveAttribute("maxlength", "100");
+	await inventoryOther.fill("Airtable");
+	await activate(dialog.getByRole("button", { name: /next question/i }));
 	await expect(dialog.getByText("Optional question 2 of 5")).toBeVisible();
 	await activate(dialog.getByRole("radio", { name: "Often" }));
 	await expect(dialog.getByText("Optional question 3 of 5")).toBeVisible();
@@ -988,6 +1103,44 @@ test("planned flow leads with Quick Sale and selects the viewport-specific photo
   });
   expect(overflow.page).toBeLessThanOrEqual(1);
   expect(overflow.figure).toBeLessThanOrEqual(1);
+});
+
+test("planned flow warms only the matching responsive previews after Quick Sale loads", async ({ page }, testInfo) => {
+  const layout = testInfo.project.name.startsWith("mobile") ? "mobile" : "desktop";
+  const initialPath = `quick-sale-${layout}.webp`;
+  const requestedPaths: string[] = [];
+  const requestsBeforeInitialResponse: string[] = [];
+  let initialResponseReceived = false;
+
+  page.on("request", (request) => {
+    const filename = request.url().split("/").at(-1);
+    if (!filename?.endsWith(".webp") || !request.url().includes("/flow-mockups/")) return;
+    requestedPaths.push(filename);
+    if (filename !== initialPath && !initialResponseReceived) {
+      requestsBeforeInitialResponse.push(filename);
+    }
+  });
+  page.on("response", (response) => {
+    if (response.url().endsWith(initialPath)) initialResponseReceived = true;
+  });
+
+  await page.goto("/");
+  await expect.poll(() => initialResponseReceived).toBe(true);
+  expect(requestsBeforeInitialResponse).toEqual([]);
+
+  const expectedWarmedPaths = [
+    `quick-actions-${layout}.webp`,
+    `search-stock-${layout}.webp`,
+    `add-stock-${layout}.webp`,
+    `installments-${layout}.webp`,
+    `payments-${layout}.webp`,
+    `backup-${layout}.webp`,
+  ];
+  await expect.poll(() => requestedPaths.filter((path) => path !== initialPath).sort()).toEqual(
+    [...expectedWarmedPaths].sort(),
+  );
+  expect(requestedPaths).not.toContain(`quick-sale-${layout === "mobile" ? "desktop" : "mobile"}.webp`);
+  expect(requestedPaths).not.toContain(`quick-actions-${layout === "mobile" ? "desktop" : "mobile"}.webp`);
 });
 
 test("planned-flow selectors are keyboard-operable with reduced motion and forced colors", async ({ page }) => {

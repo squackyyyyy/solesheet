@@ -125,10 +125,10 @@ const displayedAnswerIds = {
 		Other: "other",
 	},
 	plan: {
-		Free: "free",
-		"Starter — ₱99/month": "starter_99",
-		"Growth — ₱349/month": "growth_349",
-		"Founding Starter — ₱65/month": "founding_starter_65",
+		"Free only": "free",
+		"Up to ₱65/month": "founding_starter_65",
+		"Up to ₱99/month": "starter_99",
+		"Up to ₱349/month": "growth_349",
 		"Not sure yet": "not_sure",
 	},
 	installments: {
@@ -253,12 +253,15 @@ export function createSurveySubmissionRequest(
 				typeof surveyAnswerValues.salesChannels
 			>,
 	);
+	if (!phoneType || !activeInventoryRange || !likelyPlan || !priorityFeature) {
+		throw new Error("Complete the four required survey questions.");
+	}
 
-	if (phoneType) request.phoneType = phoneType;
-	if (activeInventoryRange) request.activeInventoryRange = activeInventoryRange;
+	request.phoneType = phoneType;
+	request.activeInventoryRange = activeInventoryRange;
+	request.likelyPlan = likelyPlan;
+	request.priorityFeature = priorityFeature;
 	if (inventoryMethod) request.inventoryMethod = inventoryMethod;
-	if (priorityFeature) request.priorityFeature = priorityFeature;
-	if (likelyPlan) request.likelyPlan = likelyPlan;
 	if (installmentFrequency) request.installmentFrequency = installmentFrequency;
 	if (cloudBackupPreference) {
 		request.cloudBackupPreference = cloudBackupPreference;
@@ -320,6 +323,18 @@ export function validateSurveySubmission(
 		if (value[field] !== undefined && !isAllowedValue(value[field], allowed)) {
 			return { ok: false, message: "One or more survey answers are invalid." };
 		}
+	}
+	const requiredCoreFields = [
+		"phoneType",
+		"activeInventoryRange",
+		"likelyPlan",
+		"priorityFeature",
+	] as const;
+	if (requiredCoreFields.some((field) => value[field] === undefined)) {
+		return {
+			ok: false,
+			message: "Complete the four required survey questions.",
+		};
 	}
 
 	let salesChannels: SurveyAnswersPayload["salesChannels"];

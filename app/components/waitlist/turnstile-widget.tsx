@@ -145,7 +145,7 @@ export const TurnstileWidget = forwardRef<
 				id={TURNSTILE_WIDGET_ID}
 				ref={containerRef}
 				data-turnstile-widget="true"
-				className="w-full max-w-full"
+				className="min-w-0 w-full max-w-full overflow-hidden"
 			/>
 		</>
 	);

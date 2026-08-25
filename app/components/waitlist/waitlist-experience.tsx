@@ -49,11 +49,11 @@ const surveyQuestionGroups = {
 	core: [
 		{ key: "phone", kind: "single" },
 		{ key: "inventorySize", kind: "single" },
-		{ key: "currentTool", kind: "single-other" },
+		{ key: "plan", kind: "single" },
 		{ key: "priority", kind: "single-other" },
 	],
 	optional: [
-		{ key: "plan", kind: "single" },
+		{ key: "currentTool", kind: "single-other" },
 		{ key: "installments", kind: "single" },
 		{ key: "backup", kind: "single" },
 		{ key: "channels", kind: "multi" },
@@ -61,21 +61,27 @@ const surveyQuestionGroups = {
 	],
 } as const;
 
+function hasSurveyAnswer(answer: string | string[] | undefined) {
+	return Array.isArray(answer) ? answer.length > 0 : Boolean(answer);
+}
+
 type SurveyQuestionDescriptor =
 	(typeof surveyQuestionGroups)[SurveyGroup][number];
 
 export function WaitlistCta({
 	variant = "primary",
 	className,
+	initialLabel = "Join the waitlist",
 }: {
 	variant?: "primary" | "secondary" | "quiet";
 	className?: string;
+	initialLabel?: string;
 }) {
 	const { activateCta, journeyState } = useWaitlistJourney();
 	const isComplete = journeyState === "survey-complete";
 	const label =
 		journeyState === "not-joined"
-			? "Join the waitlist"
+			? initialLabel
 			: journeyState === "survey-incomplete"
 				? "Answer the quick survey"
 				: "You’re all set — thank you";
@@ -180,7 +186,9 @@ function SurveyQuestion({
 				<div>
 					{position.group === "core" && position.index === 0 ? (
 						<p className="mb-2 text-xs leading-5 text-black/60">
-							About 30 seconds. Choose an answer, or skip any question.
+							About 30 seconds. Complete four required answers, including what
+							you’d pay based on this demo. Your tracking method and the other
+							follow-ups are optional.
 						</p>
 					) : null}
 					<h3
@@ -268,15 +276,15 @@ function SurveyQuestion({
 						/>
 
 						{descriptor.key === "inventorySize" ? (
-							<a
-								href="/#faq-active-pairs"
-								target="_blank"
-								rel="noreferrer"
-								className="standard-link inline-flex min-h-11 w-fit items-center rounded-sm text-xs"
-							>
-								What pairs count as active?
-								<span className="sr-only"> (opens in a new tab)</span>
-							</a>
+							<details className="group w-fit max-w-full text-xs">
+								<summary className="inline-flex min-h-11 cursor-pointer list-none items-center rounded-sm font-bold text-blue-700 underline decoration-blue-400/80 underline-offset-4 outline-none hover:text-blue-800 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+									What pairs count as active?
+								</summary>
+								<p className="max-w-md rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 leading-5 text-blue-950">
+									Available and Reserved pairs count as active. Sold pairs do not
+									count toward your plan limit.
+								</p>
+							</details>
 						) : null}
 
 						{descriptor.key === "currentTool" &&
@@ -354,7 +362,8 @@ function SurveyFooter({
 	const group = surveyQuestionGroups[position.group];
 	const descriptor = group[position.index] ?? group[0];
 	const answer = answers[descriptor.key];
-	const hasAnswer = Array.isArray(answer) ? answer.length > 0 : Boolean(answer);
+	const hasAnswer = hasSurveyAnswer(answer);
+	const isCore = position.group === "core";
 	const canGoBack = position.group === "optional" || position.index > 0;
 	const isCoreFinal = position.group === "core" && position.index === group.length - 1;
 	const isOptionalFinal =
@@ -371,12 +380,21 @@ function SurveyFooter({
 							<span aria-hidden="true">←</span>
 							Back
 						</Button>
-						<Button onPress={onAdvance} className="w-full">
-							Continue survey
+						<Button
+							onPress={onAdvance}
+							isDisabled={!hasAnswer}
+							className="w-full"
+						>
+							Continue to optional questions
 							<span aria-hidden="true">→</span>
 						</Button>
 					</div>
-					<Button variant="quiet" onPress={onComplete} className="w-full">
+					<Button
+						variant="quiet"
+						onPress={onComplete}
+						isDisabled={!hasAnswer}
+						className="w-full"
+					>
 						Finish this survey
 					</Button>
 				</div>
@@ -401,11 +419,16 @@ function SurveyFooter({
 							</Button>
 						) : null}
 						<Button
-							variant={needsExplicitAdvance ? "primary" : "quiet"}
+							variant={needsExplicitAdvance || isCore ? "primary" : "quiet"}
 							onPress={onAdvance}
+							isDisabled={isCore && !hasAnswer}
 							className="w-full"
 						>
-							{hasAnswer ? "Next question" : "Skip question"}
+							{hasAnswer
+								? "Next question"
+								: isCore
+									? "Select an answer"
+									: "Skip question"}
 							<span aria-hidden="true">→</span>
 						</Button>
 					</div>
@@ -417,7 +440,9 @@ function SurveyFooter({
 				</div>
 			)}
 			<p className="mt-2 text-center text-[11px] text-black/65">
-				Every question is optional.
+				{isCore
+					? "Four core answers are required to submit. Follow-ups are optional."
+					: "These follow-up questions are optional."}
 			</p>
 		</div>
 	);
@@ -521,6 +546,15 @@ export function WaitlistExperience() {
 
 	function advanceQuestion() {
 		const group = surveyQuestionGroups[surveyPosition.group];
+		const descriptor = group[surveyPosition.index] ?? group[0];
+		if (
+			surveyPosition.group === "core" &&
+			!hasSurveyAnswer(answers[descriptor.key])
+		) {
+			setSurveyError("Select an answer before continuing.");
+			return;
+		}
+		setSurveyError("");
 		if (
 			surveyPosition.group === "core" &&
 			surveyPosition.index === group.length - 1
@@ -554,6 +588,14 @@ export function WaitlistExperience() {
 		cancelSurveyAdvance();
 		if (surveySubmissionState === "pending") return;
 		setSurveyError("");
+		const missingCoreIndex = surveyQuestionGroups.core.findIndex(
+			({ key }) => !hasSurveyAnswer(answers[key]),
+		);
+		if (missingCoreIndex !== -1) {
+			setSurveyError("Answer this required question before finishing the survey.");
+			moveTo({ group: "core", index: missingCoreIndex }, "backward");
+			return;
+		}
 		if (!surveyToken) {
 			setSurveyError(
 				"Your survey session is no longer available. Reload the page and rejoin the waitlist to try again.",
@@ -622,16 +664,21 @@ export function WaitlistExperience() {
 	function selectSingleAnswer(key: SingleAnswerKey, value: string) {
 		cancelSurveyAdvance();
 		setSingleAnswer(key, value);
+		setSurveyError("");
 
 		const group = surveyQuestionGroups[surveyPosition.group];
 		const descriptor = group[surveyPosition.index] as SurveyQuestionDescriptor;
-		const canContinue =
-			surveyPosition.group === "core" || surveyPosition.index < group.length - 1;
-		if (
-			descriptor.key !== key ||
-			value === OTHER_OPTION ||
-			!canContinue
-		) {
+		const nextPosition: SurveyPosition | null =
+			surveyPosition.group === "core" &&
+			surveyPosition.index === group.length - 1
+				? { group: "optional", index: 0 }
+				: surveyPosition.index < group.length - 1
+					? {
+							group: surveyPosition.group,
+							index: surveyPosition.index + 1,
+						}
+					: null;
+		if (descriptor.key !== key || value === OTHER_OPTION || !nextPosition) {
 			return;
 		}
 
@@ -647,10 +694,7 @@ export function WaitlistExperience() {
 					if (current.group !== origin.group || current.index !== origin.index) {
 						return current;
 					}
-					return origin.group === "core" &&
-						origin.index === surveyQuestionGroups.core.length - 1
-						? { group: "optional", index: 0 }
-						: { group: origin.group, index: origin.index + 1 };
+					return nextPosition;
 				});
 			},
 			reduceMotion ? 0 : AUTO_ADVANCE_DELAY,
@@ -760,7 +804,7 @@ export function WaitlistExperience() {
 		<section
 			id="waitlist"
 			aria-labelledby="waitlist-title"
-			className="relative overflow-hidden rounded-[2.5rem] bg-[var(--brand-ink)] text-white"
+			className="relative min-w-0 max-w-full overflow-hidden rounded-[2.5rem] bg-[var(--brand-ink)] text-white"
 		>
 			<div
 				aria-hidden="true"
@@ -770,8 +814,8 @@ export function WaitlistExperience() {
 				aria-hidden="true"
 				className="absolute -bottom-24 -left-20 size-72 rounded-full bg-[#22c55e]/30 blur-3xl"
 			/>
-			<div className="relative grid gap-10 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[.82fr_1fr] lg:gap-16 lg:px-12 lg:py-14">
-				<div className="self-center">
+			<div className="relative grid min-w-0 max-w-full gap-10 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,.82fr)_minmax(0,1fr)] lg:gap-16 lg:px-12 lg:py-14">
+				<div className="min-w-0 self-center">
 					<p className="text-xs font-bold uppercase tracking-[0.28em] text-[#86efac]">
 						Founding seller list
 					</p>
@@ -807,7 +851,10 @@ export function WaitlistExperience() {
 					</div>
 				</div>
 
-				<div className="rounded-[2rem] bg-[var(--brand-soft)] p-5 text-[var(--brand-ink)] shadow-[0_30px_100px_rgba(0,0,0,.28)] sm:p-7">
+				<div
+					data-waitlist-card="true"
+					className="min-w-0 max-w-full rounded-[2rem] bg-[var(--brand-soft)] p-5 text-[var(--brand-ink)] shadow-[0_30px_100px_rgba(0,0,0,.28)] sm:p-7"
+				>
 					{journeyState !== "not-joined" ? (
 						<div
 							aria-live="polite"
@@ -840,7 +887,7 @@ export function WaitlistExperience() {
 						<Form
 							action="#waitlist"
 							onSubmit={submit}
-							className="grid gap-5"
+							className="grid min-w-0 max-w-full gap-5"
 							validationBehavior="aria"
 						>
 							<div>
@@ -975,7 +1022,7 @@ export function WaitlistExperience() {
 								)}
 							</Button>
 							<p className="text-center text-[11px] leading-5 text-black/65">
-								No payment today. Survey questions are optional.
+								No payment today. Survey participation is optional.
 							</p>
 						</Form>
 					)}
@@ -991,7 +1038,7 @@ export function WaitlistExperience() {
 				description={
 					isSurveyOutcomeVisible
 						? "Your perspective helps keep the first release focused on real reseller work."
-						: "Answer what you can. You can close this anytime and return while this page stays open."
+						: "Complete four required questions, including what you’d pay based on this demo. Your tracking method and four other follow-ups are optional. You can close this anytime and return while this page stays open."
 				}
 				isOpen={isSurveyOpen}
 				onOpenChange={setSurveyDialogOpen}
