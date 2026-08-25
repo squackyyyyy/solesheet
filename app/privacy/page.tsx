@@ -50,12 +50,23 @@ const noticeSections = [
 				</p>
 				<p>
 					Waitlist and finished survey submissions are processed by Cloudflare
-					Workers and stored in Cloudflare D1. We also use Cloudflare Turnstile to protect the form from
-					spam and automated misuse. For that security check, Cloudflare may process
-					limited technical information such as your IP address, browser and device
-					characteristics, requested page, referring page, request time, and the
-					verification result. SoleSheet does not store the Turnstile response token
-					or Cloudflare’s verification response in D1.
+					Workers and stored in Cloudflare D1. We also use Cloudflare Turnstile
+					to protect the form from spam and automated misuse. For that security
+					check, Cloudflare may process limited technical information such as your
+					IP address, browser and device characteristics, requested page,
+					referring page, request time, and the verification result. SoleSheet does
+					not store the Turnstile response token or Cloudflare’s verification
+					response in D1.
+				</p>
+				<p>
+					SoleSheet uses Cloudflare Web Analytics to measure aggregate visits,
+					page views and paths, referring websites, country, device class such as
+					mobile, tablet, or desktop, browser, operating system, and website
+					performance such as Core Web Vitals. This configuration does not use
+					analytics cookies. We do not use it to collect your email, name, survey
+					answers, exact device model, custom behavioral events, or session
+					recordings, and we do not join its measurements to your waitlist or
+					survey submission.
 				</p>
 			</>
 		),
@@ -75,6 +86,11 @@ const noticeSections = [
 						to understand waitlist demand and prioritize product, platform, and
 						pricing decisions using survey responses, individual signups, or
 						aggregated counts;
+					</li>
+					<li>
+						to understand how people find and use our public pages, improve website
+						performance and device compatibility, and estimate waitlist conversion
+						using separate aggregate visit and signup counts;
 					</li>
 					<li>to arrange an optional follow-up interview;</li>
 					<li>to prevent duplicate submissions, spam, fraud, and misuse; and</li>
@@ -117,8 +133,10 @@ const noticeSections = [
 				<p>We may share information only with:</p>
 				<ul>
 					<li>
-						Cloudflare, which hosts the Worker, stores waitlist and finished survey submissions in D1,
-						and provides Turnstile to help secure the form and operate the website;
+						Cloudflare, which hosts the Worker, stores waitlist and finished survey
+						submissions in D1, provides Turnstile to help secure the form, and
+						provides cookie-free Web Analytics for aggregate traffic and website
+						performance reporting;
 					</li>
 					<li>
 						professional advisers when reasonably necessary to obtain legal,
@@ -302,8 +320,9 @@ export default function PrivacyPage() {
 					</h2>
 					<p className="mt-3 max-w-3xl text-sm leading-7 text-white/72">
 						Waitlist details and deliberately finished surveys are stored with
-						Cloudflare D1. Survey participation is optional; finishing requires four core
-						answers, while follow-ups remain optional. We do not sell personal information,
+						Cloudflare D1. We also use cookie-free aggregate website analytics.
+						Survey participation is optional; finishing requires four core answers,
+						while follow-ups remain optional. We do not sell personal information,
 						and you may withdraw consent or ask us to delete your information.
 					</p>
 				</section>

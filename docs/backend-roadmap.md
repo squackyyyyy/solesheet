@@ -51,8 +51,8 @@ If the visitor closes the survey or browser after the first database confirmatio
 | 0 | `migrate-landing-site-to-zero-cost-hosting` | Establish the Cloudflare Worker deployment foundation | Complete |
 | 1 | `persist-waitlist-signups-with-d1` | Store validated waitlist signups and consent records | Complete |
 | 2 | `persist-validation-survey-with-d1` | Store completed surveys linked to their waitlist signup | Complete |
-| 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Implemented; pending acceptance |
-| 4 | `add-cloudflare-traffic-analytics` | Measure visits and page views without writing each visit to D1 | Next after Phase 3 acceptance |
+| 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Complete |
+| 4 | `add-cloudflare-traffic-analytics` | Prepare visits and page-view measurement without writing each visit to D1 | In implementation; collection deferred until `solesheet.app` |
 | 5 | To be proposed only if needed | Add protected reporting or lightweight administration | Optional |
 
 ## Phase 0: Cloudflare hosting foundation (complete)
@@ -165,7 +165,7 @@ Completion criteria:
 - Failed requests retain the answers for retry while the page remains open.
 - The database does not contain survey records without a valid signup relationship.
 
-## Phase 3: Harden and operate collected data (implemented; pending acceptance)
+## Phase 3: Harden and operate collected data (complete)
 
 Change: `harden-and-operate-waitlist-data`
 
@@ -189,16 +189,23 @@ Completion criteria:
 - Operators can diagnose failures without exposing form contents in logs.
 - The privacy policy and actual retention/deletion behavior agree.
 
-## Phase 4: Add Cloudflare traffic analytics
+## Phase 4: Add Cloudflare traffic analytics (analytics-ready; activation deferred)
 
 Proposed change: `add-cloudflare-traffic-analytics`
 
 Goal: answer questions such as how many people visited, where visits came from, and which public pages were viewed after the forms can reliably store conversions.
 
+The application integration and present-tense privacy disclosure can be
+implemented now, but the public analytics token remains unset and the current
+`workers.dev` hostname records no Web Analytics measurements. Dashboard setup
+and collection begin only after `solesheet.app` is purchased, connected, and
+approved as the production domain.
+
 Planned scope:
 
-- Enable Cloudflare Web Analytics for the public site.
-- Confirm the analytics setup works on the current production provider URL and remains ready for a future custom domain.
+- Add a dormant, hostname-gated Cloudflare Web Analytics integration to the public site.
+- Confirm the current provider URL, localhost, and previews load no beacon while the token is absent or the hostname is unmatched.
+- Document the future `solesheet.app` dashboard, build-variable, activation, verification, and rollback procedure.
 - Document where to view traffic reports.
 - Define which measurements matter initially, such as visits, page views, referrers, countries, devices, and waitlist conversion rate.
 - Review privacy-page wording and cookie implications for the chosen analytics configuration.
@@ -208,7 +215,8 @@ Why this is separate from D1: Cloudflare already provides a purpose-built traffi
 
 Completion criteria:
 
-- Production visits appear in the Cloudflare analytics dashboard.
+- The analytics-ready application emits no beacon on the current provider URL while the public token is absent.
+- After separately authorized `solesheet.app` activation, production visits appear in the Cloudflare analytics dashboard.
 - The analytics configuration does not collect more information than the privacy policy describes.
 - Visit counts can be compared with stored D1 signup counts to calculate waitlist conversion.
 - No individual visit is manually inserted into D1.
@@ -271,13 +279,11 @@ This is deliberately deferred. A public waitlist does not initially need a custo
 | Normalized survey sales-channel table | Preserves relational integrity and supports multi-select reporting without JSON parsing |
 | Monthly 12-month retention look-ahead | Keeps the manual process small while removing records before they exceed the published inactivity limit |
 | Workers Logs instead of D1 telemetry rows | Supports failure diagnosis without adding database writes or another personal-data table |
-
-## Open question for a future phase
-
-- Which production domain will be used in privacy disclosures and Cloudflare analytics configuration.
+| Dormant analytics until `solesheet.app` | Allows the integration and disclosure to be reviewed now without counting provider, preview, or local traffic before the custom domain launches |
 
 ## Recommended next action
 
-Review and accept `harden-and-operate-waitlist-data`. After it is synced and
-archived, propose `add-cloudflare-traffic-analytics` as the next independent
-backend phase.
+Implement and review `add-cloudflare-traffic-analytics` with its public token
+unset. After the dormant integration is accepted, sync and archive the change.
+Domain purchase, attachment, and analytics activation remain a future
+owner-authorized production operation.

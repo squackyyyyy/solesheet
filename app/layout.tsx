@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { CloudflareWebAnalytics } from "@/app/components/cloudflare-web-analytics";
 import "./globals.css";
 
 const siteUrl = new URL(
@@ -76,7 +77,13 @@ export default function RootLayout({
 			lang="en"
 			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
 		>
-			<body className="min-h-full flex flex-col">{children}</body>
+			<body className="min-h-full flex flex-col">
+				{children}
+				<CloudflareWebAnalytics
+					siteUrl={siteUrl.href}
+					token={process.env.NEXT_PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN}
+				/>
+			</body>
 		</html>
 	);
 }
