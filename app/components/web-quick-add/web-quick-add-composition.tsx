@@ -188,3 +188,16 @@ export function WebQuickAddComposition({ capture }: { capture: WebQuickAddCaptur
     </main>
   );
 }
+
+export function WebInventorySocialProof() {
+  return (
+    <div data-social-web-inventory-proof="true" className="relative mx-auto h-[690px] w-full overflow-hidden">
+      <div className="absolute left-1/2 top-5 w-[930px] origin-top-left [transform:translateX(-50%)_scale(.81)]">
+        <BrowserWorkspace />
+      </div>
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-200 bg-white/95 px-6 py-4 text-[16px] font-black text-emerald-900 shadow-xl">
+        Planned for the Growth plan
+      </div>
+    </div>
+  );
+}

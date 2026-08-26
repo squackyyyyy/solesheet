@@ -4,12 +4,14 @@ import {
   DeviceFrame,
   mockupMeta,
 } from "@/app/components/mockups/app-screens";
+import { FlowSocialProof } from "@/app/components/flow-mockups/flow-mockup-composition";
 import {
   PaymentProgress,
   PreviewDisclosure,
   ProofInventoryRow,
   ProofMetric,
 } from "@/app/components/mockups/product-proof-views";
+import { WebInventorySocialProof } from "@/app/components/web-quick-add/web-quick-add-composition";
 import {
   socialProductContent,
   type SocialAssetDefinition,
@@ -110,6 +112,36 @@ function PaymentState({ after = false }: { after?: boolean }) {
   );
 }
 
+function SurveyCallToAction() {
+  return (
+    <div className="relative overflow-hidden rounded-[42px] bg-emerald-950 px-10 py-10 text-white shadow-[0_30px_80px_rgba(6,78,59,.24)]">
+      <div className="absolute -right-20 -top-24 size-72 rounded-full bg-[#e8ff9f]/12 blur-2xl" />
+      <div className="relative">
+        <div className="flex items-center justify-between gap-6">
+          <span className="rounded-full bg-[#e8ff9f] px-5 py-2 text-[14px] font-black uppercase tracking-[.14em] text-emerald-950">Quick survey</span>
+          <span className="text-[16px] font-bold text-emerald-100">About 2 minutes</span>
+        </div>
+        <p className="mt-9 max-w-[760px] text-[39px] font-black leading-[1.02] tracking-[-.045em]">What would make stock, sales, and installment tracking easier for you?</p>
+        <div className="mt-9 grid grid-cols-3 gap-4">
+          {["Stock", "Sales", "Payments"].map((label, index) => (
+            <div key={label} className="rounded-[24px] border border-white/10 bg-white/8 px-5 py-6">
+              <p className="text-[13px] font-black text-[#e8ff9f]">0{index + 1}</p>
+              <p className="mt-3 text-[20px] font-black">{label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 flex items-center justify-between gap-6 rounded-[26px] bg-white px-7 py-6 text-stone-950">
+          <div>
+            <p className="text-[22px] font-black">Answer the quick survey</p>
+            <p className="mt-1 text-[15px] font-medium text-stone-500">Survey link in the post caption</p>
+          </div>
+          <span className="grid size-14 shrink-0 place-items-center rounded-full bg-emerald-700 text-[28px] font-black text-white">→</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MainProof({ variant }: { variant: string }) {
   switch (variant) {
     case "quick-problem":
@@ -157,17 +189,37 @@ function MainProof({ variant }: { variant: string }) {
           <PaymentState after />
         </div>
       );
+    case "feature-quick-actions":
+      return <FlowSocialProof feature="quick-actions" />;
+    case "feature-search-stock":
+      return <FlowSocialProof feature="search-stock" />;
+    case "feature-add-stock":
+      return <FlowSocialProof feature="add-stock" />;
+    case "feature-quick-sale":
+      return <FlowSocialProof feature="quick-sale" />;
+    case "feature-installments":
+      return <FlowSocialProof feature="installments" />;
+    case "feature-payments":
+      return <FlowSocialProof feature="payments" />;
+    case "feature-backup":
+      return <FlowSocialProof feature="backup" />;
+    case "feature-web-inventory":
+      return <WebInventorySocialProof />;
+    case "survey-cta":
+      return <SurveyCallToAction />;
     default:
       return null;
   }
 }
 
 function LinkPreview({ asset }: { asset: SocialAssetDefinition }) {
+  const isLongHeadline = asset.headline.length > 40;
+
   return (
     <div className="flex h-full items-center justify-between gap-12 px-[76px] py-[58px]">
       <div className="w-[650px]">
         <BrandBand />
-        <p className="mt-12 text-[64px] font-black leading-[.94] tracking-[-0.065em] text-stone-950">{asset.headline}</p>
+        <p className={`mt-12 ${isLongHeadline ? "text-[56px]" : "text-[64px]"} font-black leading-[.94] tracking-[-0.065em] text-stone-950`}>{asset.headline}</p>
         <p className="mt-6 text-[22px] leading-8 text-stone-600">{asset.subhead}</p>
         <p className="mt-7 text-[17px] font-bold uppercase tracking-[.14em] text-emerald-800">{asset.caption}</p>
       </div>

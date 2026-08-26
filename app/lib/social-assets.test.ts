@@ -10,13 +10,15 @@ function pngDimensions(filename: string) {
 }
 
 describe("social asset registry", () => {
-  it("defines eleven unique, stable outputs in the approved matrix", () => {
-    expect(socialAssets).toHaveLength(11);
-    expect(new Set(socialAssets.map((asset) => asset.id)).size).toBe(11);
-    expect(new Set(socialAssets.map((asset) => asset.filename)).size).toBe(11);
-    expect(socialAssets.filter((asset) => asset.width === 1080 && asset.height === 1350)).toHaveLength(8);
+  it("defines twenty-one unique, stable outputs in the approved matrix", () => {
+    expect(socialAssets).toHaveLength(21);
+    expect(new Set(socialAssets.map((asset) => asset.id)).size).toBe(21);
+    expect(new Set(socialAssets.map((asset) => asset.filename)).size).toBe(21);
+    expect(socialAssets.filter((asset) => asset.width === 1080 && asset.height === 1350)).toHaveLength(17);
     expect(socialAssets.filter((asset) => asset.width === 1080 && asset.height === 1920)).toHaveLength(2);
-    expect(socialAssets.filter((asset) => asset.width === 1200 && asset.height === 630)).toHaveLength(1);
+    expect(socialAssets.filter((asset) => asset.width === 1200 && asset.height === 630)).toHaveLength(2);
+    expect(socialAssets.filter((asset) => asset.group === "feature-preview")).toHaveLength(8);
+    expect(socialAssets.filter((asset) => asset.group === "survey")).toHaveLength(1);
   });
 
   it("keeps the approved preview disclosure and shared product values", () => {
@@ -31,6 +33,9 @@ describe("social asset registry", () => {
     expect(socialAssets.every((asset) => asset.headline && asset.caption)).toBe(true);
     expect(socialAssets.find((asset) => asset.group === "link-preview")?.filename).toBe(
       "solesheet-link-preview.png",
+    );
+    expect(socialAssets.find((asset) => asset.id === "solesheet-link-preview-v2")?.headline).toBe(
+      "Stop chasing stock across notes, sheets, and chats.",
     );
   });
 

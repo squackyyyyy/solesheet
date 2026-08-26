@@ -4,11 +4,21 @@ import path from "node:path";
 
 const origin = process.env.SHOETRACK_SOCIAL_ORIGIN || "http://127.0.0.1:3200";
 const outputDir = path.resolve("artifacts/social");
-const openGraphAssetId = "solesheet-link-preview";
+const openGraphAssetId = "solesheet-link-preview-v2";
 const openGraphOutputPath = path.resolve("app/opengraph-image.png");
 const registry = JSON.parse(
   await readFile(new URL("../app/lib/social-assets.json", import.meta.url), "utf8"),
 );
+const requestedIds = process.argv.slice(2);
+const requestedAssets = requestedIds.length
+  ? registry.filter((asset) => requestedIds.includes(asset.id))
+  : registry;
+
+if (requestedIds.length && requestedAssets.length !== new Set(requestedIds).size) {
+  const knownIds = new Set(registry.map((asset) => asset.id));
+  const unknownIds = [...new Set(requestedIds)].filter((id) => !knownIds.has(id));
+  throw new Error(`Unknown social asset id${unknownIds.length === 1 ? "" : "s"}: ${unknownIds.join(", ")}`);
+}
 
 function pngDimensions(buffer) {
   if (buffer.toString("ascii", 1, 4) !== "PNG") throw new Error("Capture is not a PNG");
@@ -19,7 +29,7 @@ await mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 
 try {
-  for (const asset of registry) {
+  for (const asset of requestedAssets) {
     const page = await browser.newPage({
       viewport: { width: asset.width, height: asset.height },
       deviceScaleFactor: 1,
@@ -48,7 +58,7 @@ try {
   const manifest = {
     generatedBy: "bun run assets:social",
     disclosure: "Product preview",
-    postingOrder: ["quick-log", "installment", "link-preview"],
+    postingOrder: ["feature-preview", "survey", "quick-log", "installment", "link-preview"],
     openGraphImage: {
       sourceId: openGraphAssetId,
       output: path.relative(process.cwd(), openGraphOutputPath),

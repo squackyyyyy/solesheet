@@ -2,10 +2,16 @@
   "generatedBy": "bun run assets:social",
   "disclosure": "Product preview",
   "postingOrder": [
+    "feature-preview",
+    "survey",
     "quick-log",
     "installment",
     "link-preview"
   ],
+  "openGraphImage": {
+    "sourceId": "solesheet-link-preview-v2",
+    "output": "app/opengraph-image.png"
+  },
   "assets": [
     {
       "id": "quick-log-feed-01",
@@ -88,6 +94,96 @@
       "caption": "₱5,500 collected of ₱6,500"
     },
     {
+      "id": "feature-quick-actions-feed",
+      "filename": "feature-quick-actions-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "feature-preview",
+      "sequence": 1,
+      "headline": "One button. Three shortcuts.",
+      "caption": "Quick Log keeps your next action within reach."
+    },
+    {
+      "id": "feature-search-stock-feed",
+      "filename": "feature-search-stock-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "feature-preview",
+      "sequence": 2,
+      "headline": "Find the exact pair, quickly.",
+      "caption": "See the exact variant and its current status."
+    },
+    {
+      "id": "feature-add-stock-feed",
+      "filename": "feature-add-stock-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "feature-preview",
+      "sequence": 3,
+      "headline": "Add stock without the admin.",
+      "caption": "Model, size, colorway, and cost are enough to begin."
+    },
+    {
+      "id": "feature-quick-sale-feed",
+      "filename": "feature-quick-sale-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "feature-preview",
+      "sequence": 4,
+      "headline": "Save one sale. Update everything.",
+      "caption": "One paid sale · Three connected updates."
+    },
+    {
+      "id": "feature-installments-feed",
+      "filename": "feature-installments-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "feature-preview",
+      "sequence": 5,
+      "headline": "Set terms only when needed.",
+      "caption": "Down payment, starting balance, and due date stay together."
+    },
+    {
+      "id": "feature-payments-feed",
+      "filename": "feature-payments-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "feature-preview",
+      "sequence": 6,
+      "headline": "Record a payment. See balances move.",
+      "caption": "Every payment updates the connected totals."
+    },
+    {
+      "id": "feature-backup-feed",
+      "filename": "feature-backup-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "feature-preview",
+      "sequence": 7,
+      "headline": "Local today. Backup when ready.",
+      "caption": "Clear about what works today and what is planned."
+    },
+    {
+      "id": "feature-web-inventory-feed",
+      "filename": "feature-web-inventory-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "feature-preview",
+      "sequence": 8,
+      "headline": "Your stockroom. One clear table.",
+      "caption": "Web Inventory is planned for the Growth plan."
+    },
+    {
+      "id": "survey-cta-feed",
+      "filename": "survey-cta-feed.png",
+      "width": 1080,
+      "height": 1350,
+      "group": "survey",
+      "sequence": 9,
+      "headline": "Help shape SoleSheet.",
+      "caption": "Quick survey · Built for Philippine shoe resellers."
+    },
+    {
       "id": "quick-log-story",
       "filename": "quick-log-story.png",
       "width": 1080,
@@ -116,6 +212,16 @@
       "sequence": 1,
       "headline": "Save once. See your stockroom update.",
       "caption": "SoleSheet · Upcoming product"
+    },
+    {
+      "id": "solesheet-link-preview-v2",
+      "filename": "solesheet-link-preview-v2.png",
+      "width": 1200,
+      "height": 630,
+      "group": "link-preview",
+      "sequence": 2,
+      "headline": "Stop chasing stock across notes, sheets, and chats.",
+      "caption": "SoleSheet · Upcoming for Philippine shoe resellers"
     }
   ]
 }

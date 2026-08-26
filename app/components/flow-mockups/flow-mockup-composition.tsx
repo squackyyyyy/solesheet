@@ -329,3 +329,21 @@ function Board({ capture }: { capture: FlowMockupCapture }) {
 export function FlowMockupComposition({ capture }: { capture: FlowMockupCapture }) {
   return <main data-capture-ready="true" data-asset-id={capture.captureId} className="overflow-hidden font-sans antialiased" style={{ width: capture.sourceWidth, height: capture.sourceHeight }}><Board capture={capture} /></main>;
 }
+
+export function FlowSocialProof({ feature }: { feature: FlowMockupId }) {
+  const item = content[feature];
+
+  return (
+    <div data-social-flow-proof={feature} className="relative mx-auto h-[720px] w-full overflow-hidden">
+      <div className="absolute left-1/2 top-0 origin-top-left [transform:translateX(-50%)_scale(.67)]">
+        <Phone mobile>{item.screen(true)}</Phone>
+      </div>
+      {feature === "quick-sale" ? (
+        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full border border-emerald-200 bg-white/95 px-6 py-4 text-[16px] font-black text-emerald-900 shadow-xl">
+          <span className="grid size-8 place-items-center rounded-full bg-emerald-700 text-white">✓</span>
+          Stock and profit update together
+        </div>
+      ) : null}
+    </div>
+  );
+}

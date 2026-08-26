@@ -13,14 +13,16 @@ export type SocialAssetSnapshot =
   | "quick-before"
   | "quick-after"
   | "payment-before"
-  | "payment-after";
+  | "payment-after"
+  | "feature-preview"
+  | "survey";
 
 export type SocialAssetDefinition = {
   id: string;
   filename: string;
   width: number;
   height: number;
-  group: "quick-log" | "installment" | "link-preview";
+  group: "quick-log" | "installment" | "feature-preview" | "survey" | "link-preview";
   sequence: number;
   variant: string;
   headline: string;
