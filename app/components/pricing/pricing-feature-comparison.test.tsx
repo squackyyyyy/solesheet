@@ -42,7 +42,9 @@ describe("PricingFeatureComparison", () => {
     expect(disclosure).not.toBeNull();
     expect(disclosure).not.toHaveAttribute("open");
     expect(within(disclosure!).getByText("Swipe to compare plans →")).toBeInTheDocument();
-    expect(within(disclosure!).getByRole("region", { name: /feature comparison table.*swipe horizontally/i })).toHaveAttribute("tabindex", "0");
+    const scrollRegion = within(disclosure!).getByRole("region", { name: /feature comparison table.*swipe horizontally/i });
+    expect(scrollRegion).toHaveAttribute("tabindex", "0");
+    expect(scrollRegion).toHaveClass("[contain:layout]");
     expect(within(disclosure!).queryByRole("heading", { name: /compare every feature/i })).not.toBeInTheDocument();
 
     const summary = within(disclosure!).getByText("Compare every feature", { exact: true }).closest("summary");

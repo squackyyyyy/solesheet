@@ -231,9 +231,9 @@ export default function Home() {
 								</h2>
 							</div>
 							<p className="max-w-xl text-sm leading-7 text-black/65 lg:justify-self-end">
-								Browse seven static product previews—from logging a sale to
-								recording installment payments and protecting your records. These
-								screens illustrate the planned app; they are not a live demo.
+								Browse seven product previews—from logging a sale to recording
+								installment payments and protecting your records. These screens
+								illustrate the planned app.
 							</p>
 						</div>
 						<MockupShowcase />
@@ -253,7 +253,8 @@ export default function Home() {
 									Help shape what we build first.
 								</h3>
 								<p className="mt-2 max-w-xl text-sm leading-6 text-black/65">
-									Join the waitlist, then answer four quick questions if you’d like.
+									Join the waitlist, then answer four quick questions if you’d
+									like.
 								</p>
 							</div>
 							<WaitlistCta
@@ -285,30 +286,31 @@ export default function Home() {
 									Sold doesn’t always mean settled.
 								</h2>
 								<p className="mt-5 max-w-2xl text-base leading-7 text-white/75">
-									SoleSheet keeps inventory state and payment state separate, so a
-									sold pair can still show exactly what was collected and what remains.
+									SoleSheet keeps inventory state and payment state separate, so
+									a sold pair can still show exactly what was collected and what
+									remains.
 								</p>
 								<div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-								{[
-									[
-										"Cash collected",
-										formatPeso(recordedInstallmentPayment.collectedAfter),
-									],
-									[
-										"Balance remaining",
-										formatPeso(recordedInstallmentPayment.remainingAfter),
-									],
-									["Inventory state", "Sold"],
-									["Payment state", "Partially paid"],
-								].map(([label, value]) => (
-									<div
-										key={label}
-										className="rounded-2xl border border-white/12 bg-white/5 p-4"
-									>
-										<p className="text-xs text-white/70">{label}</p>
-										<p className="mt-2 text-lg font-semibold">{value}</p>
-									</div>
-								))}
+									{[
+										[
+											"Cash collected",
+											formatPeso(recordedInstallmentPayment.collectedAfter),
+										],
+										[
+											"Balance remaining",
+											formatPeso(recordedInstallmentPayment.remainingAfter),
+										],
+										["Inventory state", "Sold"],
+										["Payment state", "Partially paid"],
+									].map(([label, value]) => (
+										<div
+											key={label}
+											className="rounded-2xl border border-white/12 bg-white/5 p-4"
+										>
+											<p className="text-xs text-white/70">{label}</p>
+											<p className="mt-2 text-lg font-semibold">{value}</p>
+										</div>
+									))}
 								</div>
 								<p className="mt-5 text-xs leading-6 text-white/70">
 									Seller-managed tracking only. No lending, interest, late fees,
@@ -365,7 +367,9 @@ export default function Home() {
 								<ul className="grid gap-3 text-sm text-black/68">
 									{plan.features.map((feature) => (
 										<li key={feature} className="flex items-center gap-2">
-											<span className="shrink-0 text-[var(--brand-action)]">✓</span>
+											<span className="shrink-0 text-[var(--brand-action)]">
+												✓
+											</span>
 											<span>
 												<ActivePairsText text={feature} />
 											</span>

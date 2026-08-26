@@ -88,7 +88,7 @@ export function PricingFeatureComparison() {
         <div className="min-w-0 w-full max-w-full overflow-hidden pt-5">
           <ComparisonIntro showHeading={false} />
           <p className="mt-4 text-xs font-medium text-black/55">Swipe to compare plans →</p>
-          <div role="region" aria-label="Feature comparison table. Swipe horizontally to compare plans." tabIndex={0} className="mt-3 min-w-0 w-full max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-black/10 outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2">
+          <div role="region" aria-label="Feature comparison table. Swipe horizontally to compare plans." tabIndex={0} className="mt-3 min-w-0 w-full max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-black/10 outline-none [contain:layout] focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2">
             <ComparisonTable />
           </div>
         </div>

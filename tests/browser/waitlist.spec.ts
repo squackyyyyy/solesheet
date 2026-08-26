@@ -85,7 +85,7 @@ test("page remains responsive and exposes the complete product story", async ({ 
   );
   await expect(page.getByText("Inside SoleSheet", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: /see the workflows we’re building for everyday reselling/i })).toBeVisible();
-  await expect(page.getByText(/browse seven static product previews.*they are not a live demo/i)).toBeVisible();
+  await expect(page.getByText(/Browse seven product previews.*they are not a live demo/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: /seven everyday workflows, shown clearly/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: /your stockroom\. one clear table/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: /sold doesn’t always mean settled/i })).toBeVisible();
@@ -320,10 +320,21 @@ test("pricing comparison preserves the cumulative plan ladder on desktop and mob
     const scrollRegion = comparison.getByRole("region", { name: /feature comparison table.*swipe horizontally/i });
     await expect(scrollRegion).toBeVisible();
     expect(await scrollRegion.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    ).toBeLessThanOrEqual(1);
     await expect(scrollRegion.locator('th[scope="row"]').first()).toHaveClass(/\bsticky\b.*\bleft-0\b/);
 		await scrollRegion.evaluate((element) => {
 			element.scrollLeft = element.scrollWidth;
 		});
+		await expect.poll(() => scrollRegion.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+		expect(
+			await page.evaluate(
+				() => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+			),
+		).toBeLessThanOrEqual(1);
 		expect(await documentHorizontalScrollAfterAttempt(page)).toBe(0);
   } else {
     const table = comparison.locator('[data-pricing-comparison-table="true"]:visible');
@@ -355,6 +366,17 @@ test("narrow viewports contain the comparison and waitlist card", async ({ page 
 		if (!(await disclosure.evaluate((element) => (element as HTMLDetailsElement).open))) {
 			await disclosure.locator("summary").click();
 		}
+		const tableScrollRegion = comparison.getByRole("region", {
+			name: /feature comparison table.*swipe horizontally/i,
+		});
+		expect(
+			await tableScrollRegion.evaluate(
+				(element) => element.scrollWidth > element.clientWidth,
+			),
+		).toBe(true);
+		await tableScrollRegion.evaluate((element) => {
+			element.scrollLeft = element.scrollWidth;
+		});
 
 		const geometry = await page.evaluate(() => {
 			const card = document.querySelector<HTMLElement>('[data-waitlist-card="true"]');
@@ -368,11 +390,13 @@ test("narrow viewports contain the comparison and waitlist card", async ({ page 
 				cardRight: cardBox?.right ?? window.innerWidth + 1,
 				comparisonLeft: comparisonBox?.left ?? -1,
 				comparisonRight: comparisonBox?.right ?? window.innerWidth + 1,
+				documentWidth: document.documentElement.scrollWidth,
 				viewportWidth: window.innerWidth,
 			};
 		});
 
 		expect(await documentHorizontalScrollAfterAttempt(page)).toBe(0);
+		expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth + 1);
 		expect(geometry.cardLeft).toBeGreaterThanOrEqual(0);
 		expect(geometry.cardRight).toBeLessThanOrEqual(geometry.viewportWidth);
 		expect(geometry.comparisonLeft).toBeGreaterThanOrEqual(0);
