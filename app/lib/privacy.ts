@@ -4,4 +4,4 @@ export const privacyNotice = {
 	effectiveDateLabel: "August 25, 2026",
 } as const;
 
-export const privacyContactEmail = "solesheetph@gmail.com";
+export const privacyContactEmail = "privacy@solesheet.app";

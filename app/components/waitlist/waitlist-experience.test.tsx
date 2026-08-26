@@ -143,11 +143,11 @@ async function finishSurveySuccessfully() {
 		document.querySelector('[data-survey-completion-content="true"]'),
 	).toHaveClass("survey-completion-content");
 	const responseChangeLink = screen.getByRole("link", {
-		name: "solesheetph@gmail.com",
+		name: "privacy@solesheet.app",
 	});
 	expect(responseChangeLink).toHaveAttribute(
 		"href",
-		"mailto:solesheetph@gmail.com",
+		"mailto:privacy@solesheet.app",
 	);
 }
 

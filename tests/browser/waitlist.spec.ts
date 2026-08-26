@@ -215,7 +215,7 @@ test("privacy links open the complete waitlist privacy notice", async ({ page })
   await expect(page).toHaveTitle(/Privacy Notice/);
   await expect(page.getByRole("heading", { level: 1, name: "Privacy Notice" })).toBeVisible();
   await expect(page.getByRole("heading", { name: /information is for early access and product research/i })).toBeVisible();
-  await expect(page.getByText("solesheetph@gmail.com", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("privacy@solesheet.app", { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/delete or anonymize.*within 12 months/i)).toBeVisible();
   await expect(page.getByRole("link", { name: /National Privacy Commission’s guide/i })).toHaveAttribute(
     "href",
@@ -672,8 +672,8 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
 	await page.getByRole("button", { name: /finish this survey/i }).click();
   await expect(page.getByText(/that’s the full flow/i)).toBeVisible({ timeout: 7_000 });
 	await expect(
-		page.getByRole("link", { name: "solesheetph@gmail.com" }),
-	).toHaveAttribute("href", "mailto:solesheetph@gmail.com");
+		page.getByRole("link", { name: "privacy@solesheet.app" }),
+	).toHaveAttribute("href", "mailto:privacy@solesheet.app");
   await page.getByRole("button", { name: /close survey/i }).first().click();
   await expect(page.getByText(/thanks for helping shape solesheet/i)).toBeVisible();
   const completedCtas = page.getByRole("button", { name: /you’re all set — thank you/i });
