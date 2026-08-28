@@ -81,9 +81,26 @@ describe("persistSurveyResponse", () => {
 			null,
 			null,
 			null,
+			null,
 			"2026-08-24T01:02:03.000Z",
 			"2026-08-24T01:02:03.000Z",
 		]);
+	});
+
+	it("stores an optional additional comment as a bound response value", async () => {
+		const database = createDatabase();
+		await persistSurveyResponse(
+			database.db,
+			"signup-1",
+			{ additionalComments: "Please add supplier tags." },
+			{ now: () => new Date("2026-08-24T01:02:03.000Z") },
+		);
+
+		const insert = database.recorded.find((record) =>
+			/INSERT INTO survey_responses/i.test(record.query),
+		);
+		expect(insert?.query).toContain("additional_comments");
+		expect(insert?.bindings[12]).toBe("Please add supplier tags.");
 	});
 
 	it("stores partial answers and each selected channel as bound values", async () => {
@@ -115,6 +132,7 @@ describe("persistSurveyResponse", () => {
 		await expect(
 			persistSurveyResponse(database.db, "signup-1", {
 				phoneType: "iphone",
+				additionalComments: "Do not overwrite the first response.",
 			}),
 		).resolves.toBe("existing");
 		expect(database.db.batch).not.toHaveBeenCalled();

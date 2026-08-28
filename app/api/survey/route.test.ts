@@ -60,6 +60,7 @@ describe("POST /api/survey", () => {
 				inventoryMethod: "other",
 				inventoryMethodOther: "  POS export  ",
 				salesChannels: ["instagram", "physical_store"],
+				additionalComments: "  Please add supplier tags.  ",
 			}),
 		);
 
@@ -81,6 +82,7 @@ describe("POST /api/survey", () => {
 				inventoryMethod: "other",
 				inventoryMethodOther: "POS export",
 				salesChannels: ["instagram", "physical_store"],
+				additionalComments: "Please add supplier tags.",
 			},
 		);
 		expect(console.log).toHaveBeenCalledWith({
@@ -175,14 +177,21 @@ describe("POST /api/survey", () => {
 					inventoryMethodOther: "Spreadsheet with custom columns",
 				}),
 			),
+			POST(
+				jsonRequest({
+					surveyToken: "token",
+					...requiredCorePayload,
+					additionalComments: "x".repeat(501),
+				}),
+			),
 		]);
 
 		expect(responses.map((response) => response.status)).toEqual([
-			400, 413, 415, 400, 400, 400,
+			400, 413, 415, 400, 400, 400, 400,
 		]);
 		expect(verifySurveyTokenMock).not.toHaveBeenCalled();
 		expect(persistSurveyResponseMock).not.toHaveBeenCalled();
-		expect(console.warn).toHaveBeenCalledTimes(6);
+		expect(console.warn).toHaveBeenCalledTimes(7);
 	});
 
 	it("rejects an invalid session before D1 and logs no submitted content", async () => {
@@ -198,6 +207,7 @@ describe("POST /api/survey", () => {
 				...requiredCorePayload,
 				priorityFeature: "other",
 				priorityOther: "Private product request",
+				additionalComments: "Private general comment",
 			}),
 		);
 		const logged = JSON.stringify(consoleWarn.mock.calls);
@@ -207,6 +217,7 @@ describe("POST /api/survey", () => {
 		expect(logged).toContain("invalid_session");
 		expect(logged).not.toContain("private-survey-token");
 		expect(logged).not.toContain("Private product request");
+		expect(logged).not.toContain("Private general comment");
 		expect(consoleWarn).toHaveBeenCalledTimes(1);
 		expect(response.headers.get("X-Request-ID")).toBe(
 			vi.mocked(consoleWarn).mock.calls[0]?.[0].requestId,

@@ -66,6 +66,7 @@ The operator confirmed external delivery through the approved aliases to Gmail a
 
 ## Monitoring
 
+- Monitoring location: Cloudflare dashboard for `solesheet.app` → Email Routing. Review its status, routing rules, destination addresses, catch-all state, and activity log.
 - After setup, inspect Email Routing status, destination verification, routing rules, catch-all state, and recent Email Routing activity in Cloudflare.
 - Repeat all three external delivery tests after DNS, route, destination, or application contact changes.
 - Repeat at least quarterly while the aliases are publicly advertised.
@@ -94,10 +95,15 @@ Verified on 2026-08-26:
 
 ## Handoff state
 
+- Approved aliases: `hello@solesheet.app`, `support@solesheet.app`, and `privacy@solesheet.app`
+- Verified destination: `solesheetph@gmail.com`
 - Destination verification: passed on 2026-08-26
 - Route creation: passed for all three approved aliases on 2026-08-26
 - Cloudflare configuration read-back: passed on 2026-08-26
 - External alias delivery and activity-log review: passed on 2026-08-27
+- Deployed branded contact, `mailto:` behavior, and production routing: owner-confirmed working on 2026-08-28
 - Rollback tabletop review: passed on 2026-08-26
-- Public privacy-contact cutover: approved after successful external delivery; application deployment pending
+- Public privacy-contact cutover: deployed with `privacy@solesheet.app`
+- Monitoring location: the `solesheet.app` Email Routing dashboard and activity log in Cloudflare
+- Rollback owner: SoleSheet Cloudflare account owner
 - Current cost scope: free direct forwarding; no Email Worker or outbound email binding

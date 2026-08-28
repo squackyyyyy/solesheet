@@ -36,11 +36,11 @@ type SurveyDirection = "forward" | "backward";
 type SurveyPosition = { group: SurveyGroup; index: number };
 type SurveyAnswers = Record<string, string | string[]>;
 type SingleOtherAnswerKey = "currentTool" | "priority";
-type SingleAnswerKey = Exclude<keyof typeof surveyQuestions, "channels">;
-type OtherDetailKey =
-	| "currentToolOther"
-	| "priorityOther"
-	| "channelsOther";
+type SingleAnswerKey = Exclude<
+	keyof typeof surveyQuestions,
+	"channels" | "comments"
+>;
+type OtherDetailKey = "currentToolOther" | "priorityOther" | "channelsOther";
 
 const OTHER_OPTION = "Other";
 const AUTO_ADVANCE_DELAY = 230;
@@ -58,6 +58,7 @@ const surveyQuestionGroups = {
 		{ key: "backup", kind: "single" },
 		{ key: "channels", kind: "multi" },
 		{ key: "interview", kind: "single" },
+		{ key: "comments", kind: "text" },
 	],
 } as const;
 
@@ -146,9 +147,7 @@ function SurveyQuestion({
 					className="text-[10px] font-bold uppercase tracking-[0.2em]"
 					style={{
 						color:
-							position.group === "optional"
-								? "#2563eb"
-								: "var(--brand-action)",
+							position.group === "optional" ? "#2563eb" : "var(--brand-action)",
 					}}
 				>
 					{progressText}
@@ -209,7 +208,32 @@ function SurveyQuestion({
 					) : null}
 				</div>
 
-				{descriptor.key === "channels" ? (
+				{descriptor.key === "comments" ? (
+					<TextAreaField
+						label={surveyQuestions.comments.fieldLabel}
+						description={surveyQuestions.comments.description}
+						value={String(answers.comments ?? "")}
+						onChange={(value) =>
+							onSetAnswer(
+								"comments",
+								boundTextValue(
+									value,
+									waitlistTextLimits.additionalComments,
+								),
+							)
+						}
+						onBlur={() =>
+							onSetAnswer(
+								"comments",
+								normalizeOptionalText(String(answers.comments ?? "")),
+							)
+						}
+						maxLength={waitlistTextLimits.additionalComments}
+						rows={4}
+						inputId="survey-additional-comments"
+						autoComplete="off"
+					/>
+				) : descriptor.key === "channels" ? (
 					<div className="grid gap-3">
 						<div
 							role="group"
@@ -223,9 +247,7 @@ function SurveyQuestion({
 										Array.isArray(answers.channels) &&
 										answers.channels.includes(channel)
 									}
-									onChange={(selected) =>
-										onToggleChannel(channel, selected)
-									}
+									onChange={(selected) => onToggleChannel(channel, selected)}
 								>
 									{channel}
 								</CheckField>
@@ -246,9 +268,7 @@ function SurveyQuestion({
 								onBlur={() =>
 									onSetAnswer(
 										"channelsOther",
-										normalizeOptionalText(
-											String(answers.channelsOther ?? ""),
-										),
+										normalizeOptionalText(String(answers.channelsOther ?? "")),
 									)
 								}
 								maxLength={waitlistTextLimits.channelsOther}
@@ -262,7 +282,7 @@ function SurveyQuestion({
 						<RadioCards
 							label={question.label}
 							labelClassName="sr-only"
-							options={question.options}
+							options={"options" in question ? question.options : []}
 							value={String(answers[descriptor.key] ?? "")}
 							onChange={(value) =>
 								onSelectSingle(descriptor.key as SingleAnswerKey, value)
@@ -281,8 +301,8 @@ function SurveyQuestion({
 									What pairs count as active?
 								</summary>
 								<p className="max-w-md rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 leading-5 text-blue-950">
-									Available and Reserved pairs count as active. Sold pairs do not
-									count toward your plan limit.
+									Available and Reserved pairs count as active. Sold pairs do
+									not count toward your plan limit.
 								</p>
 							</details>
 						) : null}
@@ -328,9 +348,7 @@ function SurveyQuestion({
 								onBlur={() =>
 									onSetAnswer(
 										"priorityOther",
-										normalizeOptionalText(
-											String(answers.priorityOther ?? ""),
-										),
+										normalizeOptionalText(String(answers.priorityOther ?? "")),
 									)
 								}
 								maxLength={waitlistTextLimits.priorityOther}
@@ -365,11 +383,14 @@ function SurveyFooter({
 	const hasAnswer = hasSurveyAnswer(answer);
 	const isCore = position.group === "core";
 	const canGoBack = position.group === "optional" || position.index > 0;
-	const isCoreFinal = position.group === "core" && position.index === group.length - 1;
+	const isCoreFinal =
+		position.group === "core" && position.index === group.length - 1;
 	const isOptionalFinal =
 		position.group === "optional" && position.index === group.length - 1;
 	const needsExplicitAdvance =
-		descriptor.kind === "multi" || answer === OTHER_OPTION;
+		descriptor.kind === "multi" ||
+		descriptor.kind === "text" ||
+		answer === OTHER_OPTION;
 
 	return (
 		<div data-survey-footer="true">
@@ -411,7 +432,9 @@ function SurveyFooter({
 				</div>
 			) : (
 				<div className="grid gap-2">
-					<div className={`grid gap-2 ${canGoBack ? "grid-cols-[auto_1fr]" : "grid-cols-1"}`}>
+					<div
+						className={`grid gap-2 ${canGoBack ? "grid-cols-[auto_1fr]" : "grid-cols-1"}`}
+					>
 						{canGoBack ? (
 							<Button variant="secondary" onPress={onBack}>
 								<span aria-hidden="true">←</span>
@@ -526,9 +549,7 @@ export function WaitlistExperience() {
 
 	function toggleChannel(channel: string, isSelected: boolean) {
 		setAnswers((current) => {
-			const selected = Array.isArray(current.channels)
-				? current.channels
-				: [];
+			const selected = Array.isArray(current.channels) ? current.channels : [];
 			const channels = isSelected
 				? [...new Set([...selected, channel])]
 				: selected.filter((item) => item !== channel);
@@ -592,7 +613,9 @@ export function WaitlistExperience() {
 			({ key }) => !hasSurveyAnswer(answers[key]),
 		);
 		if (missingCoreIndex !== -1) {
-			setSurveyError("Answer this required question before finishing the survey.");
+			setSurveyError(
+				"Answer this required question before finishing the survey.",
+			);
 			moveTo({ group: "core", index: missingCoreIndex }, "backward");
 			return;
 		}
@@ -691,7 +714,10 @@ export function WaitlistExperience() {
 				surveyAdvanceTimerRef.current = null;
 				setSurveyDirection("forward");
 				setSurveyPosition((current) => {
-					if (current.group !== origin.group || current.index !== origin.index) {
+					if (
+						current.group !== origin.group ||
+						current.index !== origin.index
+					) {
 						return current;
 					}
 					return nextPosition;
@@ -1038,14 +1064,13 @@ export function WaitlistExperience() {
 				description={
 					isSurveyOutcomeVisible
 						? "Your perspective helps keep the first release focused on real reseller work."
-						: "Complete four required questions, including what you’d pay based on this demo. Your tracking method and four other follow-ups are optional. You can close this anytime and return while this page stays open."
+						: "Your insights matter—four quick questions, then optional follow-ups."
 				}
 				isOpen={isSurveyOpen}
 				onOpenChange={setSurveyDialogOpen}
 				layout="wizard"
 				footer={
-					!isSurveySubmissionComplete &&
-					surveySubmissionState === "idle" ? (
+					!isSurveySubmissionComplete && surveySubmissionState === "idle" ? (
 						<SurveyFooter
 							answers={answers}
 							position={surveyPosition}

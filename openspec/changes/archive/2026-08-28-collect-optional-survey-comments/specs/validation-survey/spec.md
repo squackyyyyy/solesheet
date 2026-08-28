@@ -1,25 +1,4 @@
-# validation-survey Specification
-
-## Purpose
-
-Define the optional post-signup validation survey, keeping unfinished answers temporary while persisting only responses the visitor deliberately finishes.
-
-## Requirements
-
-### Requirement: Survey follows a confirmed persisted signup
-The existing optional survey SHALL open automatically only after the server confirms the waitlist signup outcome and supplies a valid survey continuation token. It SHALL remain dismissible without an explicit encouragement to skip and SHALL retain unsubmitted answers only in temporary page memory. It SHALL NOT open while the signup request is pending, after the request fails, or without the continuation token required to submit it.
-
-#### Scenario: Persisted signup succeeds
-- **WHEN** the visitor reaches the signup success state after server confirmation and receives a survey continuation token
-- **THEN** the optional survey opens at its first core question and the visitor can close it without affecting the stored signup
-
-#### Scenario: Visitor closes the survey
-- **WHEN** the visitor dismisses the automatically opened survey without finishing it
-- **THEN** the signup success state remains available, the durable signup remains stored, and no survey response or validation error encourages the visitor to answer
-
-#### Scenario: Signup is not confirmed
-- **WHEN** the signup request is pending, has failed, or does not provide a usable survey continuation token
-- **THEN** the survey does not open
+## MODIFIED Requirements
 
 ### Requirement: Survey captures prioritized validation signals
 The survey SHALL support questions about primary phone platform, likely pricing plan or willingness to pay, active inventory size, installment-sales frequency, current inventory method, highest-value feature, cloud-backup interest, sales channels, permission for a follow-up interview, and any additional comment the respondent chooses to share. Primary phone platform, active inventory size, willingness to pay based on the website demo, and highest-value feature SHALL form the required core answer set for a deliberately finished survey. Current inventory method and the remaining five follow-up questions SHALL remain optional. The current inventory method, highest-value feature, and sales-channel questions SHALL each include an **Other** choice that reveals an associated optional free-text detail control when selected. Current-inventory-method and sales-channel Other details SHALL be single-line and limited to 100 characters each. The highest-value-feature Other detail SHALL be a fixed-height multiline response limited to 300 characters with a visible associated character count. The additional-comment question SHALL use a fixed-height multiline response limited to 500 characters with a visible associated character count and concise guidance not to include sensitive or customer information. Whitespace-only free text SHALL be treated as empty. The survey SHALL NOT request information about the reseller's buyers.
@@ -127,66 +106,6 @@ Current inventory method, installment-sales frequency, cloud-backup interest, sa
 #### Scenario: Visitor reaches the final optional question
 - **WHEN** the additional-comment question is presented
 - **THEN** the wizard provides a bounded optional multiline field, **Finish this survey**, and Back actions and does not require a comment to complete
-
-### Requirement: Wizard progress and question changes are accessible
-The wizard SHALL expose the current position and total programmatically, move focus to each newly presented question heading, and announce meaningful progress changes. The persistent visual progress fill SHALL reveal from left to right as its width increases. Each newly presented question SHALL enter with a restrained upward movement from below and SHALL NOT use an opacity fade. Automatic advancement SHALL occur only after an answer is activated, not when an option merely receives focus. When reduced motion is requested, progress and question changes SHALL occur without nonessential animation.
-
-#### Scenario: Pointer or keyboard visitor activates an answer
-- **WHEN** the visitor commits a standard answer by tap, click, Space, or Enter
-- **THEN** the option is selected once, the next question is presented once, and focus moves to its heading
-
-#### Scenario: Visitor navigates backward
-- **WHEN** the visitor activates Back
-- **THEN** the prior question uses the backward transition direction and its heading receives focus
-
-#### Scenario: Assistive technology reads progress
-- **WHEN** a question is presented
-- **THEN** the visitor can determine the current core or optional question number and total without relying on the visual progress bar alone
-
-#### Scenario: Visitor requests reduced motion
-- **WHEN** the device reports `prefers-reduced-motion: reduce`
-- **THEN** the same questions, selected states, progress, and focus changes remain available without animated sliding or delayed navigation
-
-### Requirement: Active-pair help remains available without leaving the survey
-The inventory-size question SHALL retain a separate **What pairs count as active?** help control using a conventional bold blue link-style treatment. Activating it SHALL reveal the essential active-pair definition inside the survey and SHALL preserve the current question and temporary answers without navigation to another browser context.
-
-#### Scenario: Visitor opens active-pair help
-- **WHEN** the visitor activates **What pairs count as active?** from the inventory-size question
-- **THEN** the survey reveals that Available and Reserved pairs count while Sold pairs do not and retains its current position and temporary answers
-
-### Requirement: Survey adapts to mobile and desktop presentation
-The survey SHALL use one stable responsive height across all questions and completion states so its outer boundary does not resize during the flow. That height SHALL accommodate the tallest question when the viewport allows, remain below a viewport-safe maximum, appear as a bottom sheet on narrow viewports, and appear as a centered accessible dialog or equivalent focused surface on desktop. Its header, current-question body, and navigation footer SHALL occupy separate layout regions. The body MAY scroll when content, viewport height, orientation, zoom, or an onscreen keyboard requires it, but the opaque navigation footer SHALL remain outside that scrolling region, meet the bottom edge of the sheet without exposing question content beneath it, and include applicable device safe-area inset padding. In every presentation, focus SHALL be managed, closing SHALL remain available, and background interaction SHALL behave appropriately.
-
-#### Scenario: Survey opens on mobile
-- **WHEN** the survey is opened at 360px wide on a device with or without a bottom safe-area inset
-- **THEN** controls are thumb-friendly, the stable-height sheet is bottom-aligned, the navigation footer forms its visible bottom edge, no question content appears below or through it, and the close action remains discoverable
-
-#### Scenario: Mobile question exceeds available height
-- **WHEN** a question, optional detail field, zoom level, orientation, or onscreen keyboard requires more vertical space than the body region provides
-- **THEN** only the question body scrolls while the header and opaque navigation footer remain structurally separate and usable
-
-#### Scenario: Survey opens on desktop
-- **WHEN** the survey is opened on a desktop viewport
-- **THEN** focus enters the dialog, the dialog has an accessible title and description, its body and footer do not overlap, and closing returns focus to the triggering control
-
-### Requirement: Answers remain temporary
-Survey answers, the active core-or-optional group, and the current question position SHALL remain only in temporary page memory until the visitor deliberately activates **Finish this survey**. Question selection, skipping, advancing, closing, and reopening SHALL NOT autosave answers, use durable browser storage, or emit data-bearing analytics. Finishing SHALL send the current normalized answer set once to the survey endpoint. A reload before confirmed submission SHALL discard the temporary answers; confirmed submitted answers SHALL remain durable in D1 without being restored into the browser wizard.
-
-#### Scenario: Visitor changes an answer or question
-- **WHEN** a visitor selects or changes a survey answer, skips, advances, or navigates backward
-- **THEN** the visible state updates without a data-bearing network request, analytics event, cookie, or durable storage write
-
-#### Scenario: Visitor closes and reopens during the same page session
-- **WHEN** a visitor closes and reopens the survey without reloading or submitting it
-- **THEN** the same question, temporary answers, applicable Other details, and continuation token remain available in page memory
-
-#### Scenario: Visitor finishes the survey
-- **WHEN** the visitor activates an available **Finish this survey** action
-- **THEN** the browser submits the current normalized answer set once and does not submit omitted questions as invented answers
-
-#### Scenario: Page reloads before submission succeeds
-- **WHEN** the visitor reloads after navigating or answering questions but before the server confirms submission
-- **THEN** previous answers, question position, and completion state are not restored from persistent browser storage
 
 ### Requirement: Survey provides a complete prototype ending
 The survey SHALL provide a deliberate completion action after the fourth core question and throughout the optional follow-ups. Activating completion SHALL replace question navigation with an accessible pending state, prevent repeated activation, and transition to the existing thank-you state only after the server confirms the generic durable outcome. The thank-you state SHALL provide a clickable `solesheetph@gmail.com` contact for respondents who need to request a change to their submitted responses. Selecting an answer or entering a comment alone SHALL NOT complete or submit the survey. A validation, authorization, network, or database failure SHALL retain the current answers and position in page memory, present a safe retry action, and SHALL NOT mark the shared journey complete.

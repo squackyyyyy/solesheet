@@ -284,4 +284,10 @@ export const surveyQuestions = {
       "No, thank you",
     ],
   },
+	comments: {
+		label: "Is there anything else you’d like us to know about SoleSheet?",
+		fieldLabel: "Additional comments",
+		description:
+			"Optional — share feedback, concerns, feature ideas, or questions. Please avoid including sensitive or customer information.",
+	},
 } as const;

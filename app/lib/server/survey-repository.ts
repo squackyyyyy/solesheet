@@ -26,10 +26,11 @@ const insertSurveyResponseSql = `
 		cloud_backup_preference,
 		sales_channel_other,
 		follow_up_availability,
+		additional_comments,
 		submitted_at,
 		updated_at
 	)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `;
 
 const insertSalesChannelSql = `
@@ -76,6 +77,7 @@ export async function persistSurveyResponse(
 				answers.cloudBackupPreference ?? null,
 				answers.salesChannelOther ?? null,
 				answers.followUpAvailability ?? null,
+				answers.additionalComments ?? null,
 				timestamp,
 				timestamp,
 			),

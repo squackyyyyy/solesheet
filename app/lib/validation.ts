@@ -4,6 +4,7 @@ export const waitlistTextLimits = {
 	currentToolOther: 100,
 	priorityOther: 300,
 	channelsOther: 100,
+	additionalComments: 500,
 } as const;
 
 export function boundTextValue(value: string, maxLength: number) {

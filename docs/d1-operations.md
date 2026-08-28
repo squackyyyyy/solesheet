@@ -151,6 +151,7 @@ isolated directory and copy the exact path printed by `mktemp` into each
 mktemp -d /private/tmp/solesheet-d1-ops.XXXXXX
 bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file migrations/0001_create_waitlist_signups.sql
 bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file migrations/0002_create_survey_responses.sql
+bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file migrations/0003_add_survey_additional_comments.sql
 bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file ops/d1/retention-fixture.sql
 bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file ops/d1/retention-preview.sql
 bunx wrangler d1 execute solesheet-waitlist --local --persist-to <isolated-directory> --file ops/d1/retention-delete.sql
@@ -184,6 +185,13 @@ Apply a committed migration only after completing the production checklist:
 ```sh
 bunx wrangler d1 migrations apply solesheet-waitlist --remote
 ```
+
+When an application release starts writing a newly added column, apply and
+verify its committed remote migration before deploying that application build.
+For the optional survey-comment release, confirm
+`0003_add_survey_additional_comments.sql` is applied remotely before deploying
+code that writes `additional_comments`. Deploying the code first would make
+otherwise valid survey submissions fail until the column exists.
 
 Do not run ad-hoc schema changes in production. Never edit an already-applied
 migration. Create and test a new numbered forward migration instead.

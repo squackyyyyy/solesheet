@@ -26,6 +26,7 @@ describe("createSurveySubmissionRequest", () => {
 				backup: "Only if affordable",
 				channels: ["Instagram", "Physical store"],
 				interview: "Maybe — send me more details first",
+				comments: "  Please add supplier tags.  ",
 			}),
 		).toEqual({
 			surveyToken: "token",
@@ -39,6 +40,7 @@ describe("createSurveySubmissionRequest", () => {
 			cloudBackupPreference: "only_if_affordable",
 			salesChannels: ["instagram", "physical_store"],
 			followUpAvailability: "send_details_first",
+			additionalComments: "Please add supplier tags.",
 		});
 	});
 
@@ -134,6 +136,7 @@ describe("validateSurveySubmission", () => {
 				salesChannels: ["instagram", "other"],
 				salesChannelOther: "  Weekend pop-ups  ",
 				followUpAvailability: "send_details_first",
+				additionalComments: "  Support barcode labels too.  ",
 			}),
 		).toEqual({
 			ok: true,
@@ -152,6 +155,7 @@ describe("validateSurveySubmission", () => {
 					salesChannels: ["instagram", "other"],
 					salesChannelOther: "Weekend pop-ups",
 					followUpAvailability: "send_details_first",
+					additionalComments: "Support barcode labels too.",
 				},
 			},
 		});
@@ -166,8 +170,19 @@ describe("validateSurveySubmission", () => {
 		[{ surveyToken: "token", salesChannels: "instagram" }],
 		[{ surveyToken: "token", salesChannels: ["instagram", "instagram"] }],
 		[{ surveyToken: "token", salesChannels: ["unknown"] }],
+		[{ surveyToken: "token", ...requiredCorePayload, additionalComments: 42 }],
 	])("rejects malformed or unsupported input %#", (value) => {
 		expect(validateSurveySubmission(value).ok).toBe(false);
+	});
+
+	it("rejects over-limit additional comments", () => {
+		expect(
+			validateSurveySubmission({
+				surveyToken: "token",
+				...requiredCorePayload,
+				additionalComments: "x".repeat(501),
+			}).ok,
+		).toBe(false);
 	});
 
 	it("rejects over-limit and inconsistent Other details", () => {
@@ -213,5 +228,16 @@ describe("validateSurveySubmission", () => {
 				inventoryMethod: "other",
 			},
 		});
+	});
+
+	it("normalizes whitespace-only additional comments to absence", () => {
+		const result = validateSurveySubmission({
+			surveyToken: "token",
+			...requiredCorePayload,
+			additionalComments: "   ",
+		});
+		expect(result.ok).toBe(true);
+		if (!result.ok) throw new Error(result.message);
+		expect(result.value.answers.additionalComments).toBeUndefined();
 	});
 });

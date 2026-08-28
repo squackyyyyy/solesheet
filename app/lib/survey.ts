@@ -77,6 +77,7 @@ export type SurveyAnswersPayload = {
 	followUpAvailability?: ValuesOf<
 		typeof surveyAnswerValues.followUpAvailability
 	>;
+	additionalComments?: string;
 };
 
 export type SurveySubmissionRequest = SurveyAnswersPayload & {
@@ -175,6 +176,7 @@ const surveyRequestFields = [
 	"salesChannels",
 	"salesChannelOther",
 	"followUpAvailability",
+	"additionalComments",
 ] as const;
 
 function isJsonObject(value: unknown): value is Record<string, unknown> {
@@ -278,9 +280,13 @@ export function createSurveySubmissionRequest(
 	const salesChannelOther = normalizeOptionalText(
 		String(answers.channelsOther ?? ""),
 	);
+	const additionalComments = normalizeOptionalText(
+		String(answers.comments ?? ""),
+	);
 	if (inventoryMethodOther) request.inventoryMethodOther = inventoryMethodOther;
 	if (priorityOther) request.priorityOther = priorityOther;
 	if (salesChannelOther) request.salesChannelOther = salesChannelOther;
+	if (additionalComments) request.additionalComments = additionalComments;
 
 	return request;
 }
@@ -368,7 +374,16 @@ export function validateSurveySubmission(
 		value.salesChannelOther,
 		waitlistTextLimits.channelsOther,
 	);
-	if (!inventoryMethodOther.ok || !priorityOther.ok || !salesChannelOther.ok) {
+	const additionalComments = normalizeDetail(
+		value.additionalComments,
+		waitlistTextLimits.additionalComments,
+	);
+	if (
+		!inventoryMethodOther.ok ||
+		!priorityOther.ok ||
+		!salesChannelOther.ok ||
+		!additionalComments.ok
+	) {
 		return { ok: false, message: "One or more survey details are too long." };
 	}
 	if (
@@ -411,6 +426,9 @@ export function validateSurveySubmission(
 	}
 	if (salesChannelOther.value !== undefined) {
 		answers.salesChannelOther = salesChannelOther.value;
+	}
+	if (additionalComments.value !== undefined) {
+		answers.additionalComments = additionalComments.value;
 	}
 
 	return { ok: true, value: { surveyToken, answers } };

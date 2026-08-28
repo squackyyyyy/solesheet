@@ -40,6 +40,10 @@ const noticeSections = [
 						availability;
 					</li>
 					<li>optional Other details you enter for supported survey questions;</li>
+					<li>
+						an optional additional comment about SoleSheet, such as feedback,
+						concerns, feature ideas, or questions;
+					</li>
 					<li>messages or requests you send to our privacy contact.</li>
 				</ul>
 				<p>
@@ -47,6 +51,10 @@ const noticeSections = [
 					survey. Finished surveys are linked to your waitlist signup and stored in
 					Cloudflare D1. Closing the survey without finishing does not submit its
 					answers.
+				</p>
+				<p>
+					Please do not include passwords, payment information, customer details,
+					or other sensitive information in an optional survey comment.
 				</p>
 				<p>
 					Waitlist and finished survey submissions are processed by Cloudflare
@@ -84,8 +92,8 @@ const noticeSections = [
 					</li>
 					<li>
 						to understand waitlist demand and prioritize product, platform, and
-						pricing decisions using survey responses, individual signups, or
-						aggregated counts;
+						pricing decisions using structured survey answers, optional comments,
+						individual signups, or aggregated counts;
 					</li>
 					<li>
 						to understand how people find and use our public pages, improve website
@@ -114,8 +122,8 @@ const noticeSections = [
 					participation is optional, and you may join the waitlist without answering
 					the survey. If you choose to finish it, the four core questions are
 					required—including what you would be willing to pay based on the demo—while
-					your current tracking method, the other follow-up questions, and Other-detail
-					fields remain optional. Answers are submitted only when you select Finish this survey;
+					your current tracking method, the other follow-up questions, Other-detail
+					fields, and additional comment remain optional. Answers are submitted only when you select Finish this survey;
 					closing an unfinished survey does not submit them.
 				</p>
 				<p>

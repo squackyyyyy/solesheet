@@ -21,9 +21,9 @@
 
 - [x] 4.1 After the `privacy@solesheet.app` delivery test passes, update the shared public privacy-contact source from `solesheetph@gmail.com` to `privacy@solesheet.app` and update affected assertions.
 - [x] 4.2 Run lint, type checking, relevant privacy/contact tests, and a production build; verify every visible privacy contact and `mailto:` target uses the branded address.
-- [ ] 4.3 Deploy the application contact change, test the deployed `mailto:` link, and repeat external delivery checks for all three aliases.
+- [x] 4.3 Deploy the application contact change, test the deployed `mailto:` link, and repeat external delivery checks for all three aliases.
 
 ## 5. Final Scope and Cost Check
 
 - [x] 5.1 Confirm `wrangler.jsonc` contains no `send_email` binding, the application exports no `email()` handler, and the delivered configuration remains on free direct forwarding.
-- [ ] 5.2 Complete the runbook handoff with the approved alias inventory, verified destination, last successful test date, monitoring location, and rollback owner without storing credentials or message contents.
+- [x] 5.2 Complete the runbook handoff with the approved alias inventory, verified destination, last successful test date, monitoring location, and rollback owner without storing credentials or message contents.
