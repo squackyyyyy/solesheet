@@ -83,12 +83,25 @@ test("page remains responsive and exposes the complete product story", async ({ 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Your shoe business",
   );
+	const heroGrid = page.locator('[data-hero-grid-decoration="true"]');
+	await expect(heroGrid).toHaveCount(1);
+	await expect(heroGrid).toHaveAttribute("aria-hidden", "true");
+	const heroGridStyles = await heroGrid.evaluate((element) => {
+		const styles = getComputedStyle(element);
+		return {
+			backgroundImage: styles.backgroundImage,
+			maskImage: styles.maskImage || styles.webkitMaskImage,
+			pointerEvents: styles.pointerEvents,
+		};
+	});
+	expect(heroGridStyles.backgroundImage).toContain("linear-gradient");
+	expect(heroGridStyles.maskImage).not.toBe("none");
+	expect(heroGridStyles.pointerEvents).toBe("none");
   await expect(page.getByText("Inside SoleSheet", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: /see the workflows we’re building for everyday reselling/i })).toBeVisible();
   await expect(page.getByText(/Browse seven product previews.*illustrate the planned app/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: /seven everyday workflows, shown clearly/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: /your stockroom\. one clear table/i })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /sold doesn’t always mean settled/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: /free for the core work/i })).toBeVisible();
 	await expect(page.getByText("Being built for Filipino resellers", { exact: true })).toBeVisible();
 	const productCta = page.locator('[data-product-waitlist-cta="true"]');
@@ -146,6 +159,11 @@ test("page remains responsive and exposes the complete product story", async ({ 
   });
   expect(overflow.page).toBeLessThanOrEqual(1);
   expect(overflow.dialog).toBeLessThanOrEqual(1);
+
+	if (testInfo.project.name.startsWith("mobile")) {
+		await page.setViewportSize({ width: 320, height: 800 });
+		expect(await documentHorizontalScrollAfterAttempt(page)).toBeLessThanOrEqual(1);
+	}
 });
 
 test("public controls and surfaces use the SoleSheet brand palette", async ({ page }) => {

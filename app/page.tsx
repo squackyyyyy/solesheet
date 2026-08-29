@@ -87,7 +87,8 @@ export default function Home() {
 				<section className="relative overflow-hidden border-b border-[#14213d]/10">
 					<div
 						aria-hidden="true"
-						className="absolute -right-52 -top-40 size-[620px] rounded-full border border-[#22c55e]/20"
+						className="hero-grid-decoration"
+						data-hero-grid-decoration="true"
 					/>
 					<div
 						aria-hidden="true"
