@@ -85,7 +85,7 @@ test("page remains responsive and exposes the complete product story", async ({ 
   );
   await expect(page.getByText("Inside SoleSheet", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: /see the workflows we’re building for everyday reselling/i })).toBeVisible();
-  await expect(page.getByText(/Browse seven product previews.*they are not a live demo/i)).toBeVisible();
+  await expect(page.getByText(/Browse seven product previews.*illustrate the planned app/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: /seven everyday workflows, shown clearly/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: /your stockroom\. one clear table/i })).toBeVisible();
   await expect(page.getByRole("heading", { name: /sold doesn’t always mean settled/i })).toBeVisible();
@@ -94,7 +94,7 @@ test("page remains responsive and exposes the complete product story", async ({ 
 	const productCta = page.locator('[data-product-waitlist-cta="true"]');
 	await expect(productCta.getByRole("heading", { name: /help shape what we build first/i })).toBeVisible();
 	await expect(productCta.getByText(/join the waitlist, then answer four quick questions/i)).toBeVisible();
-	const productCtaButton = productCta.getByRole("button", { name: /help shape solesheet/i });
+	const productCtaButton = productCta.getByRole("button", { name: "Join the waitlist" });
 	await expect(productCtaButton).toBeVisible();
 	const [productCtaBox, productCtaButtonBox, productCtaPosition] = await Promise.all([
 		productCta.boundingBox(),
@@ -122,16 +122,19 @@ test("page remains responsive and exposes the complete product story", async ({ 
 	const conversionOrder = await page.evaluate(() => {
 		const gallery = document.querySelector("#product [data-testid='planned-flow-figure']");
 		const callout = document.querySelector('[data-product-waitlist-cta="true"]');
-		const installments = document.querySelector("#installments");
+		const webInventory = document.querySelector("#web-quick-add");
 		return Boolean(
 			gallery &&
 			callout &&
-			installments &&
+			webInventory &&
 			gallery.compareDocumentPosition(callout) & Node.DOCUMENT_POSITION_FOLLOWING &&
-			callout.compareDocumentPosition(installments) & Node.DOCUMENT_POSITION_FOLLOWING,
+			callout.compareDocumentPosition(webInventory) & Node.DOCUMENT_POSITION_FOLLOWING,
 		);
 	});
 	expect(conversionOrder).toBe(true);
+	await expect(page.getByTestId("preview-disclosure")).toHaveCount(4);
+	await expect(page.getByText(/currently in validation/i)).toBeVisible();
+	await expect(page.getByText(/why i’m building it/i)).toBeVisible();
 
   const overflow = await page.evaluate(() => {
     const dialog = document.querySelector('[role="dialog"]');
@@ -185,7 +188,7 @@ test("mobile footer keeps the full horizontal SoleSheet lockup", async ({ page }
   );
 
 	const footerLinks = page.getByRole("navigation", { name: "Footer navigation" }).getByRole("link");
-	await expect(footerLinks).toHaveCount(3);
+	await expect(footerLinks).toHaveCount(4);
 	const linkBoxes = await footerLinks.evaluateAll((links) =>
 		links.map((link) => {
 			const box = link.getBoundingClientRect();
@@ -193,7 +196,9 @@ test("mobile footer keeps the full horizontal SoleSheet lockup", async ({ page }
 		}),
 	);
 	for (const box of linkBoxes) expect(box.height).toBeGreaterThanOrEqual(44);
-	expect(Math.max(...linkBoxes.map((box) => box.centerY)) - Math.min(...linkBoxes.map((box) => box.centerY))).toBeLessThanOrEqual(1);
+	await expect(
+		page.getByRole("link", { name: "hello@solesheet.app" }),
+	).toHaveAttribute("href", "mailto:hello@solesheet.app");
 });
 
 test("privacy links open the complete waitlist privacy notice", async ({ page }) => {
@@ -216,7 +221,7 @@ test("privacy links open the complete waitlist privacy notice", async ({ page })
   await expect(page.getByRole("heading", { level: 1, name: "Privacy Notice" })).toBeVisible();
   await expect(page.getByRole("heading", { name: /information is for early access and product research/i })).toBeVisible();
   await expect(page.getByText("privacy@solesheet.app", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/delete or anonymize.*within 12 months/i)).toBeVisible();
+  await expect(page.getByText(/delete inactive waitlist information before it exceeds 12 months/i)).toBeVisible();
   await expect(page.getByRole("link", { name: /National Privacy Commission’s guide/i })).toHaveAttribute(
     "href",
     "https://privacy.gov.ph/data-subject-rights/",
@@ -249,29 +254,6 @@ test("mobile Flow art uses a tall cropped phone and a compact Planned pill", asy
   await expect(placement).toHaveCSS("transform", /matrix/);
   expect(plannedBox?.height ?? Infinity).toBeLessThan(30);
   expect((plannedBox?.width ?? 0) / (plannedBox?.height ?? 1)).toBeGreaterThan(2);
-});
-
-test("compact installment callout reinforces the gallery without duplicating the Payments preview", async ({ page }, testInfo) => {
-  await page.goto("/");
-
-  const section = page.locator("#installments");
-  await expect(section).toHaveAttribute("aria-labelledby", "installment-title");
-  await expect(section.getByRole("heading", { name: "Sold doesn’t always mean settled." })).toBeVisible();
-  await expect(section.getByText(/keeps inventory state and payment state separate/i)).toBeVisible();
-  await expect(section.getByText("₱5,500")).toBeVisible();
-  await expect(section.getByText("₱1,000")).toBeVisible();
-  await expect(section.getByText("Sold", { exact: true })).toBeVisible();
-  await expect(section.getByText("Partially paid", { exact: true })).toBeVisible();
-  await expect(section.getByText(/seller-managed tracking only.*payment processing/i)).toBeVisible();
-  await expect(section.locator('[data-installment-state-callout="true"]')).toHaveCount(1);
-  await expect(section.getByText("Record payment")).toHaveCount(0);
-  await expect(section.getByText("Payment received")).toHaveCount(0);
-
-  if (!testInfo.project.name.startsWith("mobile")) {
-    await page.getByRole("link", { name: "Installments" }).click();
-    await expect(page).toHaveURL(/#installments$/);
-    await expect(section).toBeInViewport();
-  }
 });
 
 test("pricing makes core inventory work free and reserves protection and scale for paid plans", async ({ page }) => {
@@ -432,13 +414,10 @@ test("Growth Web Inventory is a responsive static proof with no product side eff
   const order = await page.evaluate(() => {
     const product = document.querySelector("#product");
     const web = document.querySelector("#web-quick-add");
-    const installments = document.querySelector("#installments");
     return Boolean(
       product &&
       web &&
-      installments &&
-      product.compareDocumentPosition(installments) & Node.DOCUMENT_POSITION_FOLLOWING &&
-      installments.compareDocumentPosition(web) & Node.DOCUMENT_POSITION_FOLLOWING,
+			product.compareDocumentPosition(web) & Node.DOCUMENT_POSITION_FOLLOWING,
     );
   });
   expect(order).toBe(true);
@@ -603,9 +582,7 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
   }));
   const joinCtas = page.getByRole("button", { name: /join the waitlist/i });
 	const expectedCtaCount = testInfo.project.name.startsWith("mobile") ? 4 : 5;
-	await expect(joinCtas).toHaveCount(expectedCtaCount - 2);
-	await expect(page.getByRole("button", { name: /help shape solesheet/i })).toBeVisible();
-	await expect(page.getByRole("button", { name: /get founding access/i })).toBeVisible();
+	await expect(joinCtas).toHaveCount(expectedCtaCount);
   await joinCtas.first().click();
   await expect(page.getByRole("textbox", { name: "Email address" })).toBeFocused();
 
@@ -665,15 +642,15 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
 	await selectSurveyRadio(surveyDialog, "Up to ₱65/month");
 	await expect(page.getByText("Question 4 of 4")).toBeVisible();
 	await selectSurveyRadio(surveyDialog, "Reports");
-	await expect(page.getByText("Optional question 1 of 5")).toBeVisible();
+	await expect(page.getByText("Optional question 1 of 6")).toBeVisible();
 	await expect(
 		surveyDialog.getByRole("button", { name: /finish this survey/i }),
 	).toBeVisible();
 	await page.getByRole("button", { name: /finish this survey/i }).click();
   await expect(page.getByText(/that’s the full flow/i)).toBeVisible({ timeout: 7_000 });
 	await expect(
-		page.getByRole("link", { name: "privacy@solesheet.app" }),
-	).toHaveAttribute("href", "mailto:privacy@solesheet.app");
+		page.getByRole("link", { name: "support@solesheet.app" }),
+	).toHaveAttribute("href", "mailto:support@solesheet.app");
   await page.getByRole("button", { name: /close survey/i }).first().click();
   await expect(page.getByText(/thanks for helping shape solesheet/i)).toBeVisible();
   const completedCtas = page.getByRole("button", { name: /you’re all set — thank you/i });
@@ -693,9 +670,7 @@ test("progress-aware CTAs synchronize through the persisted survey flow", async 
   expect(stored).toEqual(initialStored);
 
   await page.reload();
-	await expect(page.getByRole("button", { name: /join the waitlist/i })).toHaveCount(expectedCtaCount - 2);
-	await expect(page.getByRole("button", { name: /help shape solesheet/i })).toBeVisible();
-	await expect(page.getByRole("button", { name: /get founding access/i })).toBeVisible();
+	await expect(page.getByRole("button", { name: /join the waitlist/i })).toHaveCount(expectedCtaCount);
 	await expect(page.getByRole("button", { name: /answer the quick survey/i })).toHaveCount(0);
 });
 

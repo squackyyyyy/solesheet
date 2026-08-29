@@ -4,9 +4,10 @@ import {
 	mockupMeta,
 } from "@/app/components/mockups/app-screens";
 import { BrandLogo } from "@/app/components/brand/brand-logo";
-import { formatPeso, recordedInstallmentPayment } from "@/app/lib/mock-data";
+import { PreviewDisclosure } from "@/app/components/preview-disclosure";
 import { MockupShowcase } from "@/app/components/mockups/mockup-showcase";
 import { ActivePairsText } from "@/app/components/active-pairs-link";
+import { helloContactEmail } from "@/app/lib/contact";
 import { PricingFeatureComparison } from "@/app/components/pricing/pricing-feature-comparison";
 import { WebQuickAddSection } from "@/app/components/web-quick-add/web-quick-add-section";
 import {
@@ -63,12 +64,6 @@ export default function Home() {
 								className="transition hover:text-[var(--brand-action)]"
 							>
 								Product
-							</a>
-							<a
-								href="#installments"
-								className="transition hover:text-[var(--brand-action)]"
-							>
-								Installments
 							</a>
 							<a
 								href="#pricing"
@@ -156,6 +151,7 @@ export default function Home() {
 							>
 								<DashboardScreen />
 							</DeviceFrame>
+							<PreviewDisclosure className="mt-3" />
 						</div>
 					</div>
 				</section>
@@ -193,7 +189,9 @@ export default function Home() {
 							))}
 						</div>
 					</div>
-					<div className="mt-14 grid gap-3 sm:grid-cols-3">
+					<div className="mt-14">
+						<PreviewDisclosure className="mb-3" />
+						<div className="grid gap-3 sm:grid-cols-3">
 						{featureProof.map((proof) => (
 							<div
 								key={proof.label}
@@ -211,6 +209,7 @@ export default function Home() {
 								</p>
 							</div>
 						))}
+						</div>
 					</div>
 				</section>
 
@@ -257,67 +256,8 @@ export default function Home() {
 									like.
 								</p>
 							</div>
-							<WaitlistCta
-								initialLabel="Help shape SoleSheet"
-								className="w-full sm:w-auto sm:min-w-52"
-							/>
+							<WaitlistCta className="w-full sm:w-auto sm:min-w-52" />
 						</section>
-					</div>
-				</section>
-
-				<section
-					id="installments"
-					aria-labelledby="installment-title"
-					className="border-b border-[#14213d]/10 bg-[var(--brand-soft)]"
-				>
-					<div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 sm:py-16 lg:px-10">
-						<div
-							data-installment-state-callout="true"
-							className="rounded-[2rem] bg-[var(--brand-ink)] px-6 py-8 text-white shadow-[0_24px_70px_rgba(20,33,61,.16)] sm:px-9 sm:py-10"
-						>
-							<div>
-								<p className="text-[11px] font-bold uppercase tracking-[0.26em] text-[#86efac]">
-									The local differentiator
-								</p>
-								<h2
-									id="installment-title"
-									className="mt-5 max-w-xl text-4xl font-semibold tracking-[-0.05em] sm:text-6xl"
-								>
-									Sold doesn’t always mean settled.
-								</h2>
-								<p className="mt-5 max-w-2xl text-base leading-7 text-white/75">
-									SoleSheet keeps inventory state and payment state separate, so
-									a sold pair can still show exactly what was collected and what
-									remains.
-								</p>
-								<div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-									{[
-										[
-											"Cash collected",
-											formatPeso(recordedInstallmentPayment.collectedAfter),
-										],
-										[
-											"Balance remaining",
-											formatPeso(recordedInstallmentPayment.remainingAfter),
-										],
-										["Inventory state", "Sold"],
-										["Payment state", "Partially paid"],
-									].map(([label, value]) => (
-										<div
-											key={label}
-											className="rounded-2xl border border-white/12 bg-white/5 p-4"
-										>
-											<p className="text-xs text-white/70">{label}</p>
-											<p className="mt-2 text-lg font-semibold">{value}</p>
-										</div>
-									))}
-								</div>
-								<p className="mt-5 text-xs leading-6 text-white/70">
-									Seller-managed tracking only. No lending, interest, late fees,
-									collections, or payment processing.
-								</p>
-							</div>
-						</div>
 					</div>
 				</section>
 
@@ -392,10 +332,7 @@ export default function Home() {
 								{foundingOffer.pricingSummary}
 							</p>
 						</div>
-						<WaitlistCta
-							variant="secondary"
-							initialLabel="Get founding access"
-						/>
+						<WaitlistCta variant="secondary" />
 					</div>
 				</section>
 
@@ -467,8 +404,14 @@ export default function Home() {
 							>
 								Privacy Policy
 							</a>
+							<a
+								href={`mailto:${helloContactEmail}`}
+								className="inline-flex min-h-11 items-center rounded-sm outline-none hover:text-[var(--brand-action)] focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] focus-visible:ring-offset-2"
+							>
+								{helloContactEmail}
+							</a>
 							<span className="inline-flex min-h-11 items-center">
-								© 2026 SoleSheet concept
+								© 2026 SoleSheet
 							</span>
 						</nav>
 					</div>

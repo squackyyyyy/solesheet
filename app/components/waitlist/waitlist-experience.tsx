@@ -19,7 +19,6 @@ import {
 	type TurnstileWidgetHandle,
 } from "@/app/components/waitlist/turnstile-widget";
 import { foundingOffer, surveyQuestions } from "@/app/lib/site-content";
-import { privacyContactEmail } from "@/app/lib/privacy";
 import { createSurveySubmissionRequest } from "@/app/lib/survey";
 import {
 	boundTextValue,
@@ -27,6 +26,7 @@ import {
 	normalizeOptionalText,
 	waitlistTextLimits,
 } from "@/app/lib/validation";
+import { supportContactEmail } from "@/app/lib/contact";
 import type { WaitlistSignupRequest } from "@/app/lib/waitlist";
 
 type SignupState = "form" | "pending";
@@ -72,17 +72,15 @@ type SurveyQuestionDescriptor =
 export function WaitlistCta({
 	variant = "primary",
 	className,
-	initialLabel = "Join the waitlist",
 }: {
 	variant?: "primary" | "secondary" | "quiet";
 	className?: string;
-	initialLabel?: string;
 }) {
 	const { activateCta, journeyState } = useWaitlistJourney();
 	const isComplete = journeyState === "survey-complete";
 	const label =
 		journeyState === "not-joined"
-			? initialLabel
+			? "Join the waitlist"
 			: journeyState === "survey-incomplete"
 				? "Answer the quick survey"
 				: "You’re all set — thank you";
@@ -854,6 +852,28 @@ export function WaitlistExperience() {
 					<p className="mt-5 max-w-lg text-base leading-7 text-white/62">
 						{foundingOffer.finalSummary}
 					</p>
+					<div className="mt-6 grid max-w-lg gap-3 border-t border-white/12 pt-5 text-sm leading-6 text-white/75">
+						<p>
+							<strong className="font-semibold text-white">Currently in validation.</strong>{" "}
+							Android is the likely first platform, but feedback from Android and
+							iPhone resellers will help decide what ships first.
+						</p>
+						<p>
+							Join to hear about the early access and product research described in
+							the Privacy Policy. There is no payment today, and the product survey
+							after signup is optional.
+						</p>
+						<p>
+							Joining records your interest; it does not reserve product access, a
+							launch date, founding-offer eligibility, or a founding price.
+						</p>
+						<p className="border-l-2 border-[#86efac] pl-3 text-white/85">
+							<strong className="font-semibold text-white">Why I’m building it.</strong>{" "}
+							I’m building SoleSheet because tracking stock, sales, profit, and
+							installments from a phone should feel simpler than maintaining a
+							spreadsheet. Early feedback guides the first release.
+						</p>
+					</div>
 					<div className="mt-8 grid grid-cols-3 gap-3 border-t border-white/12 pt-5 text-xs text-white/70">
 						<p>
 							<span className="block text-xl font-semibold text-white">20</span>
@@ -982,7 +1002,7 @@ export function WaitlistExperience() {
 								}
 							>
 								I agree to the collection and use of my information, including
-								contact about early access.
+								contact about early access and product research.
 							</CheckField>
 							<TurnstileWidget
 								ref={turnstileRef}
@@ -1113,10 +1133,10 @@ export function WaitlistExperience() {
 									<p className="mx-auto mt-3 max-w-sm text-xs leading-5 text-black/60">
 										Need to change your responses? Email us at{" "}
 										<a
-											href={`mailto:${privacyContactEmail}`}
+											href={`mailto:${supportContactEmail}`}
 											className="standard-link rounded-sm"
 										>
-											{privacyContactEmail}
+											{supportContactEmail}
 										</a>
 										.
 									</p>

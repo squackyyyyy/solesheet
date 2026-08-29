@@ -143,11 +143,11 @@ async function finishSurveySuccessfully() {
 		document.querySelector('[data-survey-completion-content="true"]'),
 	).toHaveClass("survey-completion-content");
 	const responseChangeLink = screen.getByRole("link", {
-		name: "privacy@solesheet.app",
+		name: "support@solesheet.app",
 	});
 	expect(responseChangeLink).toHaveAttribute(
 		"href",
-		"mailto:privacy@solesheet.app",
+		"mailto:support@solesheet.app",
 	);
 }
 
@@ -213,18 +213,35 @@ describe("WaitlistExperience", () => {
 		).toBeInTheDocument();
 	});
 
-	it("supports a contextual initial CTA label without changing its destination", () => {
+	it("uses one initial CTA promise across variants without changing its destination", () => {
 		render(
 			<WaitlistJourneyProvider>
-				<WaitlistCta initialLabel="Help shape SoleSheet" />
+				<WaitlistCta />
+				<WaitlistCta variant="secondary" />
+				<WaitlistCta variant="quiet" />
 				<WaitlistExperience />
 			</WaitlistJourneyProvider>,
 		);
 
-		fireEvent.click(
-			screen.getByRole("button", { name: /help shape solesheet/i }),
-		);
+		const initialCtas = screen.getAllByRole("button", {
+			name: "Join the waitlist",
+		});
+		expect(initialCtas).toHaveLength(4);
+		fireEvent.click(initialCtas[1]!);
 		expect(screen.getByRole("textbox", { name: "Email address" })).toHaveFocus();
+	});
+
+	it("explains the validation-stage waitlist promise before signup", () => {
+		renderExperience();
+
+		expect(screen.getByText(/currently in validation/i)).toBeInTheDocument();
+		expect(
+			screen.getByText(/android is the likely first platform/i),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/joining records your interest; it does not reserve/i),
+		).toBeInTheDocument();
+		expect(screen.getByText(/why i’m building it/i)).toBeInTheDocument();
 	});
 
 	it("configures interaction-only Turnstile and submits its token without a honeypot", async () => {

@@ -1,9 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { privacyNotice } from "@/app/lib/privacy";
-import PrivacyPage from "@/app/privacy/page";
+import PrivacyPage, { metadata } from "@/app/privacy/page";
 
 describe("PrivacyPage", () => {
+	it("uses the Privacy Policy's own canonical URL", () => {
+		expect(metadata.alternates?.canonical).toBe("/privacy");
+		expect(metadata.openGraph?.url).toBe("/privacy");
+	});
+
 	it("discloses the bounded Cloudflare Web Analytics practice", () => {
 		render(<PrivacyPage />);
 

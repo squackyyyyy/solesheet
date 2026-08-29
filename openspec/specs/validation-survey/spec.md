@@ -189,7 +189,7 @@ Survey answers, the active core-or-optional group, and the current question posi
 - **THEN** previous answers, question position, and completion state are not restored from persistent browser storage
 
 ### Requirement: Survey provides a complete prototype ending
-The survey SHALL provide a deliberate completion action after the fourth core question and throughout the optional follow-ups. Activating completion SHALL replace question navigation with an accessible pending state, prevent repeated activation, and transition to the existing thank-you state only after the server confirms the generic durable outcome. The thank-you state SHALL provide a clickable `solesheetph@gmail.com` contact for respondents who need to request a change to their submitted responses. Selecting an answer or entering a comment alone SHALL NOT complete or submit the survey. A validation, authorization, network, or database failure SHALL retain the current answers and position in page memory, present a safe retry action, and SHALL NOT mark the shared journey complete.
+The survey SHALL provide a deliberate completion action after the fourth core question and throughout the optional follow-ups. Activating completion SHALL replace question navigation with an accessible pending state, prevent repeated activation, and transition to the existing thank-you state only after the server confirms the generic durable outcome. The thank-you state SHALL provide a clickable `support@solesheet.app` contact for respondents who need to request a change to their submitted responses. Selecting an answer or entering a comment alone SHALL NOT complete or submit the survey. A validation, authorization, network, or database failure SHALL retain the current answers and position in page memory, present a safe retry action, and SHALL NOT mark the shared journey complete.
 
 #### Scenario: Visitor completes immediately after the core questions
 - **WHEN** the visitor activates **Finish this survey** on the first optional question after all four core answers are present
@@ -209,4 +209,4 @@ The survey SHALL provide a deliberate completion action after the fourth core qu
 
 #### Scenario: Respondent wants to change a submitted response
 - **WHEN** the confirmed thank-you state is shown
-- **THEN** it explains that response-change requests can be emailed to `solesheetph@gmail.com` through a working email link
+- **THEN** it explains that response-change requests can be emailed to `support@solesheet.app` through a working email link

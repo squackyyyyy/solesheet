@@ -55,7 +55,7 @@ Last verified on August 23, 2026: 93 static files, 6,262.68 KiB uncompressed, an
 
 Set build variables in the Cloudflare project rather than committing `.env` files:
 
-- `NEXT_PUBLIC_SITE_URL` — the candidate `workers.dev` URL during preview verification, then `https://solesheet.ph` for the custom-domain release.
+- `NEXT_PUBLIC_SITE_URL` — `https://solesheet.app`, the permanent public origin used for canonical metadata and the analytics hostname gate. Preview and provider-hosted copies retain this canonical origin.
 - `SHOETRACK_ENABLE_FLOW_STUDIO` — leave unset in production.
 - `SHOETRACK_ENABLE_SOCIAL_STUDIO` — leave unset in production.
 - `SHOETRACK_ENABLE_WEB_QUICK_ADD_STUDIO` — leave unset in production.
@@ -110,7 +110,7 @@ Do not point the custom domain at the candidate if any critical check fails.
 2. Record the current DNS records and Vercel target before changing anything.
 3. Lower DNS TTL in advance when the DNS provider permits it.
 4. Add the custom domain to the verified Worker and confirm its required DNS records.
-5. Set `NEXT_PUBLIC_SITE_URL=https://solesheet.ph`, rebuild, and deploy the candidate.
+5. Set `NEXT_PUBLIC_SITE_URL=https://solesheet.app`, rebuild, and deploy the candidate.
 6. Switch DNS only after the provider URL passes every candidate check.
 7. Verify HTTPS, homepage metadata, public routes, assets, waitlist, and survey behavior through the custom domain.
 8. Monitor for at least 48 hours before removing the custom domain from Vercel.

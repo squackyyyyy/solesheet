@@ -206,10 +206,10 @@ export function DeviceFrame({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      role="img"
-      aria-label={`${label}. ${description}`}
+	return (
+		<div
+			role="img"
+			aria-label={`Illustrative sample data for a planned product preview. ${label}. ${description}`}
       className={`device-frame relative mx-auto w-full max-w-[330px] rounded-[2.7rem] border-[7px] border-[#171717] bg-[#171717] p-1 shadow-[0_35px_90px_rgba(17,17,17,.24)] ${className}`}
     >
       <div className="pointer-events-none absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-[#171717]" />

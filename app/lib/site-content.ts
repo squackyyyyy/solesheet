@@ -15,9 +15,9 @@ export const foundingOffer = {
   priceAfter: "After that, standard Starter pricing applies.",
   pricingHeadline: "₱65/month on Starter for your first 12 paid months.",
   pricingSummary:
-    "Planned for the first 50 eligible survey respondents. Eligibility and redemption details will be confirmed before launch; standard Starter pricing applies after the first year.",
+    "Planned for the first 50 eligible survey respondents. Eligibility and redemption details will be confirmed before launch; joining the waitlist does not reserve this rate.",
   finalSummary:
-    "Join early access and help shape the first release. The planned ₱65/month founding Starter offer is for the first 50 eligible survey respondents during their first 12 paid months. Eligibility and redemption details will be confirmed before launch.",
+    "Help shape the first release. The planned ₱65/month founding Starter offer is for the first 50 eligible survey respondents during their first 12 paid months. Eligibility and redemption details will be confirmed before launch; joining the waitlist does not reserve access or this rate.",
   mockupEligibility: "Planned for first 50 eligible survey respondents.",
   mockupScope: "Starter only · first 12 paid months.",
 } as const;

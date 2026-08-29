@@ -11,6 +11,9 @@ describe("WebQuickAddSection", () => {
     expect(within(section).getByText(webQuickAddContent.label)).toBeInTheDocument();
     expect(within(section).getByText(webQuickAddContent.positioning)).toBeInTheDocument();
     expect(within(section).getByText(webQuickAddContent.disclosure)).toBeInTheDocument();
+    expect(within(section).getByTestId("preview-disclosure")).toHaveTextContent(
+      "Illustrative sample data · Planned product preview",
+    );
     expect(within(section).getByRole("img", { name: webQuickAddContent.imageDescription })).toBeInTheDocument();
   });
 

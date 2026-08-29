@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/app/components/ui/aria";
+import { PreviewDisclosure } from "@/app/components/preview-disclosure";
 import { useFlowMockupPreload } from "@/app/components/mockups/use-flow-mockup-preload";
 import {
 	flowMockupAssets,
@@ -122,6 +123,7 @@ export function MockupShowcase() {
 					/>
 				</picture>
 			</figure>
+			<PreviewDisclosure className="mt-3" />
 
 			<p aria-live="polite" className="sr-only">
 				Showing {selected.label} product preview

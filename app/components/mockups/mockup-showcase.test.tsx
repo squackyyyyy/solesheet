@@ -24,6 +24,9 @@ describe("MockupShowcase", () => {
 		expect(quickSale).toHaveAttribute("aria-pressed", "true");
 		expect(quickSale).toHaveClass("bg-emerald-900");
 		expect(screen.getByText("Fastest path")).toBeInTheDocument();
+		expect(
+			screen.getByTestId("preview-disclosure"),
+		).toHaveTextContent("Illustrative sample data · Planned product preview");
 
 		const image = screen.getByRole("img", {
 			name: /paid Nike Dunk Low sale found by model, size, or colorway.*active pairs from 12 to 11.*₱1,700 sale profit.*monthly profit from ₱8,950 to ₱10,650/i,

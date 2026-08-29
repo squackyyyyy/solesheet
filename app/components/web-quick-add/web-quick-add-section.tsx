@@ -3,6 +3,7 @@ import {
   webQuickAddAsset,
 } from "@/app/lib/web-quick-add-assets";
 import { webQuickAddContent } from "@/app/lib/site-content";
+import { PreviewDisclosure } from "@/app/components/preview-disclosure";
 
 export function WebQuickAddSection() {
   return (
@@ -58,6 +59,7 @@ export function WebQuickAddSection() {
             />
           </picture>
         </figure>
+        <PreviewDisclosure className="mt-3" />
       </div>
     </section>
   );

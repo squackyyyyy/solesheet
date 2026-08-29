@@ -7,6 +7,12 @@ export const metadata: Metadata = {
 	title: "Privacy Notice",
 	description:
 		"How SoleSheet collects, uses, protects, and retains waitlist and product-research information.",
+	alternates: {
+		canonical: "/privacy",
+	},
+	openGraph: {
+		url: "/privacy",
+	},
 };
 
 const noticeSections = [
