@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { canonicalSiteUrl } from "@/app/lib/site-url";
 
+const brandIconVersion = "2026-08-29";
+
 export const rootMetadata: Metadata = {
 	metadataBase: canonicalSiteUrl,
 	title: {
@@ -42,11 +44,30 @@ export const rootMetadata: Metadata = {
 	},
 	icons: {
 		icon: [
-			{ url: "/web/favicon.svg", type: "image/svg+xml" },
-			{ url: "/web/favicon-32.png", sizes: "32x32", type: "image/png" },
-			{ url: "/web/favicon.ico" },
+			{
+				url: `/web/favicon.svg?v=${brandIconVersion}`,
+				type: "image/svg+xml",
+			},
+			{
+				url: `/web/favicon-16.png?v=${brandIconVersion}`,
+				sizes: "16x16",
+				type: "image/png",
+			},
+			{
+				url: `/web/favicon-32.png?v=${brandIconVersion}`,
+				sizes: "32x32",
+				type: "image/png",
+			},
+			{
+				url: `/web/favicon-48.png?v=${brandIconVersion}`,
+				sizes: "48x48",
+				type: "image/png",
+			},
+			{ url: `/favicon.ico?v=${brandIconVersion}` },
 		],
-		apple: [{ url: "/web/apple-touch-icon.png" }],
+		apple: [
+			{ url: `/web/apple-touch-icon.png?v=${brandIconVersion}` },
+		],
 	},
-	manifest: "/web/site.webmanifest",
+	manifest: `/web/site.webmanifest?v=${brandIconVersion}`,
 };

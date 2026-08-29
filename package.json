@@ -18,6 +18,7 @@
     "test": "vitest run",
     "test:browser": "playwright test",
     "test:browser:authoring": "SHOETRACK_ENABLE_WEB_QUICK_ADD_STUDIO=1 playwright test --config=playwright.authoring.config.ts",
+    "assets:favicons": "node scripts/generate-favicons.mjs",
     "assets:social": "node scripts/capture-social.mjs",
     "assets:flow": "node scripts/capture-flow-mockups.mjs",
     "assets:web-quick-add": "node scripts/capture-web-quick-add.mjs"

@@ -10,4 +10,14 @@ describe("root metadata", () => {
 		expect(rootMetadata.openGraph?.url).toBe("/");
 		expect(JSON.stringify(rootMetadata)).not.toMatch(/solesheet\.ph|workers\.dev/i);
 	});
+
+	it("publishes the complete SoleSheet shoe favicon set", () => {
+		const icons = JSON.stringify(rootMetadata.icons);
+		expect(icons).toContain("/web/favicon.svg");
+		expect(icons).toContain("/web/favicon-16.png");
+		expect(icons).toContain("/web/favicon-32.png");
+		expect(icons).toContain("/web/favicon-48.png");
+		expect(icons).toContain("/favicon.ico?v=2026-08-29");
+		expect(icons).toContain("/web/apple-touch-icon.png");
+	});
 });
