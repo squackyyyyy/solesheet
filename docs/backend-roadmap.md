@@ -52,8 +52,8 @@ If the visitor closes the survey or browser after the first database confirmatio
 | 1 | `persist-waitlist-signups-with-d1` | Store validated waitlist signups and consent records | Complete |
 | 2 | `persist-validation-survey-with-d1` | Store completed surveys linked to their waitlist signup | Complete |
 | 3 | `harden-and-operate-waitlist-data` | Add the operational, privacy, abuse, export, and recovery procedures needed for collected data | Complete |
-| 4 | `add-cloudflare-traffic-analytics` | Prepare visits and page-view measurement without writing each visit to D1 | In implementation; collection deferred until `solesheet.app` |
-| 5 | To be proposed only if needed | Add protected reporting or lightweight administration | Optional |
+| 4 | `add-cloudflare-traffic-analytics` | Measure visits and page views without writing each visit to D1 | Complete and active on `solesheet.app` |
+| 5 | Not yet proposed | Add local-only, read-only reporting in a separate project | Planned |
 
 ## Phase 0: Cloudflare hosting foundation (complete)
 
@@ -189,41 +189,42 @@ Completion criteria:
 - Operators can diagnose failures without exposing form contents in logs.
 - The privacy policy and actual retention/deletion behavior agree.
 
-## Phase 4: Add Cloudflare traffic analytics (analytics-ready; activation deferred)
+## Phase 4: Add Cloudflare traffic analytics (complete and active)
 
 Proposed change: `add-cloudflare-traffic-analytics`
 
 Goal: answer questions such as how many people visited, where visits came from, and which public pages were viewed after the forms can reliably store conversions.
 
-The application integration and present-tense privacy disclosure can be
-implemented now, but the public analytics token remains unset and the current
-`workers.dev` hostname records no Web Analytics measurements. Dashboard setup
-and collection begin only after `solesheet.app` is purchased, connected, and
-approved as the production domain.
+The application integration, present-tense privacy disclosure, custom domain,
+and production analytics activation are complete. The hostname gate keeps the
+integration scoped to the approved `solesheet.app` production host.
 
-Planned scope:
+Completed scope:
 
-- Add a dormant, hostname-gated Cloudflare Web Analytics integration to the public site.
-- Confirm the current provider URL, localhost, and previews load no beacon while the token is absent or the hostname is unmatched.
-- Document the future `solesheet.app` dashboard, build-variable, activation, verification, and rollback procedure.
-- Document where to view traffic reports.
-- Define which measurements matter initially, such as visits, page views, referrers, countries, devices, and waitlist conversion rate.
-- Review privacy-page wording and cookie implications for the chosen analytics configuration.
-- Use Workers observability for operational errors rather than treating request logs as product analytics.
+- Added a hostname-gated Cloudflare Web Analytics integration to the public site.
+- Confirmed the provider URL, localhost, and previews load no beacon when the hostname is unmatched.
+- Documented the `solesheet.app` dashboard, build variable, activation, verification, and rollback procedure.
+- Documented where to view traffic reports.
+- Defined the initial measurements, including visits, page views, referrers, countries, devices, and waitlist conversion rate.
+- Reviewed privacy-page wording and cookie implications for the analytics configuration.
+- Kept Workers observability for operational errors rather than treating request logs as product analytics.
 
 Why this is separate from D1: Cloudflare already provides a purpose-built traffic analytics service. Recording every page view in D1 would create unnecessary writes, additional privacy responsibilities, and reporting work.
 
-Completion criteria:
+Verified outcomes:
 
-- The analytics-ready application emits no beacon on the current provider URL while the public token is absent.
-- After separately authorized `solesheet.app` activation, production visits appear in the Cloudflare analytics dashboard.
+- The application emits no analytics beacon on localhost, previews, or the provider hostname.
+- Production visits appear in the Cloudflare analytics dashboard after the authorized `solesheet.app` activation.
 - The analytics configuration does not collect more information than the privacy policy describes.
 - Visit counts can be compared with stored D1 signup counts to calculate waitlist conversion.
 - No individual visit is manually inserted into D1.
 
-## Phase 5: Optional reporting or administration
+## Phase 5: Local reporting or administration
 
-This phase should be proposed only when manually querying or exporting D1 becomes inconvenient.
+The owner has chosen a separate local-only project for reporting instead of
+adding an administrative surface to `solesheet.app`. The detailed architecture,
+security boundary, phased scope, testing checklist, and new-project handoff are
+recorded in [Local Admin Dashboard Roadmap](./local-admin-dashboard-roadmap.md).
 
 Possible scope:
 
@@ -232,7 +233,9 @@ Possible scope:
 - A protected CSV export action.
 - Authentication and authorization for administrative access.
 
-This is deliberately deferred. A public waitlist does not initially need a custom admin application, and Cloudflare's dashboard plus Wrangler queries are sufficient while volume is small.
+The first implementation should remain read-only and cover the isolated project,
+restricted D1 access, and aggregate dashboard. Qualitative follow-up views,
+exports, abuse controls, and any remote deployment remain separate decisions.
 
 ## D1 concepts we will use
 
@@ -279,11 +282,13 @@ This is deliberately deferred. A public waitlist does not initially need a custo
 | Normalized survey sales-channel table | Preserves relational integrity and supports multi-select reporting without JSON parsing |
 | Monthly 12-month retention look-ahead | Keeps the manual process small while removing records before they exceed the published inactivity limit |
 | Workers Logs instead of D1 telemetry rows | Supports failure diagnosis without adding database writes or another personal-data table |
-| Dormant analytics until `solesheet.app` | Allows the integration and disclosure to be reviewed now without counting provider, preview, or local traffic before the custom domain launches |
+| Hostname-gated analytics on `solesheet.app` | Keeps production measurement separate from localhost, previews, and the provider hostname |
+| Separate local admin project | Keeps survey reporting and its D1 read credential outside the public website and deployment |
 
 ## Recommended next action
 
-Implement and review `add-cloudflare-traffic-analytics` with its public token
-unset. After the dormant integration is accepted, sync and archive the change.
-Domain purchase, attachment, and analytics activation remain a future
-owner-authorized production operation.
+When reporting becomes the active priority, create the separate
+`solesheet-admin` project and begin with an OpenSpec proposal for Phases A through
+C in [Local Admin Dashboard Roadmap](./local-admin-dashboard-roadmap.md). Keep the
+public SoleSheet repository unchanged apart from schema and operations references
+that the local project needs to read.

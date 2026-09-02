@@ -6,7 +6,7 @@ import { privacyContactEmail, privacyNotice } from "@/app/lib/privacy";
 export const metadata: Metadata = {
 	title: "Privacy Notice",
 	description:
-		"How SoleSheet collects, uses, protects, and retains waitlist and product-research information.",
+		"How SoleSheet collects, uses, shares, protects, and retains waitlist, product-research, interview-outreach, and optional appointment information.",
 	alternates: {
 		canonical: "/privacy",
 	},
@@ -82,6 +82,29 @@ const noticeSections = [
 					recordings, and we do not join its measurements to your waitlist or
 					survey submission.
 				</p>
+				<p>
+					If your finished survey says that you are open to an interview or
+					would like details first, SoleSheet may use a private, owner-operated
+					dashboard to send the corresponding research message through Resend.
+					Resend processes your recipient email address, SoleSheet&apos;s sender and
+					reply addresses, the message subject and body, send time, a provider
+					message identifier, and delivery, bounce, complaint, failure, or
+					suppression outcomes. Messages are individually addressed. SoleSheet
+					does not enable open tracking or link-click tracking for this outreach.
+				</p>
+				<p>
+					An interview or details message may offer an optional public Google
+					Calendar booking page. If you choose to book, you submit the name fields,
+					an email address you can access, and your selected time directly through
+					Google. SoleSheet does not require your legal name: you may use an alias
+					or shop name in Google&apos;s required first-name and last-name fields. Google
+					Calendar then creates the appointment event and handles its confirmation,
+					cancellation or rescheduling path, and Google Meet details when enabled.
+					Booking is not anonymous because the accessible email address and event
+					remain identifiable. The dashboard does not use the Google Calendar API,
+					prefill your identity, create appointments automatically, or synchronize
+					the respondent list with Google.
+				</p>
 			</>
 		),
 	},
@@ -97,6 +120,10 @@ const noticeSections = [
 						research you agreed to receive;
 					</li>
 					<li>
+						to send an interview invitation or requested interview details that
+						match the follow-up option you selected;
+					</li>
+					<li>
 						to understand waitlist demand and prioritize product, platform, and
 						pricing decisions using structured survey answers, optional comments,
 						individual signups, or aggregated counts;
@@ -106,7 +133,14 @@ const noticeSections = [
 						performance and device compatibility, and estimate waitlist conversion
 						using separate aggregate visit and signup counts;
 					</li>
-					<li>to arrange an optional follow-up interview;</li>
+					<li>
+						to offer optional appointment booking, arrange a follow-up interview,
+						and provide confirmation and meeting details when you choose to book;
+					</li>
+					<li>
+						to prevent duplicate outreach and handle delivery failures, complaints,
+						and provider suppression;
+					</li>
 					<li>to prevent duplicate submissions, spam, fraud, and misuse; and</li>
 					<li>to protect the website and comply with applicable law.</li>
 				</ul>
@@ -137,6 +171,16 @@ const noticeSections = [
 				emailing <a href={`mailto:${privacyContactEmail}`}>{privacyContactEmail}</a>. Withdrawal
 					does not affect processing that was lawful before it was withdrawn.
 				</p>
+				<p>
+					If you selected an interview option, a message may invite you to choose
+					a time. If you selected “send me more details first,” the message will
+					explain the interview before offering optional booking and will not treat
+					you as already committed. You do not have to book. If you do, you may use
+					an alias or shop name instead of a legal name, but should use an email
+					address you can access for confirmation and meeting details. You may also
+					stop follow-up contact by replying to an outreach message or emailing{" "}
+					<a href={`mailto:${privacyContactEmail}`}>{privacyContactEmail}</a>.
+				</p>
 			</>
 		),
 	},
@@ -153,6 +197,17 @@ const noticeSections = [
 						performance reporting;
 					</li>
 					<li>
+						Resend, which sends individually addressed interview or requested-details
+						messages for SoleSheet and reports limited delivery and suppression
+						outcomes;
+					</li>
+					<li>
+						Google Calendar, which provides the optional public booking page and,
+						when you choose to book, processes the submitted booking fields,
+						appointment event, confirmations, cancellations or rescheduling, and
+						Google Meet details;
+					</li>
+					<li>
 						professional advisers when reasonably necessary to obtain legal,
 						security, or compliance advice; and
 					</li>
@@ -162,9 +217,13 @@ const noticeSections = [
 					</li>
 				</ul>
 				<p>
-					Service providers may process information outside the Philippines. When
-					that occurs, we remain responsible for using providers and safeguards
-					appropriate to the information and processing involved.
+					Service providers may process information outside the Philippines.
+					Resend states that its account data, including message content and
+					delivery logs, is stored in the United States even when a different
+					sending region is selected. Google operates servers around the world.
+					When international processing occurs, we remain responsible for data
+					minimization, access limits, appropriate provider terms and safeguards,
+					and an effective way to exercise your rights.
 				</p>
 			</>
 		),
@@ -198,6 +257,24 @@ const noticeSections = [
 					sooner when it is no longer needed.
 				</p>
 				<p>
+					For the planned standard Resend configuration, Resend documents a
+					30-day retention period for email data. The local owner dashboard keeps
+					no second raw contact list: its pseudonymous campaign and delivery-control
+					metadata is removed within 90 days, or sooner when configured. A limited
+					suppression or stop-contact record may be kept only as needed to avoid
+					contacting you again, handle a privacy request, recover safely, or comply
+					with law.
+				</p>
+				<p>
+					A booked appointment remains in the applicable Google Calendars until it
+					is cancelled or deleted under the account&apos;s controls. Google Calendar
+					normally keeps a deleted event in the calendar bin for 30 days before
+					permanent deletion; Google&apos;s broader deletion process may take longer
+					for active and backup systems. Cancellation or deletion cannot remove
+					confirmation emails or calendar copies already held by a participant or
+					another provider.
+				</p>
+				<p>
 					If you unsubscribe or make a privacy request, we may retain the minimum
 					request information needed during the recovery window to honor it after
 					a restore, avoid contacting you again, or meet a legal obligation.
@@ -210,13 +287,22 @@ const noticeSections = [
 	{
 		title: "7. How we protect information",
 		body: (
-			<p>
-				We use reasonable organizational and technical safeguards appropriate to
-				the nature of the information, including limiting access to people and
-				providers that need it, protecting data in transit, and reviewing access
-				and retention practices. No method of transmission or storage is
-				completely secure, but we work to reduce foreseeable risks.
-			</p>
+			<>
+				<p>
+					We use reasonable organizational and technical safeguards appropriate to
+					the nature of the information, including limiting access to people and
+					providers that need it, protecting data in transit, and reviewing access
+					and retention practices. No method of transmission or storage is
+					completely secure, but we work to reduce foreseeable risks.
+				</p>
+				<p>
+					Interview outreach is limited to fixed survey-answer cohorts, sent one
+					recipient at a time without CC or BCC, and tested before live delivery.
+					The local journal excludes raw email addresses, names, survey answers,
+					message text, and D1 identifiers. The dashboard keeps D1 access read-only
+					and does not override provider bounce or complaint suppression.
+				</p>
+			</>
 		),
 	},
 	{
@@ -335,9 +421,11 @@ export default function PrivacyPage() {
 					<p className="mt-3 max-w-3xl text-sm leading-7 text-white/72">
 						Waitlist details and deliberately finished surveys are stored with
 						Cloudflare D1. We also use cookie-free aggregate website analytics.
-						Survey participation is optional; finishing requires four core answers,
-						while follow-ups remain optional. We do not sell personal information,
-						and you may withdraw consent or ask us to delete your information.
+						If you select an interview or details option, SoleSheet may send the
+						matching individually addressed research message through Resend and
+						offer optional booking through Google Calendar. Open and click tracking
+						are disabled. We do not sell personal information, and you may withdraw
+						consent or ask us to delete your information.
 					</p>
 				</section>
 
@@ -355,6 +443,8 @@ export default function PrivacyPage() {
 						<ul className="mt-5 grid gap-3 border-t border-black/10 pt-5 text-sm leading-6 text-black/68">
 							<li>✓ Waitlist and research use only</li>
 							<li>✓ Optional survey participation</li>
+							<li>✓ Optional interview scheduling</li>
+							<li>✓ No outreach open or click tracking</li>
 							<li>✓ No sale of personal information</li>
 							<li>✓ Withdrawal and deletion requests supported</li>
 						</ul>

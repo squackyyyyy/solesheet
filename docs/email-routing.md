@@ -7,9 +7,34 @@
 - Exact inbound aliases: `hello@solesheet.app`, `support@solesheet.app`, and `privacy@solesheet.app`
 - Catch-all: disabled
 - Delivery model: Cloudflare Email Routing direct forwarding only
-- Out of scope: Email Workers, outbound sending, automatic replies, message storage, and branded Gmail replies
+- Out of scope for Cloudflare Email Routing: Email Workers, outbound sending,
+  automatic replies, message storage, and branded Gmail replies
 
 Cloudflare Email Routing forwards incoming messages to the Gmail destination. It does not create a mailbox, and replies sent from Gmail may expose the Gmail address unless branded outbound sending is configured separately.
+
+## Separate outbound interview-outreach boundary
+
+Cloudflare Email Routing remains inbound-only. A separately reviewed local
+Interview Outreach workflow may use Resend to send individually addressed
+interview invitations or requested details from
+`SoleSheet Interviews <interviews@outreach.solesheet.app>`. Those messages use
+`hello@solesheet.app` as their Reply-To address, so replies return through the
+existing Cloudflare forwarding route to `solesheetph@gmail.com`.
+
+Resend is independent outbound infrastructure. Its domain verification, API
+key, SPF and DKIM records, optional DMARC policy, tracking settings, and
+delivery status are managed separately from Cloudflare Email Routing. Do not
+replace or remove the apex MX records or the existing inbound routes while
+configuring the Resend sending subdomain. The public site has no Resend key and
+does not send messages.
+
+An outreach message may contain a public Google Calendar booking link. Google
+Calendar is an optional scheduling provider, not an email-routing component.
+The respondent opens and submits Google's booking form directly; no Calendar
+API, recipient prefill, automatic event creation from the dashboard, or contact
+list synchronization is used. Booking instructions must state that a legal
+name is unnecessary, an alias or shop name is acceptable, and an accessible
+email address is required for confirmation and meeting details.
 
 ## Preflight snapshot
 

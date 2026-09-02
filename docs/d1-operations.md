@@ -240,6 +240,27 @@ provider-specific characters.
 After any recovery to an earlier time, replay all verified deletion requests
 received after the restore target before declaring recovery complete.
 
+### Interview-outreach stop-contact bridge
+
+A stop-contact reply received at `hello@solesheet.app` or a request sent to
+`privacy@solesheet.app` uses the same private verification and deletion process
+above. Do not add a write route or deletion control to the local dashboard.
+
+1. Pause any relevant outreach campaign while the request is unresolved.
+2. Verify control of the requesting address without copying the address or
+   message into shared notes.
+3. Complete the existing D1 lookup and deletion in the private owner session.
+   The dashboard's read-only token cannot and must not perform this mutation.
+4. Preserve only the minimum private request or suppression information needed
+   through the active recovery window, to replay the deletion after a restore,
+   prevent renewed contact, or meet a legal obligation.
+5. Do not remove or bypass a Resend hard-bounce or complaint suppression. A
+   provider submission already accepted cannot be recalled, but the verified
+   D1 deletion ensures the address is absent from a later cohort re-check.
+6. If recovery restores the deleted signup, replay the verified deletion before
+   resuming outreach and do not record the raw address in the local campaign
+   journal.
+
 ## Monthly retention cleanup
 
 Schedule a recurring owner reminder during the first five days of every month.
